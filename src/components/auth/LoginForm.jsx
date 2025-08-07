@@ -1,54 +1,128 @@
-import { useState } from 'react'
-import Input from '../ui/Input'
-import Button from '../ui/Button'
+import { useState } from 'react';
+import Input from '../ui/Input';
+import Button from '../ui/Button';
 
-const LoginForm = () => {
+// Import necessary Firebase functions
+import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
+
+/**
+ * LoginForm Component
+ * @param {object} props - The component props.
+ * @param {object} props.auth - The Firebase Auth instance.
+ * @param {object} props.db - The Firestore instance.
+ * @param {function} props.setMessage - A function to display messages to the user.
+ * @param {object} props.googleProvider - The Firebase GoogleAuthProvider instance.
+ */
+const LoginForm = ({ auth, db, setMessage, googleProvider }) => {
   // Form state management
   const [formData, setFormData] = useState({
     email: '',
     password: ''
-  })
+  });
 
   // Handle input changes
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
-    })
-  }
+    });
+  };
 
-  // Handle form submission
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    
-    // TODO: Replace with your Firebase authentication logic
-    console.log('Login attempt:', formData)
-    
-    // Example Firebase login would look like:
-    // signInWithEmailAndPassword(auth, formData.email, formData.password)
-    //   .then((userCredential) => {
-    //     // Handle successful login
-    //   })
-    //   .catch((error) => {
-    //     // Handle errors
-    //   })
-  }
+  // Handle form submission with role-based logic (email/password)
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage(''); // Clear any previous messages
 
-  // Handle Google sign-in
-  const handleGoogleSignIn = () => {
-    // TODO: Implement Google authentication
-    console.log('Google sign-in clicked')
-    
-    // Example Firebase Google auth:
-    // signInWithPopup(auth, googleProvider)
-    //   .then((result) => {
-    //     // Handle successful Google sign-in
-    //   })
-    //   .catch((error) => {
-    //     // Handle errors
-    //   })
-  }
+    if (!auth || !db) {
+      setMessage('Firebase not initialized. Please refresh.', 'error');
+      return;
+    }
 
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+      const user = userCredential.user;
+
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        console.log('User role:', userData.role);
+
+        if (userData.role === 'lecturer') {
+          window.location.href = '/lecturer-dashboard';
+        } else {
+          window.location.href = '/student-dashboard';
+        }
+      } else {
+        await setDoc(doc(db, 'users', user.uid), {
+          email: user.email,
+          role: 'student',
+          createdAt: new Date()
+        });
+        window.location.href = '/student-dashboard';
+      }
+    } catch (error) {
+      let errorMessage = 'Login failed. Please try again.';
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = 'No account found with this email.';
+      } else if (error.code === 'auth/wrong-password') {
+        errorMessage = 'Incorrect password.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Invalid email address.';
+      }
+      setMessage(errorMessage, 'error');
+      console.error('Login error:', error);
+    }
+  };
+
+  // Handle Google sign-in with role-based logic
+  const handleGoogleSignIn = async () => {
+    setMessage(''); // Clear any previous messages
+    
+    if (!auth || !db) {
+      setMessage('Firebase not initialized. Please refresh.', 'error');
+      return;
+    }
+
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        console.log('Existing Google user role:', userData.role);
+
+        if (userData.role === 'lecturer') {
+          window.location.href = '/lecturer-dashboard';
+        } else {
+          window.location.href = '/student-dashboard';
+        }
+      } else {
+        await setDoc(doc(db, 'users', user.uid), {
+          email: user.email,
+          displayName: user.displayName,
+          photoURL: user.photoURL,
+          role: 'student',
+          createdAt: new Date(),
+          provider: 'google'
+        });
+
+        console.log('New Google user created with default role');
+        window.location.href = '/student-dashboard';
+      }
+    } catch (error) {
+      let errorMessage = 'Google sign-in failed. Please try again.';
+      if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
+        errorMessage = 'Sign-in process was canceled.';
+      }
+      setMessage(errorMessage, 'error');
+      console.error('Google sign-in error:', error);
+    }
+  };
+  
   return (
     <form onSubmit={handleSubmit} className="auth-form">
       <Input
@@ -88,7 +162,7 @@ const LoginForm = () => {
         Continue with Google
       </Button>
     </form>
-  )
-}
+  );
+};
 
-export default LoginForm
+export default LoginForm;

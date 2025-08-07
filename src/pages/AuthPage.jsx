@@ -17,17 +17,13 @@ const AuthPage = ({ auth, db, setMessage, googleProvider }) => {
   const [isLogin, setIsLogin] = useState(true);
 
   return (
-    <div className="flex flex-col md:flex-row h-screen font-sans">
-      {/* Left side - Brand section with a gradient background */}
-      <div className="flex-1 bg-gradient-to-br from-indigo-700 to-purple-800 text-white p-8 md:p-16 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-4xl md:text-6xl font-extrabold mb-4 drop-shadow-lg">
-            ERDucate
-          </h1>
-          <p className="text-xl md:text-2xl font-light mb-6 opacity-90">
-            An AI-Powered ERD Assessment & Feedback Tool
-          </p>
-          <p className="text-sm md:text-base leading-relaxed opacity-80 max-w-xl mx-auto">
+    <div className="auth-container">
+      {/* Brand Section - Left Side */}
+      <div className="brand-section">
+        <div className="brand-content">
+          <h1 className="brand-title">ERDucate</h1>
+          <h2 className="brand-subtitle">AI-Powered ERD Assessment & Feedback Tool</h2>
+          <p className="brand-description">
             Revolutionize database design education with AI-powered feedback. 
             Students upload ERD diagrams and receive instant, intelligent analysis 
             that helps them learn from mistakes without waiting for manual review sessions.
@@ -35,27 +31,19 @@ const AuthPage = ({ auth, db, setMessage, googleProvider }) => {
         </div>
       </div>
 
-      {/* Right side - Auth forms section */}
-      <div className="flex-1 flex items-center justify-center bg-gray-50 p-6 md:p-12">
-        <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl">
-          {/* Toggle buttons for Login/Sign Up */}
-          <div className="flex justify-center mb-8 gap-4">
+      {/* Form Section - Right Side */}
+      <div className="form-section">
+        <div className="form-container">
+          {/* Auth Toggle */}
+          <div className="auth-toggle">
             <button 
-              className={`py-2 px-6 rounded-full font-semibold transition-all duration-300 ease-in-out ${
-                isLogin 
-                  ? 'bg-indigo-600 text-white shadow-md hover:bg-indigo-700' 
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
+              className={`toggle-btn ${isLogin ? 'active' : ''}`}
               onClick={() => setIsLogin(true)}
             >
               Log In
             </button>
             <button 
-              className={`py-2 px-6 rounded-full font-semibold transition-all duration-300 ease-in-out ${
-                !isLogin 
-                  ? 'bg-indigo-600 text-white shadow-md hover:bg-indigo-700' 
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
+              className={`toggle-btn ${!isLogin ? 'active' : ''}`}
               onClick={() => setIsLogin(false)}
             >
               Sign Up
@@ -64,18 +52,18 @@ const AuthPage = ({ auth, db, setMessage, googleProvider }) => {
 
           {/* Conditional form rendering, now with props passed down */}
           {isLogin ? (
-            <LoginForm 
-              auth={auth} 
-              db={db} 
-              setMessage={setMessage} 
-              googleProvider={googleProvider} 
+            <LoginForm
+              auth={auth}
+              db={db}
+              setMessage={setMessage}
+              googleProvider={googleProvider}
             />
           ) : (
-            <SignupForm 
-              auth={auth} 
-              db={db} 
-              setMessage={setMessage} 
-              googleProvider={googleProvider} 
+            <SignupForm
+              auth={auth}
+              db={db}
+              setMessage={setMessage}
+              googleProvider={googleProvider}
             />
           )}
         </div>

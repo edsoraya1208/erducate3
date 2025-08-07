@@ -9,8 +9,7 @@ import { auth, db } from '../../config/firebase';
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
-// Create Google provider instance
-const googleProvider = new GoogleAuthProvider();
+
 
 const LoginForm = () => {
   // Form state management

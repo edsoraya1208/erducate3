@@ -1,18 +1,17 @@
-import { useState } from 'react'
-import AuthPage from './pages/AuthPage'
-import './styles/globals.css'
+import { Routes, Route } from 'react-router-dom';
+import AuthPage from './pages/AuthPage';
+import WelcomePage from './components/welcome/WelcomePage';
+import './styles/globals.css';
 
 function App() {
   return (
     <div className="App">
-      {/* 
-        Main app container - currently just showing auth page
-        Later you can add routing here for different pages
-        Example: Dashboard, Profile, etc.
-      */}
-      <AuthPage />
+      <Routes>
+        <Route path="/" element={<WelcomePage />} />
+        <Route path="/auth" element={<AuthPage />} />
+      </Routes>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

@@ -72,10 +72,7 @@ const WelcomePage = () => {
         <div className="features-grid">
           <div className="feature-card">
             <div className="feature-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="3" fill="currentColor"/>
-                <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
+              <img src="/bot.svg" alt="AI Analysis" width="250" height="55" />
             </div>
             <h3 className="feature-title">AI-Powered Analysis</h3>
             <p className="feature-description">
@@ -85,9 +82,7 @@ const WelcomePage = () => {
 
           <div className="feature-card">
             <div className="feature-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="currentColor"/>
-              </svg>
+              <img src="/flash.svg" alt="Instant Feedback" width="250" height="55" />
             </div>
             <h3 className="feature-title">Instant Feedback</h3>
             <p className="feature-description">
@@ -97,11 +92,7 @@ const WelcomePage = () => {
 
           <div className="feature-card">
             <div className="feature-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-                <circle cx="12" cy="12" r="6" stroke="currentColor" strokeWidth="2"/>
-                <circle cx="12" cy="12" r="2" fill="currentColor"/>
-              </svg>
+              <img src="/goal.svg" alt="Smart Learning" width="250" height="55" />
             </div>
             <h3 className="feature-title">Smart Learning</h3>
             <p className="feature-description">
@@ -111,10 +102,7 @@ const WelcomePage = () => {
 
           <div className="feature-card">
             <div className="feature-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L2 7l10 5 10-5-10-5z" fill="currentColor"/>
-                <path d="m2 17 10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <img src="/correct.svg" alt="Instructor Control" width="250" height="45" />
             </div>
             <h3 className="feature-title">Instructor Control</h3>
             <p className="feature-description">

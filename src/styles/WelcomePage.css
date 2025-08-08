@@ -185,13 +185,15 @@ body {
 
 .features-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(300px, 1fr)); /* Fixed 2 columns with min width */
-  grid-auto-rows: 1fr; /* Equal height rows */
+  grid-template-columns: repeat(2, 300px); /* Fixed width instead of minmax */
+  grid-auto-rows: 1fr;
   gap: 40px;
+  justify-content: center; /* Centers the grid columns */
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
+  gap: 100px; /* Increased gap for better spacing */
 }
 
 /* Feature Cards - White background with subtle shadow */
@@ -204,10 +206,13 @@ body {
   transition: all 0.3s ease;
   border: 1px solid #E5E7EB;
   height: 100%;
+  max-width: 500px; /* Limit max width */
   display: flex;
   flex-direction: column;
-  justify-content: flex-start; /* Align content to top */
-  align-items: center;
+  justify-content: center; /* Centers content vertically */
+  align-items: center; /* Centers content horizontally */
+  min-height: 280px; /* Set minimum height to make them taller */
+  
 }
 
 .feature-card:hover {
@@ -233,11 +238,11 @@ body {
 }
 
 .feature-card:nth-child(2) .feature-icon {
-  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  background: linear-gradient(135deg, #df8e02 0%, #D97706 100%);
 }
 
 .feature-card:nth-child(3) .feature-icon {
-  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  background: linear-gradient(135deg, #34ca0b 0%, #0ee31c 100%);
 }
 
 .feature-card:nth-child(4) .feature-icon {

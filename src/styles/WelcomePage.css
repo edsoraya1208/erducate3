@@ -96,21 +96,27 @@ body {
 
 /* Logo Section */
 .logo-section {
-  margin-bottom: 2rem;
+  margin-bottom: rem;
 }
 
 .logo {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 20px;
+  gap: 5px;
   margin-bottom: 2rem;
+  margin-left: auto;
+  margin-right: auto;
+  width: max-content;
+  transform: translateX(-12px); /* shift left slightly */
 }
+
 
 .logo-icon {
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-right: -19px;
 }
 
 /* ERDucate title - matching the font weight and style from image */
@@ -118,6 +124,7 @@ body {
   font-size: 4rem;
   font-weight: 800;
   margin: 0;
+  padding:0;
   letter-spacing: -0.02em;
   font-family: 'Inter', sans-serif;
 }

@@ -297,8 +297,7 @@ body {
 /* Hero Section */
 .hero-section {
   position: relative;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  min-height: 100vh;
+  background-color: #7b3fe4;  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -417,7 +416,7 @@ body {
 }
 
 .get-started-btn {
-  background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+  background-color: #ff9e43;
   color: white;
   padding: 18px 40px;
   font-size: 1.1rem;

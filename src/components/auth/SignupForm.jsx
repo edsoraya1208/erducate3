@@ -8,9 +8,7 @@ import { auth, db, googleProvider } from '../../config/firebase';
 import { createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 
-/**
- * Enhanced SignupForm Component with comprehensive error handling and validation
- */
+
 const SignupForm = () => {
   // Form state management
   const [formData, setFormData] = useState({
@@ -370,7 +368,7 @@ const SignupForm = () => {
         
         <p>
           Already have an account? 
-          <a href="/login" className="auth-link">Sign In</a>
+          <a href="/auth" className="auth-link">Sign In</a>
         </p>
       </div>
     </form>

@@ -6,10 +6,11 @@ import Button from '../ui/Button';
 import { auth, db } from '../../config/firebase';
 
 // Import necessary Firebase functions
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, sendPasswordResetEmail } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
-
+// Create Google provider
+const googleProvider = new GoogleAuthProvider();
 
 const LoginForm = () => {
   // Form state management
@@ -21,6 +22,10 @@ const LoginForm = () => {
   // Message state for displaying feedback to users
   const [message, setMessage] = useState({ text: '', type: '' });
   const [isLoading, setIsLoading] = useState(false);
+
+  // Add this state
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
 
   // Handle input changes
   const handleChange = (e) => {
@@ -227,62 +232,124 @@ const LoginForm = () => {
     }
   };
 
-  // Add this state
-const [showForgotPassword, setShowForgotPassword] = useState(false);
-const [resetEmail, setResetEmail] = useState('');
+  // Add this handler function
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setMessage({ text: '', type: '' });
 
-// Add this handler function
-const handleForgotPassword = async (e) => {
-  e.preventDefault();
-  setIsLoading(true);
-  setMessage({ text: '', type: '' });
-
-  if (!resetEmail) {
-    showMessage('Please enter your email address.');
-    setIsLoading(false);
-    return;
-  }
-
-  if (!auth) {
-    showMessage('Firebase not initialized. Please refresh the page and try again.');
-    setIsLoading(false);
-    return;
-  }
-
-  try {
-    await sendPasswordResetEmail(auth, resetEmail);
-    showMessage('Password reset email sent! Check your inbox.', 'success');
-    setShowForgotPassword(false);
-    setResetEmail('');
-  } catch (error) {
-    console.error('Password reset error:', error);
-    
-    let errorMessage = 'Failed to send reset email. Please try again.';
-    
-    switch (error.code) {
-      case 'auth/user-not-found':
-        errorMessage = 'No account found with this email address.';
-        break;
-      case 'auth/invalid-email':
-        errorMessage = 'Please enter a valid email address.';
-        break;
-      case 'auth/too-many-requests':
-        errorMessage = 'Too many requests. Please wait before trying again.';
-        break;
+    if (!resetEmail) {
+      showMessage('Please enter your email address.');
+      setIsLoading(false);
+      return;
     }
-    
-    showMessage(errorMessage);
-  } finally {
-    setIsLoading(false);
-  }
-};
+
+    if (!auth) {
+      showMessage('Firebase not initialized. Please refresh the page and try again.');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      await sendPasswordResetEmail(auth, resetEmail);
+      showMessage('Password reset email sent! Check your inbox.', 'success');
+      setShowForgotPassword(false);
+      setResetEmail('');
+    } catch (error) {
+      console.error('Password reset error:', error);
+      
+      let errorMessage = 'Failed to send reset email. Please try again.';
+      
+      switch (error.code) {
+        case 'auth/user-not-found':
+          errorMessage = 'No account found with this email address.';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'Please enter a valid email address.';
+          break;
+        case 'auth/too-many-requests':
+          errorMessage = 'Too many requests. Please wait before trying again.';
+          break;
+      }
+      
+      showMessage(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Inline styles object
+  const styles = {
+    message: {
+      padding: '12px',
+      borderRadius: '4px',
+      marginBottom: '16px',
+      fontSize: '14px',
+      fontWeight: '500'
+    },
+    messageError: {
+      backgroundColor: '#fef2f2',
+      color: '#dc2626',
+      border: '1px solid #fecaca'
+    },
+    messageSuccess: {
+      backgroundColor: '#f0fdf4',
+      color: '#16a34a',
+      border: '1px solid #bbf7d0'
+    },
+    authForm: {
+      maxWidth: '400px',
+      margin: '0 auto'
+    },
+    googleIcon: {
+      marginRight: '8px'
+    },
+    forgotPasswordContainer: {
+      textAlign: 'right',
+      marginBottom: '16px'
+    },
+    forgotPasswordLink: {
+      background: 'none',
+      border: 'none',
+      color: '#3b82f6',
+      textDecoration: 'underline',
+      cursor: 'pointer',
+      fontSize: '14px',
+      padding: '0'
+    },
+    forgotPasswordLinkHover: {
+      color: '#1d4ed8'
+    },
+    forgotPasswordLinkDisabled: {
+      color: '#9ca3af',
+      cursor: 'not-allowed'
+    },
+    forgotPasswordForm: {
+      background: '#f9fafb',
+      border: '1px solid #e5e7eb',
+      borderRadius: '8px',
+      padding: '16px',
+      marginBottom: '16px'
+    },
+    forgotPasswordActions: {
+      display: 'flex',
+      gap: '8px',
+      justifyContent: 'flex-end',
+      marginTop: '12px'
+    }
+  };
   
   return (
     <div className="login-form-container">
-      <form onSubmit={handleSubmit} className="auth-form">
+      <form onSubmit={handleSubmit} style={styles.authForm}>
         {/* Message Display */}
         {message.text && (
-          <div className={`message ${message.type === 'success' ? 'message-success' : 'message-error'}`}>
+          <div 
+            style={{
+              ...styles.message,
+              ...(message.type === 'success' ? styles.messageSuccess : styles.messageError)
+            }}
+          >
             {message.text}
           </div>
         )}
@@ -308,63 +375,77 @@ const handleForgotPassword = async (e) => {
         />
 
         {/* Forgot Password Link */}
-<div className="forgot-password-container">
-  <button 
-    type="button" 
-    className="forgot-password-link"
-    onClick={() => setShowForgotPassword(!showForgotPassword)}
-    disabled={isLoading}
-  >
-    Forgot Password?
-  </button>
-</div>
+        <div style={styles.forgotPasswordContainer}>
+          <button 
+            type="button" 
+            style={{
+              ...styles.forgotPasswordLink,
+              ...(isLoading ? styles.forgotPasswordLinkDisabled : {})
+            }}
+            onClick={() => setShowForgotPassword(!showForgotPassword)}
+            disabled={isLoading}
+            onMouseEnter={(e) => {
+              if (!isLoading) {
+                e.target.style.color = styles.forgotPasswordLinkHover.color;
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isLoading) {
+                e.target.style.color = styles.forgotPasswordLink.color;
+              }
+            }}
+          >
+            Forgot Password?
+          </button>
+        </div>
 
-{/* Forgot Password Form */}
-{showForgotPassword && (
-  <div className="forgot-password-form">
-    <Input
-      label="EMAIL FOR RESET"
-      type="email"
-      name="resetEmail"
-      value={resetEmail}
-      onChange={(e) => setResetEmail(e.target.value)}
-      required
-      disabled={isLoading}
-    />
-    <div className="forgot-password-actions">
-      <Button 
-        type="button" 
-        variant="secondary" 
-        onClick={() => {
-          setShowForgotPassword(false);
-          setResetEmail('');
-        }}
-        disabled={isLoading}
-      >
-        Cancel
-      </Button>
-      <Button 
-        type="button" 
-        variant="primary" 
-        onClick={handleForgotPassword}
-        disabled={isLoading}
-      >
-        {isLoading ? 'Sending...' : 'Send Reset Email'}
-      </Button>
-    </div>
-  </div>
-)}
-        
+        {/* Forgot Password Form */}
+        {showForgotPassword && (
+          <div style={styles.forgotPasswordForm}>
+            <Input
+              label="EMAIL FOR RESET"
+              type="email"
+              name="resetEmail"
+              value={resetEmail}
+              onChange={(e) => setResetEmail(e.target.value)}
+              required
+              disabled={isLoading}
+            />
+            <div style={styles.forgotPasswordActions}>
+              <Button 
+                type="button" 
+                variant="secondary" 
+                onClick={() => {
+                  setShowForgotPassword(false);
+                  setResetEmail('');
+                }}
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="button" 
+                variant="primary" 
+                onClick={handleForgotPassword}
+                disabled={isLoading}
+              >
+                {isLoading ? 'Sending...' : 'Send Reset Email'}
+              </Button>
+            </div>
+          </div>
+        )}
         
         <Button 
           type="submit" 
           variant="primary" 
           fullWidth 
           disabled={isLoading}
+          style={{marginBottom: '16px'}}
         >
           {isLoading ? 'Signing In...' : 'Log In'}
         </Button>
         
+      
         <Button 
           type="button" 
           variant="google" 
@@ -372,7 +453,7 @@ const handleForgotPassword = async (e) => {
           onClick={handleGoogleSignIn}
           disabled={isLoading}
         >
-          <svg width="18" height="18" viewBox="0 0 18 18" className="google-icon">
+          <svg width="18" height="18" viewBox="0 0 18 18" style={styles.googleIcon}>
             <path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/>
             <path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2.04a4.8 4.8 0 0 1-7.18-2.53H1.83v2.07A8 8 0 0 0 8.98 17z"/>
             <path fill="#FBBC05" d="M4.5 10.49a4.8 4.8 0 0 1 0-3.07V5.35H1.83a8 8 0 0 0 0 7.28l2.67-2.14z"/>
@@ -381,77 +462,6 @@ const handleForgotPassword = async (e) => {
           {isLoading ? 'Signing In...' : 'Continue with Google'}
         </Button>
       </form>
-
-      {/* Add these styles to your CSS file */}
-      <style jsx>{`
-        .message {
-          padding: 12px;
-          border-radius: 4px;
-          margin-bottom: 16px;
-          font-size: 14px;
-          font-weight: 500;
-        }
-        
-        .message-error {
-          background-color: #fef2f2;
-          color: #dc2626;
-          border: 1px solid #fecaca;
-        }
-        
-        .message-success {
-          background-color: #f0fdf4;
-          color: #16a34a;
-          border: 1px solid #bbf7d0;
-        }
-        
-        .auth-form {
-          max-width: 400px;
-          margin: 0 auto;
-        }
-        
-        .google-icon {
-          margin-right: 8px;
-        }
-
-        .forgot-password-container {
-  text-align: right;
-  margin-bottom: 16px;
-}
-
-.forgot-password-link {
-  background: none;
-  border: none;
-  color: #3b82f6;
-  text-decoration: underline;
-  cursor: pointer;
-  font-size: 14px;
-  padding: 0;
-}
-
-.forgot-password-link:hover {
-  color: #1d4ed8;
-}
-
-.forgot-password-link:disabled {
-  color: #9cafadff;
-  cursor: not-allowed;
-}
-
-.forgot-password-form {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 16px;
-}
-
-.forgot-password-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  margin-top: 12px;
-}
-      `}</style>
     </div>
   );
 };

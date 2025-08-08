@@ -192,6 +192,7 @@ body {
   background: white;
   color: #374151;
   border: 2px solid #e5e7eb;
+  margin-top: 20px;
 }
 
 .btn-google:hover {

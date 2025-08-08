@@ -9,6 +9,17 @@ const WelcomePage = () => {
     navigate('/auth');
   };
 
+  const handleLearnMore = () => {
+  const element = document.querySelector('.features-section');
+  const elementPosition = element.offsetTop;
+  const offsetPosition = elementPosition - 5; // 100px offset from top
+
+  window.scrollTo({
+    top: offsetPosition,
+    behavior: 'smooth'
+  });
+};
+
   return (
     <div className="welcome-container">
       <section className="hero-section">
@@ -55,16 +66,22 @@ const WelcomePage = () => {
           </div>
           <h2 className="hero-subtitle">An AI-Powered ERD Assessment & Feedback Tool</h2>
           <p className="hero-description">
-            Revolutionize database design education with AI-powered feedback. 
-            Students upload ERD diagrams and receive instant, intelligent analysis 
-            that helps them learn from mistakes without waiting for manual review sessions.
+            Revolutionize database design education with AI-powered feedback. Students upload ERD diagrams and receive instant, intelligent analysis, enabling lecturers to review and provide feedback faster.
           </p>
-          <button 
-            className="get-started-btn"
-            onClick={handleGetStarted}
-          >
-            Get Started
-          </button>
+          <div className="button-container">
+            <button 
+              className="learn-more-btn"
+              onClick={handleLearnMore}
+            >
+              Learn More
+            </button>
+            <button 
+              className="get-started-btn"
+              onClick={handleGetStarted}
+            >
+              Get Started
+            </button>
+          </div>
         </div>
       </section>
 

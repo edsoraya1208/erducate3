@@ -21,12 +21,11 @@ const AuthPage = ({ auth, db, setMessage, googleProvider }) => {
       {/* Brand Section - Left Side */}
       <div className="brand-section">
         <div className="brand-content">
-          <h1 className="brand-title">ERDucate</h1>
-          <h2 className="brand-subtitle">AI-Powered ERD Assessment & Feedback Tool</h2>
+          <h1 className="brand-title">Ready to begin?</h1>
+          <h2 className="brand-subtitle">Join ERDucate Today</h2>
           <p className="brand-description">
-            Revolutionize database design education with AI-powered feedback. 
-            Students upload ERD diagrams and receive instant, intelligent analysis 
-            that helps them learn from mistakes without waiting for manual review sessions.
+            Create your account or log in to start using our AI-powered ERD assessment tool. 
+                Get instant feedback on your database designs and accelerate your learning.
           </p>
         </div>
       </div>

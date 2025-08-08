@@ -152,6 +152,40 @@ body {
   color: rgba(255, 255, 255, 0.8);
 }
 
+/* ada get started and learn more*/
+.button-container {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 2rem;
+}
+
+.learn-more-btn {
+  padding: 14px 28px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border: 2px solid #2ec6cb;
+  background: transparent;
+  color: #2ec6cb;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+  min-width: 200px; /* Add this line */
+  text-align: center; /* Add this to center the text */
+  box-sizing: border-box; /* Add this for consistent sizing */
+  
+}
+
+.learn-more-btn:hover {
+  background: #2ec6cb;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(46, 198, 203, 0.3);
+}
+
 /* Get Started Button - EXACTLY matching the orange from image */
 .get-started-btn {
   background: linear-gradient(135deg, #FF8A50 0%, #FF6B35 100%) !important;
@@ -193,7 +227,7 @@ body {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
-  gap: 100px; /* Increased gap for better spacing */
+  gap: 45px; /* Increased gap for better spacing */
 }
 
 /* Feature Cards - White background with subtle shadow */
@@ -334,5 +368,18 @@ body {
   
   .feature-card {
     padding: 30px 15px;
+  }
+}
+
+@media (max-width: 768px) {
+  .button-container {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+.learn-more-btn {
+    width: auto; /* Change from 100% to auto */
+    max-width: 280px;
+    min-width: 200px; /* Add this to maintain minimum size */
   }
 }

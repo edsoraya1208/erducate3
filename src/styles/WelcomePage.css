@@ -119,14 +119,14 @@ body {
   margin-right: -19px;
 }
 
-/* ERDucate title - matching the font weight and style from image */
+/* ERDucate title */
 .logo-text {
-  font-size: 4rem;
-  font-weight: 800;
+  font-size: 4.8rem;
+  font-weight: 850;
   margin: 0;
   padding:0;
   letter-spacing: -0.02em;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Nunito', sans-serif;
 }
 
 /* Subtitle */
@@ -141,7 +141,7 @@ body {
 
 /* Description text */
 .hero-description {
-  font-size: 1.1rem;
+  font-size: 1.4rem;
   line-height: 1.7;
   margin-bottom: 3rem;
   opacity: 0.85;

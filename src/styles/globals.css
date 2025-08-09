@@ -291,6 +291,8 @@ body {
   font-weight: 500;
 }
 
+
+
 /* Responsive Design for Auth Page */
 @media (max-width: 768px) {
   .auth-container {

@@ -126,11 +126,13 @@ const LoginForm = () => {
       
       // Handle specific Firebase error codes
       switch (error.code) {
-        case 'auth/user-not-found':
-          errorMessage = 'No account found with this email address.';
+         case 'auth/user-not-found':
+          errorMessage = `No password account found for this email. If you signed up with Google, try "Continue with Google" instead.`;
+          // Show Google button option
+          setShowGoogleOption(true);
           break;
-        case 'auth/wrong-password':
-          errorMessage = 'Incorrect password. Please try again.';
+          case 'auth/wrong-password':
+          errorMessage = `Incorrect password. If you signed up with Google, try "Continue with Google" instead.`;
           break;
         case 'auth/invalid-email':
           errorMessage = 'Please enter a valid email address.';

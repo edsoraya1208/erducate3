@@ -58,16 +58,28 @@ const LecturerDashboard = () => {
       {/* Top Navigation Header */}
       <header className="dashboard-header">
         <div className="header-left">
-          {/* ERDucate Logo and Brand */}
-          <div className="logo-container">
+        {/* ERDucate Logo and Brand */}
+        <div className="logo-container">
             <div className="logo-icon">
-              {/* This creates the purple cube logo - you can replace with actual logo image */}
-              <div className="cube-logo">
-                <span className="logo-text">ER</span>
-              </div>
+            <img 
+                src="/logo.svg" 
+                alt="ERDucate Logo" 
+                className="custom-logo"
+                style={{ width: '200px', height: '60px' ,marginLeft: '-60px', marginRight: '-65px' }} // Adjust size and margin
+            />
             </div>
-            <span className="brand-name">ERDucate</span>
-          </div>
+            <span 
+            className="brand-name"
+            style={{
+                fontFamily: 'Nunito, sans-serif', // Change font
+                fontSize: '38px',               // Change size
+                fontWeight: '1000',              // Make it bolder
+                letterSpacing: '1px',            // Add letter spacing
+            }}
+            >
+            ERDucate
+            </span>
+        </div>
         </div>
         
         <div className="header-right">

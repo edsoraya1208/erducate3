@@ -25,8 +25,7 @@
   Top navigation bar with purple background
 */
 .dashboard-header {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); /* Purple gradient */
-  color: white;
+    background: linear-gradient(135deg, #7b10a5, #5e17a5);  color: white;
   padding: 16px 24px;
   display: flex;
   justify-content: space-between;
@@ -49,38 +48,13 @@
   gap: 12px;
 }
 
-/* 
-  CUBE LOGO STYLES
-  Creates the 3D-looking purple cube logo
-*/
+
 .logo-icon {
   display: flex;
   align-items: center;
 }
 
-.cube-logo {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(45deg, #ec4899, #8b5cf6, #3b82f6);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
 
-.cube-logo::before {
-  content: '';
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  width: 20px;
-  height: 20px;
-  background: linear-gradient(45deg, #3b82f6, #1d4ed8);
-  border-radius: 4px;
-  transform: skew(-15deg, -15deg);
-}
 
 .logo-text {
   color: white;
@@ -134,8 +108,7 @@
   Orange logout button in the header
 */
 .logout-btn {
-  background-color: #f97316; /* Orange color matching the design */
-  color: white;
+  background: linear-gradient(135deg, #FF8A50 0%, #FF6B35 100%) !important;  color: white;
   border: none;
   padding: 10px 20px;
   border-radius: 25px; /* Rounded pill shape */
@@ -143,6 +116,7 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  
 }
 
 .logout-btn:hover {
@@ -187,15 +161,7 @@
   gap: 24px;
 }
 
-/* 
-  RESPONSIVE GRID
-  Changes to multiple columns on larger screens
-*/
-@media (min-width: 768px) {
-  .classes-grid {
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  }
-}
+
 
 /* 
   CLASS CARD STYLES
@@ -387,7 +353,7 @@
 .logout-btn:focus,
 .delete-btn:focus,
 .copy-btn:focus {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid #4a12bb;
   outline-offset: 2px;
 }
 

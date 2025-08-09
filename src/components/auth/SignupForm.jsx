@@ -144,24 +144,9 @@ const SignupForm = () => {
       console.log('Firestore document created successfully');
 
       // Show success message
-      showMessage('Account created successfully! Redirecting to your dashboard...', 'success');
+      showMessage('Account created successfully! Please login to continue.', 'success');
       
-      // Clear the form
-      setFormData({
-        name: '',
-        email: '',
-        password: '',
-        role: ''
-      });
-
-      // Redirect based on role after a brief delay
-      setTimeout(() => {
-        if (formData.role === 'lecturer') {
-          window.location.href = '/lecturer-dashboard';
-        } else {
-          window.location.href = '/student-dashboard';
-        }
-      }, 2000);
+  
 
     } catch (error) {
       console.error('Signup error:', error);
@@ -222,16 +207,8 @@ const SignupForm = () => {
         const userData = userDoc.data();
         console.log('Existing Google user found with role:', userData.role);
 
-        showMessage('Welcome back! Redirecting to your dashboard...', 'success');
-        
-        // Redirect based on existing role
-        setTimeout(() => {
-          if (userData.role === 'lecturer') {
-            window.location.href = '/lecturer-dashboard';
-          } else {
-            window.location.href = '/student-dashboard';
-          }
-        }, 1500);
+        showMessage('Welcome back! Please login to continue.', 'success');
+
         
       } else {
         // New Google user - create with default student role
@@ -246,12 +223,7 @@ const SignupForm = () => {
         });
 
         console.log('New Google user created successfully');
-        showMessage('Account created successfully! Redirecting to your dashboard...', 'success');
-        
-        // Redirect to student dashboard for new Google users
-        setTimeout(() => {
-          window.location.href = '/student-dashboard';
-        }, 2000);
+        showMessage('Account created successfully! Please login to continue.', 'success');
       }
       
     } catch (error) {

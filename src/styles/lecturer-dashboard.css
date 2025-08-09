@@ -1,0 +1,397 @@
+/* src/styles/lecturer-dashboard.css */
+
+/* 
+  GLOBAL STYLES AND RESETS
+  These ensure consistent styling across different browsers
+*/
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* 
+  MAIN DASHBOARD CONTAINER 
+  This is the outermost container for the entire dashboard
+*/
+.lecturer-dashboard {
+  min-height: 100vh;
+  background-color: #f5f5f5; /* Light gray background for the whole page */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+/* 
+  HEADER STYLES
+  Top navigation bar with purple background
+*/
+.dashboard-header {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); /* Purple gradient */
+  color: white;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 
+  LOGO SECTION
+  Left side of header with ERDucate branding
+*/
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 
+  CUBE LOGO STYLES
+  Creates the 3D-looking purple cube logo
+*/
+.logo-icon {
+  display: flex;
+  align-items: center;
+}
+
+.cube-logo {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(45deg, #ec4899, #8b5cf6, #3b82f6);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.cube-logo::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(45deg, #3b82f6, #1d4ed8);
+  border-radius: 4px;
+  transform: skew(-15deg, -15deg);
+}
+
+.logo-text {
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+  z-index: 1;
+}
+
+.brand-name {
+  color: white;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+}
+
+/* 
+  NAVIGATION SECTION
+  Right side of header with navigation items
+*/
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+.nav-items {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.nav-item {
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-item.active {
+  background-color: rgba(255, 255, 255, 0.2);
+  font-weight: 500;
+}
+
+/* 
+  LOGOUT BUTTON
+  Orange logout button in the header
+*/
+.logout-btn {
+  background-color: #f97316; /* Orange color matching the design */
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 25px; /* Rounded pill shape */
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
+  background-color: #ea580c; /* Darker orange on hover */
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+}
+
+/* 
+  MAIN CONTENT AREA
+  Container for all dashboard content below the header
+*/
+.dashboard-main {
+  padding: 32px;
+  min-height: calc(100vh - 80px); /* Full height minus header */
+}
+
+.dashboard-container {
+  max-width: 1200px; /* Limit width on large screens */
+  margin: 0 auto; /* Center the content */
+}
+
+/* 
+  PAGE TITLE
+  "Instructor's Dashboard" heading
+*/
+.dashboard-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1f2937; /* Dark gray */
+  margin-bottom: 32px;
+  letter-spacing: -0.5px;
+}
+
+/* 
+  CLASSES GRID
+  Container for all class cards - uses CSS Grid for layout
+*/
+.classes-grid {
+  display: grid;
+  grid-template-columns: 1fr; /* Single column by default */
+  gap: 24px;
+}
+
+/* 
+  RESPONSIVE GRID
+  Changes to multiple columns on larger screens
+*/
+@media (min-width: 768px) {
+  .classes-grid {
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  }
+}
+
+/* 
+  CLASS CARD STYLES
+  Individual cards for each class
+*/
+.class-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.class-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+/* 
+  CLASS HEADER
+  Top section with title and delete button
+*/
+.class-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  gap: 16px;
+}
+
+.class-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.4;
+  flex: 1; /* Takes up remaining space */
+}
+
+/* 
+  DELETE BUTTON
+  Red delete button in top-right of each card
+*/
+.delete-btn {
+  background-color: #ef4444; /* Red color */
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap; /* Prevents text wrapping */
+}
+
+.delete-btn:hover {
+  background-color: #dc2626; /* Darker red on hover */
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* 
+  CLASS CODE SECTION
+  Bottom section with code, copy button, and description
+*/
+.class-code-section {
+  border-top: 1px solid #e5e7eb; /* Separator line */
+  padding-top: 16px;
+}
+
+.code-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+/* 
+  CODE CONTAINER
+  Holds the class code and copy button
+*/
+.code-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.class-code {
+  background-color: #f3f4f6; /* Light gray background */
+  color: #3b82f6; /* Blue text color */
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; /* Monospace font */
+  font-size: 16px;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  min-width: 120px;
+  text-align: center;
+}
+
+/* 
+  COPY BUTTON
+  Button to copy class code to clipboard
+*/
+.copy-btn {
+  background-color: #6b7280; /* Gray background */
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.copy-btn:hover {
+  background-color: #4b5563; /* Darker gray on hover */
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(107, 114, 128, 0.3);
+}
+
+/* 
+  CLASS DESCRIPTION
+  Help text below the class code
+*/
+.class-description {
+  color: #6b7280; /* Medium gray */
+  font-size: 14px;
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* 
+  RESPONSIVE STYLES
+  Adjustments for mobile devices
+*/
+@media (max-width: 768px) {
+  .dashboard-main {
+    padding: 16px;
+  }
+  
+  .dashboard-title {
+    font-size: 24px;
+    margin-bottom: 24px;
+  }
+  
+  .class-card {
+    padding: 20px;
+  }
+  
+  .class-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .delete-btn {
+    align-self: flex-end;
+  }
+  
+  .code-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .copy-btn {
+    align-self: center;
+  }
+}
+
+/* 
+  DASHBOARD PAGE WRAPPER
+  Wrapper for the entire page component
+*/
+.dashboard-page {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* 
+  ACCESSIBILITY IMPROVEMENTS
+  Better focus states for keyboard navigation
+*/
+.logout-btn:focus,
+.delete-btn:focus,
+.copy-btn:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.nav-item:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}

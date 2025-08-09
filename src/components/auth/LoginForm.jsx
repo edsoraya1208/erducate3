@@ -2,6 +2,9 @@ import { useState } from 'react';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
 
+import { useNavigate } from 'react-router-dom';
+
+
 // Import Firebase instances
 import { auth, db } from '../../config/firebase';
 
@@ -12,7 +15,10 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 // Create Google provider
 const googleProvider = new GoogleAuthProvider();
 
+
 const LoginForm = () => {
+  const navigate = useNavigate(); // ✅ define navigate
+
   // Form state management
   const [formData, setFormData] = useState({
     email: '',
@@ -49,6 +55,7 @@ const LoginForm = () => {
     }
   };
 
+  
   // Handle form submission with role-based logic (email/password)
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -94,10 +101,10 @@ const LoginForm = () => {
         // Redirect based on user role
         if (userData.role === 'lecturer') {
           console.log('🎓 Redirecting to lecturer dashboard');
-          window.location.href = '/lecturer-dashboard';
+          navigate('/lecturer/dashboard1');        
         } else {
           console.log('🎒 Redirecting to student dashboard');
-          window.location.href = '/student-dashboard';
+          navigate('/student-dashboard');
         }
       } else {
         // Create new user document with default role
@@ -109,7 +116,7 @@ const LoginForm = () => {
           provider: 'email'
         });
         console.log('🎒 Redirecting new user to student dashboard');
-        window.location.href = '/student-dashboard';
+        navigate('/student-dashboard');
       }
     } catch (error) {
       console.log('❌ Login error occurred');
@@ -183,10 +190,11 @@ const LoginForm = () => {
         // Redirect based on user role
         if (userData.role === 'lecturer') {
           console.log('🎓 Redirecting to lecturer dashboard');
-          window.location.href = '/lecturer-dashboard';
+          navigate('/lecturer/dashboard1');
+
         } else {
           console.log('🎒 Redirecting to student dashboard');
-          window.location.href = '/student-dashboard';
+          navigate('/student-dashboard');
         }
       } else {
         // Create new user document with default role
@@ -201,7 +209,7 @@ const LoginForm = () => {
         });
 
         console.log('🎒 Redirecting new Google user to student dashboard');
-        window.location.href = '/student-dashboard';
+        navigate('/student-dashboard');
       }
     } catch (error) {
       console.error('❌ Google sign-in error:', error);
@@ -232,6 +240,7 @@ const LoginForm = () => {
       setIsLoading(false);
     }
   };
+
 
   // Add this handler function
   const handleForgotPassword = async (e) => {

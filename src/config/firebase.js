@@ -1,7 +1,7 @@
 // config/firebase.js
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getAuth, GoogleAuthProvider, connectAuthEmulator } from 'firebase/auth';
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
@@ -17,7 +17,18 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize services and EXPORT them
+// Initialize services
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const googleProvider = new GoogleAuthProvider(); // Add this
+export const googleProvider = new GoogleAuthProvider();
+
+// Connect to emulators in development (localhost only)
+if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+  // Only connect if not already connected
+  if (!auth._authDomain?.includes('localhost')) {
+    connectAuthEmulator(auth, 'http://localhost:9099');
+  }
+  if (!db._delegate?._databaseId?.projectId?.includes('demo-')) {
+    connectFirestoreEmulator(db, 'localhost', 8080);
+  }
+}

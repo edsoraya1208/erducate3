@@ -198,6 +198,11 @@ body {
   margin-top: 20px;
 }
 
+.signup-form-container .btn-google {
+  margin-top: -3px; /* smaller space just in signup */
+}
+
+
 .btn-google:hover {
   background: #f9fafb;
   border-color: #d1d5db;
@@ -222,28 +227,7 @@ body {
   height: 18px;
 }
 
-.divider {
-  display: flex;
-  align-items: center;
-  text-align: center;
-  margin: 1rem 0;
-}
 
-.divider span {
-  background: white;
-  padding: 0 1rem;
-  color: #6b7280;
-  font-size: 0.85rem;
-  font-weight: 500;
-}
-
-.divider::before,
-.divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: #e5e7eb;
-}
 
 /* Role Selector Styles */
 .role-selector {
@@ -291,6 +275,15 @@ body {
   font-weight: 500;
 }
 
+.message-success {
+  color: #16a34a; /* green text */
+  font-weight: 600;
+}
+
+.message-error {
+  color: #dc2626; /* red text */
+  font-weight: 600;
+}
 
 
 /* Responsive Design for Auth Page */

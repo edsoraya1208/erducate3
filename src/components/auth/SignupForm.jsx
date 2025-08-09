@@ -1,3 +1,4 @@
+// IMPORTS - NO CHANGES (keep as is)
 import { useState, useEffect } from 'react';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
@@ -8,9 +9,8 @@ import { auth, db, googleProvider } from '../../config/firebase';
 import { createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 
-
 const SignupForm = () => {
-  // Form state management
+  // FORM STATE MANAGEMENT - NO CHANGES (keep as is)
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -18,19 +18,22 @@ const SignupForm = () => {
     role: '' // No default - user must choose
   });
 
-  // Message state management
+  // MESSAGE STATE MANAGEMENT - NO CHANGES (keep as is)
   const [message, setMessage] = useState({
     text: '',
     type: '' // 'success' or 'error'
   });
 
-  // Loading state
+  // LOADING STATE - NO CHANGES (keep as is)
   const [isLoading, setIsLoading] = useState(false);
 
-  //pasword eye
+  // PASSWORD EYE - NO CHANGES (keep as is)
   const [showPassword, setShowPassword] = useState(false);
 
-  // Helper function for consistent message display
+  // ❌ REMOVED - This was the problem! We don't need separate selectedRole state
+  // const [selectedRole, setSelectedRole] = useState('');
+
+  // HELPER FUNCTION FOR MESSAGES - NO CHANGES (keep as is)
   const showMessage = (text, type = 'error') => {
     setMessage({ text, type });
     
@@ -42,14 +45,14 @@ const SignupForm = () => {
     }
   };
 
-  // Clear messages when user starts typing
+  // CLEAR MESSAGES - NO CHANGES (keep as is)
   const clearMessage = () => {
     if (message.text) {
       setMessage({ text: '', type: '' });
     }
   };
 
-  // Handle input changes
+  // HANDLE INPUT CHANGES - NO CHANGES (keep as is)
   const handleChange = (e) => {
     clearMessage();
     setFormData({
@@ -58,7 +61,7 @@ const SignupForm = () => {
     });
   };
 
-  // Handle role selection
+  // HANDLE ROLE SELECTION - NO CHANGES (keep as is)
   const handleRoleChange = (role) => {
     clearMessage();
     setFormData({
@@ -67,7 +70,7 @@ const SignupForm = () => {
     });
   };
 
-  // Form validation
+  // FORM VALIDATION - NO CHANGES (keep as is)
   const validateForm = () => {
     if (!formData.name.trim()) {
       showMessage('Please enter your name');
@@ -104,7 +107,7 @@ const SignupForm = () => {
     return true;
   };
 
-  // Handle form submission (signup logic)
+  // EMAIL SIGNUP FUNCTION - NO CHANGES (keep as is)
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -145,8 +148,6 @@ const SignupForm = () => {
 
       // Show success message
       showMessage('Account created successfully! Please login to continue.', 'success');
-      
-  
 
     } catch (error) {
       console.error('Signup error:', error);
@@ -183,9 +184,18 @@ const SignupForm = () => {
     }
   };
 
-  // Handle Google sign-up
+  // ❌ REMOVED - We don't need the RoleDropdown component anymore
+  // const RoleDropdown = () => { ... }
+
+  // ✅ FIXED - Google signup now checks formData.role instead of selectedRole
   const handleGoogleSignUp = async () => {
     setMessage({ text: '', type: '' });
+    
+    // 🔥 FIXED: Check formData.role instead of selectedRole
+    if (!formData.role) {
+      showMessage('Please select whether you are a Student or Lecturer before signing up.');
+      return;
+    }
     
     if (!auth || !db) {
       showMessage('Firebase not initialized. Please refresh the page and try again.');
@@ -193,7 +203,8 @@ const SignupForm = () => {
     }
 
     setIsLoading(true);
-    console.log('Starting Google signup process...');
+    // 🔥 FIXED: Use formData.role in console log
+    console.log('Starting Google signup process with role:', formData.role);
 
     try {
       const result = await signInWithPopup(auth, googleProvider);
@@ -206,24 +217,34 @@ const SignupForm = () => {
       if (userDoc.exists()) {
         const userData = userDoc.data();
         console.log('Existing Google user found with role:', userData.role);
-
         showMessage('Welcome back! Please login to continue.', 'success');
-
-        
       } else {
-        // New Google user - create with default student role
-        console.log('Creating new Google user with default student role');
+        // 🔥 FIXED: Use formData.role instead of selectedRole
+        console.log('Creating new Google user with role:', formData.role);
         await setDoc(doc(db, 'users', user.uid), {
           email: user.email,
           displayName: user.displayName || '',
           photoURL: user.photoURL || '',
-          role: 'student', // Default role for new Google users
+          role: formData.role, // 🔥 FIXED: Use formData.role here
           createdAt: new Date(),
-          provider: 'google'
+          provider: 'google',
+          emailVerified: user.emailVerified || false
         });
 
-        console.log('New Google user created successfully');
-        showMessage('Account created successfully! Please login to continue.', 'success');
+        // 🔥 FIXED: Use formData.role in console log
+        console.log('New Google user created successfully with role:', formData.role);
+        
+        // 🔥 FIXED: Use formData.role for role display name
+        const roleDisplayName = formData.role === 'lecturer' ? 'Lecturer' : 'Student';
+        showMessage(`Account created successfully as ${roleDisplayName}! Please login to continue.`, 'success');
+        
+        // 🔥 FIXED: Reset the entire formData, not just selectedRole
+        setFormData({
+          name: '',
+          email: '',
+          password: '',
+          role: ''
+        });
       }
       
     } catch (error) {
@@ -247,6 +268,9 @@ const SignupForm = () => {
         case 'auth/too-many-requests':
           errorMessage = 'Too many attempts. Please try again later.';
           break;
+        case 'auth/account-exists-with-different-credential':
+          errorMessage = 'An account already exists with this email using a different sign-in method.';
+          break;
         default:
           errorMessage = `Google sign-up failed: ${error.message}`;
       }
@@ -256,12 +280,12 @@ const SignupForm = () => {
       setIsLoading(false);
     }
   };
-//eye hide unhide password
-  const togglePasswordVisibility = () => {
-  setShowPassword(!showPassword);
-};
 
-  
+  // PASSWORD VISIBILITY TOGGLE - NO CHANGES (keep as is)
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
 
 return (
   <div className="signup-form-container">
@@ -423,10 +447,6 @@ return (
       >
         {isLoading ? 'Creating Account...' : 'Create Account'}
       </Button>
-      
-      <div className="divider">
-        <span>OR</span>
-      </div>
       
       <Button 
         type="button" 

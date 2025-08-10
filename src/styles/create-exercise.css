@@ -118,27 +118,6 @@ body {
   font-weight: 600;
 }
 
-.header-right {
-  display: flex;
-  align-items: center;
-}
-
-.logout-btn {
-  background: linear-gradient(135deg, #FF8A50 0%, #FF6B35 100%) !important;  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 25px; /* Rounded pill shape */
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  
-}
-
-.logout-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateY(-1px);
-}
 
 /* 📋 MAIN CONTENT */
 .main-content {
@@ -320,7 +299,7 @@ body {
 }
 
 .browse-btn {
-  background: linear-gradient(135deg, #8b5cf6, #a855f7);
+  background: linear-gradient(135deg, #6b43ca, #7a26ca, #6b43ca);
   border: none;
   color: white;
   padding: 10px 24px;
@@ -434,7 +413,7 @@ body {
 }
 
 .create-btn {
-  background: linear-gradient(135deg, #8b5cf6, #a855f7);
+  background: linear-gradient(135deg, #6b43ca, #7a26ca, #6b43ca);
   border: none;
   color: white;
   padding: 12px 32px;
@@ -443,6 +422,7 @@ body {
   cursor: pointer;
   font-size: 0.9rem;
   transition: all 0.2s;
+  box-shadow: 0 6px 12px rgba(173, 22, 249, 0.3);
 }
 
 .create-btn:hover {

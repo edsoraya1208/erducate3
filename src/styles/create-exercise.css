@@ -1,6 +1,6 @@
 /* 🎨 CREATE EXERCISE PAGE STYLES */
 
-/* 📱 RESET & BASE STYLES */
+
 * {
   margin: 0;
   padding: 0;
@@ -77,7 +77,7 @@ body {
 }
 
 .cube-bottom {
-  transform: rotateX(-90deg) translateZ(20px);
+  transform: rotateX(-90deg) translateZ(-20px);
 }
 
 .logo-text {
@@ -90,7 +90,8 @@ body {
 .header-center {
   flex: 1;
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
+  margin-right: 2rem;
 }
 
 .nav-links {
@@ -123,14 +124,15 @@ body {
 }
 
 .logout-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: white;
-  padding: 8px 20px;
-  border-radius: 8px;
-  font-weight: 600;
+  background: linear-gradient(135deg, #FF8A50 0%, #FF6B35 100%) !important;  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 25px; /* Rounded pill shape */
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  
 }
 
 .logout-btn:hover {
@@ -140,7 +142,7 @@ body {
 
 /* 📋 MAIN CONTENT */
 .main-content {
-  max-width: 800px;
+  max-width: 95%;
   margin: 0 auto;
   padding: 2rem;
 }
@@ -248,6 +250,29 @@ body {
   color: #374151;
 }
 
+/* 📁 UPLOAD SECTIONS CONTAINER */
+.upload-sections-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin: 2rem 0;
+}
+
+.upload-section {
+  border: 2px solid #f3f4f6;
+  border-radius: 12px;
+  padding: 1.5rem;
+  background: #fafbfc;
+}
+
+/* 💡 TIPS ROW */
+.tips-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-top: 1.5rem;
+}
+
 /* 📤 UPLOAD AREAS */
 .upload-area {
   border: 2px dashed #d1d5db;
@@ -326,7 +351,6 @@ body {
 
 /* 💡 TIPS SECTIONS */
 .tips-section {
-  margin-top: 1.5rem;
   background: linear-gradient(135deg, #fef3c7, #fde68a);
   border-radius: 8px;
   padding: 1rem;
@@ -438,6 +462,8 @@ body {
 
   .header-center {
     order: -1;
+    justify-content: center;
+    margin-right: 0;
   }
 
   .nav-links {
@@ -446,6 +472,7 @@ body {
 
   .main-content {
     padding: 1rem;
+    max-width: 100%;
   }
 
   .exercise-form {
@@ -455,6 +482,16 @@ body {
   .form-row {
     flex-direction: column;
     gap: 0;
+  }
+
+  .upload-sections-container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .tips-row {
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
 
   .form-actions {

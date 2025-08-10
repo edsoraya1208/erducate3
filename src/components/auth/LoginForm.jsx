@@ -49,10 +49,6 @@ const LoginForm = () => {
   // Display message helper function
   const showMessage = (text, type = 'error') => {
     setMessage({ text, type });
-    // Auto-clear success messages after 3 seconds
-    if (type === 'success') {
-      setTimeout(() => setMessage({ text: '', type: '' }), 3000);
-    }
   };
 
   

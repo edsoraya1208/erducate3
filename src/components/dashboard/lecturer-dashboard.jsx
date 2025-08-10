@@ -11,7 +11,7 @@ import {
   where,
   orderBy 
 } from 'firebase/firestore';
-import { db } from '../../config/firebase'; // You'll need to create this
+import { db, auth } from '../../config/firebase';import { useAuthState } from 'react-firebase-hooks/auth';
 import '../../styles/lecturer-shared-header.css';
 import '../../styles/lecturer-dashboard.css';
 
@@ -19,6 +19,7 @@ const LecturerDashboard = () => {
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [user, error] = useAuthState(auth);
 
   // Generate unique class code
   const generateClassCode = () => {
@@ -70,13 +71,13 @@ const LecturerDashboard = () => {
       setCreating(true);
       const classCode = generateClassCode();
       
-      const newClass = {
+     const newClass = {
         title: className.trim(),
         classCode: classCode,
         description: "Share this code with students to join your class",
         createdAt: new Date(),
-        instructorId: "current-instructor-id", // Replace with actual instructor ID
-        instructorName: "Prof. Johnson" // Replace with actual instructor name
+        instructorId: user?.uid || "unknown",
+        instructorName: user?.displayName || user?.email || "Unknown Instructor"
       };
 
       await addDoc(collection(db, 'classes'), newClass);

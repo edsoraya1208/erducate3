@@ -1,0 +1,143 @@
+/* 
+  HEADER STYLES
+  Top navigation bar with purple background
+*/
+.dashboard-header {
+    background: linear-gradient(135deg, #7b10a5, #5e17a5);  color: white;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+
+/* 
+  LOGO SECTION
+  Left side of header with ERDucate branding
+*/
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 
+  CUSTOM LOGO STYLES
+  Controls the size and positioning of the ERDucate logo image
+*/
+.custom-logo {
+  width: 200px;           /* Sets logo width */
+  height: 60px;           /* Sets logo height */
+  margin-left: -60px;     /* Moves logo left (negative = leftward) */
+  margin-right: -65px;    /* Reduces space after logo */
+}
+
+/* 
+  BRAND NAME STYLES  
+  Styles for the "ERDucate" text next to logo
+*/
+.brand-name {
+  font-family: 'Nunito', sans-serif;  /* Custom font */
+  font-size: 38px;                    /* Large text size */
+  font-weight: 1000;                  /* Extra bold */
+  letter-spacing: 1px;                /* Space between letters */
+  color: white;                       /* Keep text white */
+}
+
+
+.logo-icon {
+  display: flex;
+  align-items: center;
+}
+
+
+
+.logo-text {
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+  z-index: 1;
+}
+
+.brand-name {
+  color: white;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+}
+
+/* 
+  NAVIGATION SECTION
+  Right side of header with navigation items
+*/
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+.nav-items {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.nav-item {
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-item.active {
+  background-color: rgba(255, 255, 255, 0.2);
+  font-weight: 500;
+}
+
+/* 
+  LOGOUT BUTTON
+  Orange logout button in the header
+*/
+.logout-btn {
+  background: linear-gradient(135deg, #FF8A50 0%, #FF6B35 100%) !important;  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 25px; /* Rounded pill shape */
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+}
+
+.logout-btn:hover {
+  background-color: #ea580c; /* Darker orange on hover */
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+}
+
+  ACCESSIBILITY IMPROVEMENTS
+  Better focus states for keyboard navigation
+*/
+.logout-btn:focus,
+.delete-btn:focus,
+.copy-btn:focus {
+  outline: 2px solid #4a12bb;
+  outline-offset: 2px;
+}
+
+.nav-item:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}

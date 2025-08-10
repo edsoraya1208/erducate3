@@ -1,7 +1,5 @@
 import React from 'react';
-
-
-
+import LecturerCreateExercise from '../../components/class/lecturer-create-exercise.jsx';
 const CreateExercisePage = () => {
   return (
     <div className="create-exercise-page">

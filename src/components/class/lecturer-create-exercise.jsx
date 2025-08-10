@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 import '../../styles/create-exercise.css';
 
+
+// 🔥 FIREBASE IMPORTS - Add these imports
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '../../config/firebase';
 // 🎯 MAIN COMPONENT: This handles the entire create exercise form
 const LecturerCreateExercise = () => {
   // 📝 STATE MANAGEMENT: These store all form data
@@ -12,6 +17,9 @@ const LecturerCreateExercise = () => {
     answerSchemeFile: null,
     rubricFile: null
   });
+
+  // ⏳ LOADING STATE: Show loading during submission
+  const [isLoading, setIsLoading] = useState(false);
 
   // 🎯 HANDLE INPUT CHANGES: Updates state when user types
   const handleInputChange = (e) => {
@@ -26,6 +34,12 @@ const LecturerCreateExercise = () => {
   const handleFileUpload = (e, fileType) => {
     const file = e.target.files[0];
     if (file) {
+      // Validate file size (10MB limit)
+      if (file.size >  2* 1024 * 1024) {
+        alert('File size must be less than 2MB');
+        return;
+      }
+      
       setFormData(prev => ({
         ...prev,
         [fileType]: file
@@ -33,80 +47,74 @@ const LecturerCreateExercise = () => {
     }
   };
 
-  // 🚀 SUBMIT FORM: This is where you'll connect to Firebase/API
+  // 🔥 FIREBASE HELPER FUNCTION: Upload file to Firebase Storage
+  const uploadFileToStorage = async (file, folder) => {
+    if (!file) return null;
+    
+    try {
+      // Create unique filename with timestamp
+      const fileName = `${Date.now()}_${file.name}`;
+      const fileRef = ref(storage, `${folder}/${fileName}`);
+      
+      // Upload file
+      const snapshot = await uploadBytes(fileRef, file);
+      
+      // Get download URL
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      return downloadURL;
+    } catch (error) {
+      console.error(`Error uploading ${folder} file:`, error);
+      throw error;
+    }
+  };
+
+  // 🚀 SUBMIT FORM: This connects to Firebase
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     // ⚠️ VALIDATION: Check if required fields are filled
     if (!formData.title || !formData.description) {
-      alert('Please fill in all required fields');
+      alert('Please fill in all required fields (Title and Description)');
       return;
     }
 
+    setIsLoading(true);
+
     try {
-      // 🔥 FIREBASE CONNECTION POINT - Replace this section with your Firebase code
-      // Example Firebase structure:
-      /*
-      import { collection, addDoc } from 'firebase/firestore';
-      import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-      
-      // Upload files to Firebase Storage first
+      // 📤 STEP 1: Upload files to Firebase Storage
       let answerSchemeURL = null;
       let rubricURL = null;
-      
+
       if (formData.answerSchemeFile) {
-        const answerSchemeRef = ref(storage, `answer-schemes/${Date.now()}_${formData.answerSchemeFile.name}`);
-        await uploadBytes(answerSchemeRef, formData.answerSchemeFile);
-        answerSchemeURL = await getDownloadURL(answerSchemeRef);
+        console.log('Uploading answer scheme...');
+        answerSchemeURL = await uploadFileToStorage(formData.answerSchemeFile, 'answer-schemes');
       }
-      
+
       if (formData.rubricFile) {
-        const rubricRef = ref(storage, `rubrics/${Date.now()}_${formData.rubricFile.name}`);
-        await uploadBytes(rubricRef, formData.rubricFile);
-        rubricURL = await getDownloadURL(rubricRef);
+        console.log('Uploading rubric...');
+        rubricURL = await uploadFileToStorage(formData.rubricFile, 'rubrics');
       }
-      
-      // Save exercise data to Firestore
-      const docRef = await addDoc(collection(db, 'exercises'), {
+
+      // 🗄️ STEP 2: Save exercise data to Firestore
+      const exerciseData = {
         title: formData.title,
         description: formData.description,
-        dueDate: formData.dueDate,
+        dueDate: formData.dueDate || null,
         totalMarks: parseInt(formData.totalMarks),
         answerSchemeURL: answerSchemeURL,
+        answerSchemeFileName: formData.answerSchemeFile?.name || null,
         rubricURL: rubricURL,
-        createdBy: 'Prof. Johnson', // Replace with actual user data
-        createdAt: new Date(),
+        rubricFileName: formData.rubricFile?.name || null,
+        createdBy: 'Prof. Johnson', // 🔄 TODO: Replace with actual logged-in user
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
         status: 'active'
-      });
-      
-      console.log('Exercise created with ID: ', docRef.id);
-      */
-      
-      // 🌐 API CONNECTION POINT - Or replace with your API call
-      /*
-      const response = await fetch('/api/exercises', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${yourAuthToken}`
-        },
-        body: JSON.stringify({
-          title: formData.title,
-          description: formData.description,
-          dueDate: formData.dueDate,
-          totalMarks: formData.totalMarks,
-          // Handle file uploads separately for API
-        })
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        console.log('Exercise created:', result);
-      }
-      */
+      };
 
-      // 💻 FOR NOW: Just log the data (remove this when you add real backend)
-      console.log('Form submitted:', formData);
+      console.log('Saving exercise to Firestore...');
+      const docRef = await addDoc(collection(db, 'exercises'), exerciseData);
+      
+      console.log('✅ Exercise created with ID:', docRef.id);
       alert('Exercise created successfully!');
       
       // 🔄 RESET FORM: Clear form after successful submission
@@ -119,9 +127,15 @@ const LecturerCreateExercise = () => {
         rubricFile: null
       });
       
+      // Clear file inputs
+      document.getElementById('answerScheme').value = '';
+      document.getElementById('rubric').value = '';
+      
     } catch (error) {
-      console.error('Error creating exercise:', error);
-      alert('Error creating exercise. Please try again.');
+      console.error('❌ Error creating exercise:', error);
+      alert('Error creating exercise. Please check the console and try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -131,14 +145,7 @@ const LecturerCreateExercise = () => {
       {/* 🏠 HEADER SECTION */}
       <header className="header">
         <div className="header-left">
-          {/* 🎯 LOGO REPLACEMENT POINT: Replace this with your SVG */}
           <div className="logo">
-            {/* 
-            Replace this div with your SVG logo like this:
-            <svg width="40" height="40" viewBox="0 0 40 40">
-              <path d="YOUR_SVG_PATH_HERE" fill="#your-color"/>
-            </svg>
-            */}
             <div className="logo-cube">
               <div className="cube-face cube-front"></div>
               <div className="cube-face cube-back"></div>
@@ -178,6 +185,7 @@ const LecturerCreateExercise = () => {
               placeholder="e.g., Exercise 3A - University Database"
               className="form-input"
               required
+              disabled={isLoading}
             />
           </div>
 
@@ -193,6 +201,7 @@ const LecturerCreateExercise = () => {
               className="form-textarea"
               rows="6"
               required
+              disabled={isLoading}
             />
           </div>
 
@@ -207,6 +216,7 @@ const LecturerCreateExercise = () => {
                 value={formData.dueDate}
                 onChange={handleInputChange}
                 className="form-input"
+                disabled={isLoading}
               />
               <small className="form-hint">Allow for late submission</small>
             </div>
@@ -220,6 +230,7 @@ const LecturerCreateExercise = () => {
                 onChange={handleInputChange}
                 className="form-input"
                 min="1"
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -242,11 +253,13 @@ const LecturerCreateExercise = () => {
                   accept="image/*"
                   onChange={(e) => handleFileUpload(e, 'answerSchemeFile')}
                   className="file-input"
+                  disabled={isLoading}
                 />
                 <button 
                   type="button" 
                   className="browse-btn"
                   onClick={() => document.getElementById('answerScheme').click()}
+                  disabled={isLoading}
                 >
                   Browse Files
                 </button>
@@ -292,11 +305,13 @@ const LecturerCreateExercise = () => {
                   accept=".pdf"
                   onChange={(e) => handleFileUpload(e, 'rubricFile')}
                   className="file-input"
+                  disabled={isLoading}
                 />
                 <button 
                   type="button" 
                   className="browse-btn"
                   onClick={() => document.getElementById('rubric').click()}
+                  disabled={isLoading}
                 >
                   Browse Files
                 </button>
@@ -326,11 +341,11 @@ const LecturerCreateExercise = () => {
 
           {/* 🎯 FORM BUTTONS */}
           <div className="form-actions">
-            <button type="button" className="cancel-btn">
+            <button type="button" className="cancel-btn" disabled={isLoading}>
               Cancel
             </button>
-            <button type="submit" className="create-btn">
-              Create Exercise
+            <button type="submit" className="create-btn" disabled={isLoading}>
+              {isLoading ? 'Creating Exercise...' : 'Create Exercise'}
             </button>
           </div>
         </form>

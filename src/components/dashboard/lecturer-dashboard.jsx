@@ -1,6 +1,7 @@
 // src/components/dashboard/lecturer-dashboard.jsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import '../../styles/lecturer-shared-header.css';
 import '../../styles/lecturer-dashboard.css';
 
 
@@ -55,31 +56,23 @@ const LecturerDashboard = () => {
 
   return (
     <div className="lecturer-dashboard">
-      {/* Top Navigation Header */}
+      {/* 🏠 TOP NAVIGATION HEADER - Contains logo and navigation */}
       <header className="dashboard-header">
         <div className="header-left">
-        {/* ERDucate Logo and Brand */}
-        <div className="logo-container">
+          {/* 🎨 LOGO SECTION - ERDucate branding */}
+          <div className="logo-container">
             <div className="logo-icon">
-            <img 
+              <img 
                 src="/logo.svg" 
                 alt="ERDucate Logo" 
                 className="custom-logo"
-                style={{ width: '200px', height: '60px' ,marginLeft: '-60px', marginRight: '-65px' }} // Adjust size and margin
-            />
+              />
             </div>
-            <span 
-            className="brand-name"
-            style={{
-                fontFamily: 'Nunito, sans-serif', // Change font
-                fontSize: '38px',               // Change size
-                fontWeight: '1000',              // Make it bolder
-                letterSpacing: '1px',            // Add letter spacing
-            }}
-            >
-            ERDucate
+            {/* Brand name with CSS styling */}
+            <span className="brand-name">
+              ERDucate
             </span>
-        </div>
+          </div>
         </div>
         
         <div className="header-right">

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import '../../styles/lecturer-shared-header.css';
 import '../../styles/create-exercise.css';
 
 
@@ -143,27 +144,29 @@ const LecturerCreateExercise = () => {
   return (
     <div className="create-exercise-container">
       {/* 🏠 HEADER SECTION */}
-      <header className="header">
+      <header className="dashboard-header">
         <div className="header-left">
-          <div className="logo">
-            <div className="logo-cube">
-              <div className="cube-face cube-front"></div>
-              <div className="cube-face cube-back"></div>
-              <div className="cube-face cube-right"></div>
-              <div className="cube-face cube-left"></div>
-              <div className="cube-face cube-top"></div>
-              <div className="cube-face cube-bottom"></div>
+          {/* 🎨 LOGO AND BRAND SECTION */}
+          <div className="logo-container">
+            <div className="logo-icon">
+              <img 
+                src="/logo.svg" 
+                alt="ERDucate Logo" 
+                className="custom-logo"
+              />
             </div>
-            <span className="logo-text">ERDucate</span>
+            {/* Brand name with consistent styling */}
+            <span className="brand-name">ERDucate</span>
           </div>
         </div>
-        <div className="header-center">
-          <nav className="nav-links">
-            <a href="/dashboard" className="nav-link">Dashboard</a>
-            <span className="nav-link active">Prof. Johnson</span>
-          </nav>
-        </div>
+        
         <div className="header-right">
+          {/* 🧭 NAVIGATION MENU */}
+          <nav className="nav-items">
+            <a href="/dashboard" className="nav-item">Dashboard</a>
+            <span className="nav-item active">Prof. Johnson</span>
+          </nav>
+          {/* 🚪 LOGOUT BUTTON */}
           <button className="logout-btn">Logout</button>
         </div>
       </header>
@@ -235,44 +238,88 @@ const LecturerCreateExercise = () => {
             </div>
           </div>
 
-          {/* 📁 ANSWER SCHEME SECTION */}
-          <div className="form-section">
-            <div className="section-header">
-              <span className="folder-icon">📁</span>
-              <h3 className="section-title">Answer Scheme</h3>
-            </div>
-            
-            <div className="upload-area">
-              <div className="upload-content">
-                <div className="upload-icon">📁</div>
-                <h4 className="upload-title">Upload Answer Scheme</h4>
-                <p className="upload-text">Drag and drop your ERD image here or click to browse</p>
-                <input
-                  type="file"
-                  id="answerScheme"
-                  accept="image/*"
-                  onChange={(e) => handleFileUpload(e, 'answerSchemeFile')}
-                  className="file-input"
-                  disabled={isLoading}
-                />
-                <button 
-                  type="button" 
-                  className="browse-btn"
-                  onClick={() => document.getElementById('answerScheme').click()}
-                  disabled={isLoading}
-                >
-                  Browse Files
-                </button>
-                <small className="file-info">
-                  Supported formats: PNG, JPG (Max 10MB)
-                </small>
-                {formData.answerSchemeFile && (
-                  <p className="file-selected">Selected: {formData.answerSchemeFile.name}</p>
-                )}
+          {/* 📁 UPLOAD SECTIONS - 2 COLUMN LAYOUT */}
+          <div className="upload-sections-container">
+            {/* ANSWER SCHEME SECTION */}
+            <div className="upload-section">
+              <div className="section-header">
+                <span className="folder-icon">📁</span>
+                <h3 className="section-title">Answer Scheme</h3>
+              </div>
+              
+              <div className="upload-area">
+                <div className="upload-content">
+                  <div className="upload-icon">📁</div>
+                  <h4 className="upload-title">Upload Answer Scheme</h4>
+                  <p className="upload-text">Drag and drop your ERD image here or click to browse</p>
+                  <input
+                    type="file"
+                    id="answerScheme"
+                    accept="image/*"
+                    onChange={(e) => handleFileUpload(e, 'answerSchemeFile')}
+                    className="file-input"
+                    disabled={isLoading}
+                  />
+                  <button 
+                    type="button" 
+                    className="browse-btn"
+                    onClick={() => document.getElementById('answerScheme').click()}
+                    disabled={isLoading}
+                  >
+                    Browse Files
+                  </button>
+                  <small className="file-info">
+                    Supported formats: PNG, JPG (Max 10MB)
+                  </small>
+                  {formData.answerSchemeFile && (
+                    <p className="file-selected">Selected: {formData.answerSchemeFile.name}</p>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* 💡 ANSWER SCHEME TIPS */}
+            {/* RUBRIC SECTION */}
+            <div className="upload-section">
+              <div className="section-header">
+                <span className="folder-icon">📋</span>
+                <h3 className="section-title">Rubric</h3>
+              </div>
+              
+              <div className="upload-area">
+                <div className="upload-content">
+                  <div className="upload-icon">📋</div>
+                  <h4 className="upload-title">Upload Rubric</h4>
+                  <p className="upload-text">Drag and drop your PDF rubric here or click to browse</p>
+                  <input
+                    type="file"
+                    id="rubric"
+                    accept=".pdf"
+                    onChange={(e) => handleFileUpload(e, 'rubricFile')}
+                    className="file-input"
+                    disabled={isLoading}
+                  />
+                  <button 
+                    type="button" 
+                    className="browse-btn"
+                    onClick={() => document.getElementById('rubric').click()}
+                    disabled={isLoading}
+                  >
+                    Browse Files
+                  </button>
+                  <small className="file-info">
+                    Supported format: PDF (Max 10MB)
+                  </small>
+                  {formData.rubricFile && (
+                    <p className="file-selected">Selected: {formData.rubricFile.name}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 💡 TIPS ROW - 2 COLUMN LAYOUT */}
+          <div className="tips-row">
+            {/* ANSWER SCHEME TIPS */}
             <div className="tips-section">
               <div className="tips-header">
                 <span className="bulb-icon">💡</span>
@@ -280,51 +327,13 @@ const LecturerCreateExercise = () => {
               </div>
               <ul className="tips-list">
                 <li>Ensure all ERD components are clearly visible</li>
-                <li>Use standard ERD notation</li>
+                <li>Use Crow's Foot notation</li>
                 <li>Include all required entities, relationships, and attributes</li>
                 <li>High resolution images work best for AI detection</li>
               </ul>
             </div>
-          </div>
 
-          {/* 📋 RUBRIC SECTION */}
-          <div className="form-section">
-            <div className="section-header">
-              <span className="folder-icon">📋</span>
-              <h3 className="section-title">Rubric</h3>
-            </div>
-            
-            <div className="upload-area">
-              <div className="upload-content">
-                <div className="upload-icon">📋</div>
-                <h4 className="upload-title">Upload Rubric</h4>
-                <p className="upload-text">Drag and drop your PDF rubric here or click to browse</p>
-                <input
-                  type="file"
-                  id="rubric"
-                  accept=".pdf"
-                  onChange={(e) => handleFileUpload(e, 'rubricFile')}
-                  className="file-input"
-                  disabled={isLoading}
-                />
-                <button 
-                  type="button" 
-                  className="browse-btn"
-                  onClick={() => document.getElementById('rubric').click()}
-                  disabled={isLoading}
-                >
-                  Browse Files
-                </button>
-                <small className="file-info">
-                  Supported format: PDF (Max 10MB)
-                </small>
-                {formData.rubricFile && (
-                  <p className="file-selected">Selected: {formData.rubricFile.name}</p>
-                )}
-              </div>
-            </div>
-
-            {/* 📋 RUBRIC TIPS */}
+            {/* RUBRIC TIPS */}
             <div className="tips-section rubric-tips">
               <div className="tips-header">
                 <span className="tips-icon">📋</span>

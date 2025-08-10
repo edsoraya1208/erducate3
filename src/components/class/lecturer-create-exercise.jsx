@@ -161,13 +161,11 @@ const LecturerCreateExercise = () => {
         </div>
         
         <div className="header-right">
-          {/* 🧭 NAVIGATION MENU */}
           <nav className="nav-items">
-            <a href="/dashboard" className="nav-item">Dashboard</a>
+            <span className="nav-item">Dashboard</span>  {/* Changed from <a> to <span> */}
             <span className="nav-item active">Prof. Johnson</span>
+            <button className="logout-btn">Logout</button>
           </nav>
-          {/* 🚪 LOGOUT BUTTON */}
-          <button className="logout-btn">Logout</button>
         </div>
       </header>
 
@@ -221,7 +219,7 @@ const LecturerCreateExercise = () => {
                 className="form-input"
                 disabled={isLoading}
               />
-              <small className="form-hint">Allow for late submission</small>
+             
             </div>
             <div className="form-group half-width">
               <label htmlFor="totalMarks" className="form-label">Total Marks</label>

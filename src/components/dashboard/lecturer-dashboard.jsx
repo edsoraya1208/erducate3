@@ -1,47 +1,123 @@
 // src/components/dashboard/lecturer-dashboard.jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { 
+  collection, 
+  addDoc, 
+  getDocs, 
+  deleteDoc, 
+  doc, 
+  query, 
+  where,
+  orderBy 
+} from 'firebase/firestore';
+import { db } from '../../config/firebase'; // You'll need to create this
 import '../../styles/lecturer-shared-header.css';
 import '../../styles/lecturer-dashboard.css';
 
-
 const LecturerDashboard = () => {
-  // Sample data for classes - you can replace this with real data from API/database
-  const classes = [
-    {
-      id: 1,
-      title: "Database Principles - CS301-G1",
-      classCode: "DB301-2025",
-      description: "Share this code with students to join your class"
-    },
-    {
-      id: 2,
-      title: "Database Principles - CS301-G2", 
-      classCode: "DB301-2025",
-      description: "Share this code with students to join your class"
-    },
-    {
-      id: 3,
-      title: "Advanced Database - CS302",
-      classCode: "DB301-2025", 
-      description: "Share this code with students to join your class"
+  const [classes, setClasses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+
+  // Generate unique class code
+  const generateClassCode = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < 8; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-  ];
+    return result;
+  };
+
+  // Load classes from Firebase
+  const loadClasses = async () => {
+    try {
+      setLoading(true);
+      const classesRef = collection(db, 'classes');
+      // You can add a where clause to filter by instructor ID if needed
+      // const q = query(classesRef, where("instructorId", "==", currentUserId));
+      const querySnapshot = await getDocs(classesRef);
+      
+      const classesData = [];
+      querySnapshot.forEach((doc) => {
+        classesData.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
+      
+      setClasses(classesData);
+    } catch (error) {
+      console.error('Error loading classes:', error);
+      alert('Error loading classes. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load classes on component mount
+  useEffect(() => {
+    loadClasses();
+  }, []);
+
+  // Create new class
+  const handleCreateClass = async () => {
+    const className = prompt('Enter class name (e.g., "Database Principles - CS301-G1"):');
+    if (!className || className.trim() === '') return;
+
+    try {
+      setCreating(true);
+      const classCode = generateClassCode();
+      
+      const newClass = {
+        title: className.trim(),
+        classCode: classCode,
+        description: "Share this code with students to join your class",
+        createdAt: new Date(),
+        instructorId: "current-instructor-id", // Replace with actual instructor ID
+        instructorName: "Prof. Johnson" // Replace with actual instructor name
+      };
+
+      await addDoc(collection(db, 'classes'), newClass);
+      
+      // Reload classes to show the new one
+      await loadClasses();
+      
+      alert(`Class "${className}" created successfully with code: ${classCode}`);
+    } catch (error) {
+      console.error('Error creating class:', error);
+      alert('Error creating class. Please try again.');
+    } finally {
+      setCreating(false);
+    }
+  };
 
   // Function to handle copying class code to clipboard
-  const handleCopyCode = (classCode) => {
-    navigator.clipboard.writeText(classCode);
-    alert(`Class code ${classCode} copied to clipboard!`);
-    // You can replace alert with a toast notification for better UX
+  const handleCopyCode = async (classCode) => {
+    try {
+      await navigator.clipboard.writeText(classCode);
+      alert(`Class code ${classCode} copied to clipboard!`);
+      // You can replace alert with a toast notification for better UX
+    } catch (error) {
+      console.error('Error copying to clipboard:', error);
+      alert('Error copying code to clipboard');
+    }
   };
 
   // Function to handle class deletion
-  const handleDeleteClass = (classId, className) => {
+  const handleDeleteClass = async (classId, className) => {
     const confirmDelete = window.confirm(`Are you sure you want to delete "${className}"?`);
     if (confirmDelete) {
-      // Here you would typically call an API to delete the class
-      console.log(`Deleting class with ID: ${classId}`);
-      // Add your delete logic here
+      try {
+        await deleteDoc(doc(db, 'classes', classId));
+        // Remove the class from local state
+        setClasses(classes.filter(cls => cls.id !== classId));
+        alert(`Class "${className}" deleted successfully.`);
+      } catch (error) {
+        console.error('Error deleting class:', error);
+        alert('Error deleting class. Please try again.');
+      }
     }
   };
 
@@ -91,46 +167,82 @@ const LecturerDashboard = () => {
       {/* Main Content Area */}
       <main className="dashboard-main">
         <div className="dashboard-container">
-          {/* Page Title */}
-          <h1 className="dashboard-title">Instructor's Dashboard</h1>
+          {/* Header Section with Title and Create Button */}
+          <div className={`dashboard-header-section ${classes.length === 0 ? 'hidden' : ''}`}>            <h1 className="dashboard-title">Instructor's Dashboard</h1>
+            <button 
+              className="create-class-btn"
+              onClick={handleCreateClass}
+              disabled={creating}
+            >
+              {creating ? 'Creating...' : '+ Create Class'}
+            </button>
+          </div>
           
-          {/* Classes Grid - This is where all class cards are displayed */}
-          <div className="classes-grid">
-            {classes.map((classItem) => (
-              <div key={classItem.id} className="class-card">
-                {/* Class Header with Title and Delete Button */}
-                <div className="class-header">
-                  <h3 className="class-title">{classItem.title}</h3>
-                  <button 
-                    className="delete-btn"
-                    onClick={() => handleDeleteClass(classItem.id, classItem.title)}
-                    title="Delete this class"
-                  >
-                    Delete Class
-                  </button>
-                </div>
-                
-                {/* Class Code Section */}
-                <div className="class-code-section">
-                  <div className="code-label">Class Code</div>
-                  <div className="code-container">
-                    {/* The actual class code - students use this to join */}
-                    <span className="class-code">{classItem.classCode}</span>
-                    {/* Copy button to copy code to clipboard */}
+          {/* Loading State */}
+          {loading ? (
+            <div className="loading-container">
+              <p>Loading classes...</p>
+            </div>
+          ) : (
+            /* Classes Grid - This is where all class cards are displayed */
+            <div className="classes-grid">
+              {classes.length === 0 ? (
+                <div className="empty-state-container">
+                  <div className="empty-state-content">
+                    <div className="empty-state-icon">
+                      <img src="/empty-class.svg" alt="ERDucate" className="empty-class" />
+                    </div>
+                    <h2 className="empty-state-title">No Classes Yet</h2>
+                    <p className="empty-state-description">
+                      You haven't created any classes yet. Start by creating your first class to manage students and exercises.
+                    </p>
                     <button 
-                      className="copy-btn"
-                      onClick={() => handleCopyCode(classItem.classCode)}
-                      title="Copy class code"
+                      className="create-first-class-btn"
+                      onClick={handleCreateClass}
+                      disabled={creating}
                     >
-                      Copy Code
+                      {creating ? 'Creating...' : 'Create Your First Class'}
                     </button>
                   </div>
-                  {/* Description text below the code */}
-                  <p className="class-description">{classItem.description}</p>
                 </div>
-              </div>
-            ))}
-          </div>
+              ) : (
+                classes.map((classItem) => (
+                  <div key={classItem.id} className="class-card">
+                    {/* Class Header with Title and Delete Button */}
+                    <div className="class-header">
+                      <h3 className="class-title">{classItem.title}</h3>
+                      <button 
+                        className="delete-btn"
+                        onClick={() => handleDeleteClass(classItem.id, classItem.title)}
+                        title="Delete this class"
+                      >
+                        Delete Class
+                      </button>
+                    </div>
+                    
+                    {/* Class Code Section */}
+                    <div className="class-code-section">
+                      <div className="code-label">Class Code</div>
+                      <div className="code-container">
+                        {/* The actual class code - students use this to join */}
+                        <span className="class-code">{classItem.classCode}</span>
+                        {/* Copy button to copy code to clipboard */}
+                        <button 
+                          className="copy-btn"
+                          onClick={() => handleCopyCode(classItem.classCode)}
+                          title="Copy class code"
+                        >
+                          Copy Code
+                        </button>
+                      </div>
+                      {/* Description text below the code */}
+                      <p className="class-description">{classItem.description}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
       </main>
     </div>

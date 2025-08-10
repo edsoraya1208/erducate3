@@ -3,7 +3,7 @@
   Top navigation bar with purple background
 */
 .dashboard-header {
-    background: linear-gradient(135deg, #7b10a5, #5e17a5);  color: white;
+  background: linear-gradient(135deg, #7b10a5, #5e17a5);  color: white;
   padding: 16px 24px;
   display: flex;
   justify-content: space-between;
@@ -42,13 +42,6 @@
   BRAND NAME STYLES  
   Styles for the "ERDucate" text next to logo
 */
-.brand-name {
-  font-family: 'Nunito', sans-serif;  /* Custom font */
-  font-size: 38px;                    /* Large text size */
-  font-weight: 1000;                  /* Extra bold */
-  letter-spacing: 1px;                /* Space between letters */
-  color: white;                       /* Keep text white */
-}
 
 
 .logo-icon {
@@ -66,10 +59,11 @@
 }
 
 .brand-name {
-  color: white;
-  font-size: 24px;
-  font-weight: 600;
-  letter-spacing: -0.5px;
+  font-family: 'Nunito', sans-serif;  /* Custom font */
+  font-size: 38px;                    /* Large text size */
+  font-weight: 1000;                  /* Extra bold */
+  letter-spacing: 1px;                /* Space between letters */
+  color: white;                       /* Keep text white */
 }
 
 /* 
@@ -101,7 +95,7 @@
 }
 
 .nav-item.active {
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: transparent;
   font-weight: 500;
 }
 
@@ -118,6 +112,7 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  
   
 }
 

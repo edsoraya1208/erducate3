@@ -128,8 +128,6 @@ const LoginForm = () => {
       switch (error.code) {
          case 'auth/user-not-found':
           errorMessage = `No password account found for this email. If you signed up with Google, try "Continue with Google" instead.`;
-          // Show Google button option
-          setShowGoogleOption(true);
           break;
           case 'auth/wrong-password':
           errorMessage = `Incorrect password. If you signed up with Google, try "Continue with Google" instead.`;
@@ -160,89 +158,92 @@ const LoginForm = () => {
     }
   };
 
-  // Handle Google sign-in with role-based logic
-  const handleGoogleSignIn = async () => {
-    setIsLoading(true);
-    setMessage({ text: '', type: '' }); // Clear any previous messages
+// Handle Google sign-in with role-based logic
+const handleGoogleSignIn = async () => {
+  setIsLoading(true);
+  setMessage({ text: '', type: '' }); // Clear any previous messages
+  
+  // Check Firebase initialization
+  if (!auth || !db) {
+    showMessage('Firebase not initialized. Please refresh the page and try again.');
+    setIsLoading(false);
+    return;
+  }
+
+  try {
+    console.log('🔐 Attempting Google sign-in...');
     
-    // Check Firebase initialization
-    if (!auth || !db) {
-      showMessage('Firebase not initialized. Please refresh the page and try again.');
-      setIsLoading(false);
-      return;
-    }
+    const result = await signInWithPopup(auth, googleProvider);
+    const user = result.user;
 
-    try {
-      console.log('🔐 Attempting Google sign-in...');
-      
-      const result = await signInWithPopup(auth, googleProvider);
-      const user = result.user;
+    console.log('✅ Google authentication successful, user:', user.uid);
 
-      console.log('✅ Google sign-in successful, user:', user.uid);
-      showMessage('Google sign-in successful! Redirecting...', 'success');
+    // Get user document from Firestore
+    const userDocRef = doc(db, 'users', user.uid);
+    const userDoc = await getDoc(userDocRef);
 
-      // Get user document from Firestore
-      const userDocRef = doc(db, 'users', user.uid);
-      const userDoc = await getDoc(userDocRef);
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      console.log('📄 Existing Google user found, role:', userData.role);
 
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        console.log('📄 Existing Google user found, role:', userData.role);
+      // Only show success message when we're sure the user has access
+      showMessage('Login successful! Redirecting...', 'success');
 
-        // Redirect based on user role
-        if (userData.role === 'lecturer') {
-          console.log('🎓 Redirecting to lecturer dashboard');
-          navigate('/lecturer/dashboard1');
-
-        } else {
-          console.log('🎒 Redirecting to student dashboard');
-          navigate('/student-dashboard');
-        }
+      // Redirect based on user role
+      if (userData.role === 'lecturer') {
+        console.log('🎓 Redirecting to lecturer dashboard');
+        navigate('/lecturer/dashboard1');
       } else {
-        // Create new user document with default role
-        console.log('📝 Creating new Google user document');
-        await setDoc(userDocRef, {
-          email: user.email,
-          displayName: user.displayName,
-          photoURL: user.photoURL,
-          role: 'student',
-          createdAt: new Date(),
-          provider: 'google'
-        });
-
-        console.log('🎒 Redirecting new Google user to student dashboard');
+        console.log('🎒 Redirecting to student dashboard');
         navigate('/student-dashboard');
       }
-    } catch (error) {
-      console.error('❌ Google sign-in error:', error);
+    } else {
+      // User doesn't exist in database - block access
+      console.log('❌ No account found for this Google user');
       
-      let errorMessage = 'Google sign-in failed. Please try again.';
-      
-      // Handle specific Google sign-in errors
-      switch (error.code) {
-        case 'auth/popup-closed-by-user':
-        case 'auth/cancelled-popup-request':
-          errorMessage = 'Sign-in process was canceled. Please try again.';
-          break;
-        case 'auth/popup-blocked':
-          errorMessage = 'Pop-up was blocked by your browser. Please allow pop-ups and try again.';
-          break;
-        case 'auth/network-request-failed':
-          errorMessage = 'Network error. Please check your internet connection.';
-          break;
-        case 'auth/internal-error':
-          errorMessage = 'An internal error occurred. Please try again.';
-          break;
-        default:
-          errorMessage = `Google sign-in failed: ${error.message}`;
+      try {
+        // Delete the Firebase user account completely (not just sign out)
+        await user.delete();
+        console.log('🗑️ Firebase user account deleted');
+      } catch (deleteError) {
+        console.error('❌ Error deleting user account:', deleteError);
+        // If deletion fails, at least sign them out
+        await auth.signOut();
       }
       
-      showMessage(errorMessage);
-    } finally {
-      setIsLoading(false);
+      // Show error message with explicit 'error' type to ensure it doesn't auto-clear
+      showMessage('No account associated with this email address. Please sign up first.', 'error');
     }
-  };
-
+  } catch (error) {
+    console.error('❌ Google sign-in error:', error);
+    
+    let errorMessage = 'Google sign-in failed. Please try again.';
+    
+    // Handle specific Google sign-in errors
+    switch (error.code) {
+      case 'auth/popup-closed-by-user':
+      case 'auth/cancelled-popup-request':
+        errorMessage = 'Sign-in process was canceled. Please try again.';
+        break;
+      case 'auth/popup-blocked':
+        errorMessage = 'Pop-up was blocked by your browser. Please allow pop-ups and try again.';
+        break;
+      case 'auth/network-request-failed':
+        errorMessage = 'Network error. Please check your internet connection.';
+        break;
+      case 'auth/internal-error':
+        errorMessage = 'An internal error occurred. Please try again.';
+        break;
+      default:
+        errorMessage = `Google sign-in failed: ${error.message}`;
+    }
+    
+    // Explicitly set message type to 'error' to prevent auto-clearing
+    showMessage(errorMessage, 'error');
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   // Add this handler function
   const handleForgotPassword = async (e) => {

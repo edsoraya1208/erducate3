@@ -2,18 +2,7 @@
 import React from 'react';
 import LecturerDashboard from '../../components/dashboard/lecturer-dashboard';
 
-/**
- * Dashboard1 Page Component
- * 
- * This is the main page component that renders the lecturer dashboard.
- * It serves as a wrapper for the LecturerDashboard component.
- * 
- * In a real application, this page might:
- * - Handle authentication checks
- * - Fetch initial data
- * - Manage loading states
- * - Handle error states
- */
+
 const Dashboard1 = () => {
   return (
     <div className="dashboard-page">

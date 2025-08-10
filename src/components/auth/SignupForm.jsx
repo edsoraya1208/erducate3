@@ -30,8 +30,6 @@ const SignupForm = () => {
   // PASSWORD EYE - NO CHANGES (keep as is)
   const [showPassword, setShowPassword] = useState(false);
 
-  // ❌ REMOVED - This was the problem! We don't need separate selectedRole state
-  // const [selectedRole, setSelectedRole] = useState('');
 
   // HELPER FUNCTION FOR MESSAGES - NO CHANGES (keep as is)
   const showMessage = (text, type = 'error') => {
@@ -184,8 +182,6 @@ const SignupForm = () => {
     }
   };
 
-  // ❌ REMOVED - We don't need the RoleDropdown component anymore
-  // const RoleDropdown = () => { ... }
 
   // ✅ FIXED - Google signup now checks formData.role instead of selectedRole
   const handleGoogleSignUp = async () => {

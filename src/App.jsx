@@ -1,6 +1,8 @@
 import { Routes, Route } from 'react-router-dom';
 import { Suspense, lazy } from 'react';
 import './styles/globals.css';
+import CreateExercisePage from './pages/lecturer/create-exercise';
+
 
 // Lazy load components
 const WelcomePage = lazy(() => import('./components/welcome/WelcomePage'));
@@ -30,10 +32,9 @@ function App() {
           {/* 📍 EXISTING ROUTES - These are your current pages */}
           <Route path="/" element={<WelcomePage />} />
           <Route path="/auth" element={<AuthPage />} />
-          
-          {/* 🔥 ADD THIS: New route for lecturer dashboard */}
           <Route path="/lecturer/dashboard1" element={<Dashboard1 />} />
-          
+          <Route path="/lecturer/create-exercise" element={<CreateExercisePage />} />
+
           {/* 🚀 OPTIONAL: Add more lecturer routes */}
           {/* <Route path="/lecturer/profile" element={<LecturerProfile />} /> */}
           {/* <Route path="/lecturer/classes/:classId" element={<ClassDetails />} /> */}

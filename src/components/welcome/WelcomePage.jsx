@@ -12,7 +12,7 @@ const WelcomePage = () => {
   const handleLearnMore = () => {
   const element = document.querySelector('.features-section');
   const elementPosition = element.offsetTop;
-  const offsetPosition = elementPosition - 5; // 100px offset from top
+  const offsetPosition = elementPosition - 0; // 100px offset from top
 
   window.scrollTo({
     top: offsetPosition,

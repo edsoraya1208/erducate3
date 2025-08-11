@@ -39,7 +39,7 @@ const LecturerDashboard = () => {
     try {
       setLoading(true);
       const classesRef = collection(db, 'classes');
-      // You can add a where clause to filter by instructor ID if needed
+      //can add a where clause to filter by instructor ID if needed
       // const q = query(classesRef, where("instructorId", "==", currentUserId));
       const querySnapshot = await getDocs(classesRef);
       

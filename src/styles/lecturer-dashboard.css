@@ -369,8 +369,7 @@ Media queries for different screen sizes
   }
   
   .create-class-btn {
-    width: 100%;
-    align-self: center;
+    align-self:flex-end;
     margin-top: 1rem; /* FIXED: Reduced from 150px to 1rem */
   }
   
@@ -395,7 +394,7 @@ Media queries for different screen sizes
   }
   
   .copy-btn {
-    align-self: center;
+    align-self: flex;
   }
   
   /* Empty state responsive */

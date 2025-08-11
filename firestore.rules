@@ -32,6 +32,14 @@ service cloud.firestore {
       // Keep deletion disabled for safety
       allow delete: if false;
     }
+
+    // ADD THIS: Classes collection rules
+    match /classes/{classId} {
+      allow create: if isLecturer();
+      allow read: if isLecturer();
+      allow update: if isLecturer() && resource.data.instructorId == request.auth.uid;
+      allow delete: if isLecturer() && resource.data.instructorId == request.auth.uid;
+    }
     
     // ADDED: Deny all other collections by default (FREE & SAFE practice)
     match /{document=**} {

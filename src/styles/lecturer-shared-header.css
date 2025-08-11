@@ -25,6 +25,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  gap: 12px !important; /* Force the gap */
+  transform: translateZ(0); /* Force hardware acceleration */
 }
 
 /* 

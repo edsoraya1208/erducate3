@@ -5,8 +5,9 @@ LECTURER DASHBOARD STYLES - ORGANIZED
 */
 
 /* 
-  BASE LAYOUT
-  Main container and page structure
+==============================================
+BASE LAYOUT & TYPOGRAPHY
+==============================================
 */
 .lecturer-dashboard {
   min-height: 100vh;
@@ -30,8 +31,9 @@ LECTURER DASHBOARD STYLES - ORGANIZED
 }
 
 /* 
-  HEADER SECTION
-  Title and create button area
+==============================================
+HEADER SECTION
+==============================================
 */
 .dashboard-header-section {
   display: flex;
@@ -43,56 +45,150 @@ LECTURER DASHBOARD STYLES - ORGANIZED
   padding: 0 1rem;
 }
 
-/* FIXED: Removed negative margin that was causing title to go off-screen */
+
 .dashboard-title {
   font-size: 32px;
   font-weight: 700;
   color: #1f2937;
   margin-bottom: 32px;
   letter-spacing: -0.5px;
-  /* REMOVED: margin-left: -115px; - this was causing layout issues */
 }
 
-/* FIXED: Removed excessive top margin that was pushing button down */
-.create-class-btn {
+/* 
+==============================================
+BUTTONS
+==============================================
+*/
+.create-class-button {
   background: linear-gradient(135deg, #7b10a5, #5e17a5);
   color: white;
   border: none;
-  padding: 12px 24px;
+  padding: 14px 32px;
   border-radius: 8px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(123, 16, 165, 0.3);
-  min-width: 140px;
-  margin-top: 40px; /* ADDED: push button down from title */
+  box-shadow: 0 4px 16px rgba(123, 16, 165, 0.3);
+  min-width: 200px;
 }
 
-.create-class-btn:hover:not(:disabled) {
+.create-class-button:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(123, 16, 165, 0.4);
-  background: linear-gradient(135deg, #6a0e8f, #4d1280);
+  box-shadow: 0 6px 20px rgba(123, 16, 165, 0.4);
+  background: linear-gradient(135deg, #7b10a5, #5e17a5);
 }
 
-.create-class-btn:active {
+.create-class-button:active {
   transform: translateY(0);
 }
 
-.create-class-btn:disabled {
-  opacity: 0.7;
+.create-class-button:disabled {
+  background: linear-gradient(135deg, #7b10a5, #5e17a5);
+  opacity: 0.9;
   cursor: not-allowed;
   transform: none;
 }
 
-/* Hide header section when no classes */
-.dashboard-header-section.hidden {
-  display: none;
+/* 1. ADD: New container for create button positioned above classes grid */
+.create-class-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+    margin-top: -29px;  /* <-- ADD THIS LINE */
+
+  padding-right: 24px; /* Match class card padding */
+}
+
+/* 2. MODIFIED: Updated create-class-button-dashboard to maintain consistent sizing */
+.create-class-button-dashboard {
+  background: linear-gradient(135deg, #7b10a5, #5e17a5);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(94, 23, 165, 0.2);
+  /* ADDED: Fixed width to prevent shrinking */
+  min-width: 120px;
+  /* ADDED: Prevent button from growing/shrinking */
+  flex-shrink: 0;
+}
+
+.create-class-button-dashboard:hover {
+  background: linear-gradient(135deg, #7b10a5, #5e17a5);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(192, 2, 230, 0.3);
+}
+
+.delete-btn {
+  background: linear-gradient(135deg, #e60202 0%, #ee2424 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  /* ADDED: Fixed width to prevent shrinking */
+  min-width: 120px;
+  /* ADDED: Prevent button from growing/shrinking */
+  flex-shrink: 0;
+}
+
+.delete-btn:hover {
+  background: linear-gradient(135deg, #cc0000 0%, #d41f1f 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(230, 2, 2, 0.3);
+}
+
+.copy-btn {
+  background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.copy-btn:hover {
+  background: linear-gradient(135deg, #00a085 0%, #00896b 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 184, 148, 0.3);
+}
+
+.cancel-btn {
+  padding: 10px 50px;
+  background: #f5f5f5;
+  padding: 14px 32px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 300;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 200px;
+  max-width: 10px;;
+  color: #666666;
+}
+
+.cancel-btn:hover {
+  background: #e8e8e8;
 }
 
 /* 
-  CLASSES GRID
-  Container for all class cards
+==============================================
+CLASSES GRID & CARDS
+==============================================
 */
 .classes-grid {
   display: grid;
@@ -100,10 +196,6 @@ LECTURER DASHBOARD STYLES - ORGANIZED
   gap: 24px;
 }
 
-/* 
-  CLASS CARDS
-  Individual cards for each class
-*/
 .class-card {
   background: white;
   border-radius: 12px;
@@ -134,30 +226,6 @@ LECTURER DASHBOARD STYLES - ORGANIZED
   flex: 1;
 }
 
-/* ENHANCED: Updated delete button with better gradient colors */
-.delete-btn {
-  background: linear-gradient(135deg, #e60202 0%, #ee2424 100%);
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  white-space: nowrap;
-}
-
-.delete-btn:hover {
-  background: linear-gradient(135deg, #cc0000 0%, #d41f1f 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(230, 2, 2, 0.3);
-}
-
-/* 
-  CLASS CODE SECTION
-  Bottom section with code and copy functionality
-*/
 .class-code-section {
   border-top: 1px solid #e5e7eb;
   padding-top: 16px;
@@ -190,26 +258,6 @@ LECTURER DASHBOARD STYLES - ORGANIZED
   text-align: center;
 }
 
-/* ENHANCED: Updated copy button with better gradient colors */
-.copy-btn {
-  background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  white-space: nowrap;
-}
-
-.copy-btn:hover {
-  background: linear-gradient(135deg, #00a085 0%, #00896b 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 184, 148, 0.3);
-}
-
 .class-description {
   color: #6b7280;
   font-size: 14px;
@@ -218,8 +266,9 @@ LECTURER DASHBOARD STYLES - ORGANIZED
 }
 
 /* 
-  LOADING STATE
-  Loading indicator styles
+==============================================
+STATE DISPLAYS
+==============================================
 */
 .loading-container {
   display: flex;
@@ -234,10 +283,6 @@ LECTURER DASHBOARD STYLES - ORGANIZED
   font-weight: 500;
 }
 
-/* 
-  NO CLASSES STATE
-  Simple no classes message
-*/
 .no-classes {
   grid-column: 1 / -1;
   text-align: center;
@@ -250,22 +295,21 @@ LECTURER DASHBOARD STYLES - ORGANIZED
   margin: 0;
 }
 
-/* 
-  EMPTY STATE
-  Enhanced empty state with illustration and call-to-action
-*/
+/* Empty State */
 .empty-state-container {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 400px;
   padding: 2rem;
-  margin-top: 40px;;
+  margin-top: -40px;
+
 }
 
 .empty-state-content {
   text-align: center;
-  max-width: 500px; /* FIXED: Was 5000x, changed to 500px */
+  max-width: 800px;
+  width: 100%; /* ADDED: Ensures it responds to max-width properly */
   background: white;
   padding: 3rem 2rem;
   border-radius: 16px;
@@ -301,39 +345,91 @@ LECTURER DASHBOARD STYLES - ORGANIZED
   font-size: 16px;
   color: #718096;
   line-height: 1.6;
-  margin: 0 0 2rem 0;
+  margin: 0 0 1rem 0;
+  max-width: 400px;
+  margin-left: auto; /* ADDED: Centers the description within its container */
+  margin-right: auto; /* ADDED: Centers the description within its container */
+  text-align: center;
 }
 
-.create-first-class-btn {
-  background: linear-gradient(135deg, #7b10a5, #5e17a5);
-  color: white;
-  border: none;
-  padding: 14px 32px;
-  border-radius: 8px;
-  font-size: 16px;
+.empty-state-content .create-class-button {
+  margin-top: 2rem;
+}
+
+/* 
+==============================================
+MODAL
+==============================================
+*/
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 50px;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  width: 700px;
+  max-width: 90vw;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.modal-title {
+  font-size: 20px;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 16px rgba(123, 16, 165, 0.3);
-  min-width: 200px;
+  margin-bottom: 20px;
+  color: #333;
 }
 
-.create-first-class-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(123, 16, 165, 0.4);
-  background: linear-gradient(135deg, #6a0e8f, #4d1280);
+.form-group {
+  margin-bottom: 16px;
 }
 
-.create-first-class-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-  transform: none;
+.form-label {
+  display: block;
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: #555;
+}
+
+.form-input {
+ width: 100%;
+ border: 1px solid #dddddd;
+ border-radius: 6px;
+ padding: 14px 12px;
+ font-size: 16px;
+ transition: border-color 0.2s ease;
+ height: 48px;
+ box-sizing: border-box;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #7b10a5;
+  box-shadow: 0 0 0 2px rgba(123, 16, 165, 0.1);
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
 }
 
 /* 
 ==============================================
 RESPONSIVE DESIGN
-Media queries for different screen sizes
 ==============================================
 */
 
@@ -343,7 +439,7 @@ Media queries for different screen sizes
     padding: 0 2rem;
   }
   
-  .dashboard-title { /* FIXED: Changed from h1 to .dashboard-title for specificity */
+  .dashboard-title {
     font-size: 1.8rem;
     word-wrap: break-word;
   }
@@ -366,12 +462,12 @@ Media queries for different screen sizes
     font-size: 1.5rem;
     text-align: center;
     word-wrap: break-word;
-    margin: 0.5rem 0; /* FIXED: Added proper margin instead of using !important */
+    margin: 0.5rem 0;
   }
   
-  .create-class-btn {
-    align-self:flex-end;
-    margin-top: 1rem; /* FIXED: Reduced from 150px to 1rem */
+  .create-class-button {
+    align-self: flex-end;
+    margin-top: 1rem;
   }
   
   .class-card {
@@ -391,17 +487,18 @@ Media queries for different screen sizes
   .code-container {
     flex-direction: column;
     align-items: stretch;
-    gap: px;
+    gap: 8px; /* FIXED: Was 'px' only */
   }
   
   .copy-btn {
-    align-self: flex;
+    align-self: flex-start; /* FIXED: Was 'flex' only */
   }
   
   /* Empty state responsive */
   .empty-state-content {
     margin: 1rem;
     padding: 2rem 1.5rem;
+    max-width: none; /* ADDED: Removes max-width constraint on mobile */
   }
   
   .empty-state-title {
@@ -410,6 +507,19 @@ Media queries for different screen sizes
   
   .empty-state-description {
     font-size: 14px;
+    max-width: none; /* ADDED: Removes max-width constraint on mobile */
   }
+  .cancel-btn {
+    align-self: flex-end;  }
 
+    .create-class-container {
+    padding-right: 20px; /* Match mobile class card padding */
+    margin-bottom: 16px;
+  }
+  
+  /* ADDED: Ensure buttons maintain size on mobile */
+  .create-class-button-dashboard,
+  .delete-btn {
+    min-width: 100px; /* Slightly smaller on mobile but still consistent */
+  }
 }

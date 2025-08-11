@@ -24,6 +24,10 @@ const LecturerDashboard = () => {
   const [user, error] = useAuthState(auth);
   const {getUserDisplayName } = useUser();
 
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newClassName, setNewClassName] = useState('');
+  const [maxStudents, setMaxStudents] = useState('');
+
   // Generate unique class code
   const generateClassCode = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -67,36 +71,92 @@ const LecturerDashboard = () => {
 
   // Create new class
   const handleCreateClass = async () => {
-    const className = prompt('Enter class name (e.g., "Database Principles - CS301-G1"):');
-    if (!className || className.trim() === '') return;
+  if (!newClassName.trim()) return;
+  
+  try {
+    setCreating(true);
+    const classCode = generateClassCode();
+    
+    const newClass = {
+      title: newClassName.trim(),
+      classCode: classCode,
+      description: "Share this code with students to join your class",
+      maxStudents: maxStudents ? parseInt(maxStudents) : null,
+      currentStudents: 0,
+      createdAt: new Date(),
+      instructorId: user?.uid || "unknown",
+      instructorName: user?.displayName || user?.email || "Unknown Instructor"
+    };
 
-    try {
-      setCreating(true);
-      const classCode = generateClassCode();
-      
-     const newClass = {
-        title: className.trim(),
-        classCode: classCode,
-        description: "Share this code with students to join your class",
-        createdAt: new Date(),
-        instructorId: user?.uid || "unknown",
-        instructorName: user?.displayName || user?.email || "Unknown Instructor"
-      };
+    await addDoc(collection(db, 'classes'), newClass);
+    await loadClasses();
+    
+    // Close modal and reset
+    setShowCreateModal(false);
+    setNewClassName('');
+    setMaxStudents('');
+    
+    alert(`Class "${newClassName}" created successfully with code: ${classCode}`);
+  } catch (error) {
+    console.error('Error creating class:', error);
+    alert('Error creating class. Please try again.');
+  } finally {
+    setCreating(false);
+  }
+};
 
-      await addDoc(collection(db, 'classes'), newClass);
+//for pop up class creation modal component 
+const CreateClassModal = () => (
+  <div className="modal-overlay">
+    <div className="modal-content">
+      <h2 className="modal-title">Create New Class</h2>
       
-      // Reload classes to show the new one
-      await loadClasses();
+      <div className="form-group">
+        <label className="form-label">Class Name</label>
+        <input
+          type="text"
+          value={newClassName}
+          onChange={(e) => setNewClassName(e.target.value)}
+          placeholder="e.g., Database Principles - CS301-G1"
+          className="form-input"
+          autoFocus
+        />
+      </div>
       
-      alert(`Class "${className}" created successfully with code: ${classCode}`);
-    } catch (error) {
-      console.error('Error creating class:', error);
-      alert('Error creating class. Please try again.');
-    } finally {
-      setCreating(false);
-    }
-  };
-
+      <div className="form-group">
+        <label className="form-label">Max Students (Optional)</label>
+        <input
+          type="number"
+          value={maxStudents}
+          onChange={(e) => setMaxStudents(e.target.value)}
+          placeholder="Leave empty for unlimited"
+          min="1"
+          className="form-input"
+        />
+      </div>
+      
+      <div className="modal-buttons">
+        <button
+          onClick={() => {
+            setShowCreateModal(false);
+            setNewClassName('');
+            setMaxStudents('');
+          }}
+          className="cancel-btn"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleCreateClass}
+          disabled={!newClassName.trim() || creating}
+          className="create-class-button"
+        >
+          {creating ? 'Creating...' : 'Create Class'}
+        </button>
+      </div>
+    </div>
+  </div>
+);
   // Function to handle copying class code to clipboard
   const handleCopyCode = async (classCode) => {
     try {
@@ -171,22 +231,29 @@ const LecturerDashboard = () => {
       <main className="dashboard-main">
         <div className="dashboard-container">
           {/* Header Section with Title and Create Button */}
-          <div className={`dashboard-header-section ${classes.length === 0 ? 'hidden' : ''}`}>            <h1 className="dashboard-title">Instructor's Dashboard</h1>
-            <button 
-              className="create-class-btn"
-              onClick={handleCreateClass}
-              disabled={creating}
-            >
-              {creating ? 'Creating...' : '+ Create Class'}
-            </button>
-          </div>
-          
-          {/* Loading State */}
-          {loading ? (
+         <div className="dashboard-header-section">            
+          <h1 className="dashboard-title">Instructor's Dashboard</h1>
+        </div>
+
+            {/* Create Class Button Container */}
+            {classes.length > 0 && (
+            <div className="create-class-container">
+              <button 
+                onClick={() => setShowCreateModal(true)}
+                disabled={creating}
+                className="create-class-button-dashboard"
+              >
+                {creating ? 'Creating...' : 'Create Class'}
+              </button>
+            </div>
+            )}
+                    
+            {/* Loading State */}
+            {loading ? (
             <div className="loading-container">
               <p>Loading classes...</p>
             </div>
-          ) : (
+            ) : (
             /* Classes Grid - This is where all class cards are displayed */
             <div className="classes-grid">
               {classes.length === 0 ? (
@@ -200,11 +267,11 @@ const LecturerDashboard = () => {
                       You haven't created any classes yet. Start by creating your first class to manage students and exercises.
                     </p>
                     <button 
-                      className="create-first-class-btn"
-                      onClick={handleCreateClass}
+                      onClick={() => setShowCreateModal(true)}
                       disabled={creating}
+                      className="create-class-button"
                     >
-                      {creating ? 'Creating...' : 'Create Your First Class'}
+                      {creating ? 'Creating...' : 'Create Class'}
                     </button>
                   </div>
                 </div>
@@ -248,6 +315,7 @@ const LecturerDashboard = () => {
           )}
         </div>
       </main>
+       {showCreateModal && <CreateClassModal />}
     </div>
   );
 };

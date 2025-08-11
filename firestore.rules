@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user owns the document
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    // Helper function to check if user is a lecturer
+    function isLecturer() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'lecturer';
+    }
+    
+    // Users collection rules
+    match /users/{userId} {
+      // FIXED: Only authenticated users can create their own document
+      allow create: if isAuthenticated() && isOwner(userId);
+      
+      // FIXED: Added authentication check for safety
+      allow update: if isAuthenticated() && (isOwner(userId) || isLecturer());
+      
+      // FIXED: Added authentication check
+      allow read: if isAuthenticated() && (isOwner(userId) || isLecturer());
+      
+      // Keep deletion disabled for safety
+      allow delete: if false;
+    }
+    
+    // ADDED: Deny all other collections by default (FREE & SAFE practice)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

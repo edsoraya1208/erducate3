@@ -260,6 +260,7 @@ LECTURER DASHBOARD STYLES - ORGANIZED
   align-items: center;
   min-height: 400px;
   padding: 2rem;
+  margin-top: 40px;;
 }
 
 .empty-state-content {

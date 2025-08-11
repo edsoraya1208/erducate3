@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
 import '../../styles/lecturer-shared-header.css';
 import '../../styles/create-exercise.css';
+import { useUser } from '../../contexts/UserContext'; // Adjust path as needed
 
 
 // 🔥 FIREBASE IMPORTS - Add these imports
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../config/firebase';
+
+
 // 🎯 MAIN COMPONENT: This handles the entire create exercise form
 const LecturerCreateExercise = () => {
+    const { user, getUserDisplayName } = useUser();
   // 📝 STATE MANAGEMENT: These store all form data
   const [formData, setFormData] = useState({
     title: '',
@@ -98,20 +102,21 @@ const LecturerCreateExercise = () => {
 
       // 🗄️ STEP 2: Save exercise data to Firestore
       const exerciseData = {
-        title: formData.title,
-        description: formData.description,
-        dueDate: formData.dueDate || null,
-        totalMarks: parseInt(formData.totalMarks),
-        answerSchemeURL: answerSchemeURL,
-        answerSchemeFileName: formData.answerSchemeFile?.name || null,
-        rubricURL: rubricURL,
-        rubricFileName: formData.rubricFile?.name || null,
-        createdBy: 'Prof. Johnson', // 🔄 TODO: Replace with actual logged-in user
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        status: 'active'
-      };
-
+      title: formData.title,
+      description: formData.description,
+      dueDate: formData.dueDate || null,
+      totalMarks: parseInt(formData.totalMarks),
+      answerSchemeURL: answerSchemeURL,
+      answerSchemeFileName: formData.answerSchemeFile?.name || null,
+      rubricURL: rubricURL,
+      rubricFileName: formData.rubricFile?.name || null,
+      // ✅ Use actual logged-in user instead of hardcoded
+      createdBy: getUserDisplayName(),
+      createdById: user?.uid || null, // Also store user ID for database queries
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      status: 'active'
+    };
       console.log('Saving exercise to Firestore...');
       const docRef = await addDoc(collection(db, 'exercises'), exerciseData);
       
@@ -163,7 +168,7 @@ const LecturerCreateExercise = () => {
         <div className="header-right">
           <nav className="nav-items">
             <span className="nav-item">Dashboard</span>  {/* Changed from <a> to <span> */}
-            <span className="nav-item active">Prof. Johnson</span>
+            <span className="nav-item">{getUserDisplayName()}</span>
             <button className="logout-btn">Logout</button>
           </nav>
         </div>

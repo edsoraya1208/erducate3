@@ -14,12 +14,15 @@ import {
 import { db, auth } from '../../config/firebase';import { useAuthState } from 'react-firebase-hooks/auth';
 import '../../styles/lecturer-shared-header.css';
 import '../../styles/lecturer-dashboard.css';
+import { useUser } from '../../contexts/UserContext'; 
+
 
 const LecturerDashboard = () => {
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [user, error] = useAuthState(auth);
+  const {getUserDisplayName } = useUser();
 
   // Generate unique class code
   const generateClassCode = () => {
@@ -153,11 +156,10 @@ const LecturerDashboard = () => {
         </div>
         
         <div className="header-right">
-          {/* Navigation items */}
           <nav className="nav-items">
             <span className="nav-item active">Dashboard</span>
-            <span className="nav-item">Prof. Johnson</span>
-            {/* Logout button */}
+            {/* Use actual user name instead of hardcoded */}
+            <span className="nav-item">{getUserDisplayName()}</span>
             <button className="logout-btn" onClick={handleLogout}>
               Logout
             </button>

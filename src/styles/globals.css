@@ -198,8 +198,11 @@ body {
   margin-top: 20px;
 }
 
-.signup-form-container .btn-google {
-  margin-top: -3px; /* smaller space just in signup */
+.btn-google-signup {
+  background: white;
+  color: #374151;
+  border: 2px solid #e5e7eb;
+  margin-top: -10px; /* Less margin for signup */
 }
 
 

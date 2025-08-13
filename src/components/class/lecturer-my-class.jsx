@@ -232,7 +232,7 @@ const LecturerMyClass = () => {
         <div className="lecturer-my-class">
           <div className="class-header">
             <div className="class-info">
-              <h1>My Exercises</h1>
+              <h1>My Class</h1>
               <p>Overview of class exercises</p>
             </div>
           </div>

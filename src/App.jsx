@@ -10,6 +10,7 @@ import { UserProvider } from './contexts/UserContext';
 const WelcomePage = lazy(() => import('./components/welcome/WelcomePage'));
 const AuthPage = lazy(() => import('./pages/AuthPage'));
 const Dashboard1 = lazy(() => import('./pages/lecturer/dashboard1'));
+const MyClassLectPage = lazy(() => import('./pages/lecturer/my-class-lect-page'));
 
 // Loading component with better styling
 const LoadingFallback = () => (
@@ -36,6 +37,7 @@ function App() {
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/lecturer/dashboard1" element={<Dashboard1 />} />
             <Route path="/lecturer/create-exercise" element={<CreateExercisePage />} />
+            <Route path="/lecturer/class/:classId" element={<MyClassLectPage />} />
 
             {/* 🚀 OPTIONAL: Add more lecturer routes */}
             {/* <Route path="/lecturer/profile" element={<LecturerProfile />} /> */}

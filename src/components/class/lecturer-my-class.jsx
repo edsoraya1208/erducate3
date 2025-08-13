@@ -310,7 +310,7 @@ const LecturerMyClass = () => {
                         {exercise.status === 'draft' ? (
                           <>
                             <button 
-                              className="btn btn-publish"
+                              className="btn-class-lect btn-publish"
                               onClick={() => handlePublishExercise(exercise.id)}
                             >
                               Publish

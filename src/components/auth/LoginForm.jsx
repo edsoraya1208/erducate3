@@ -377,7 +377,7 @@ const handleGoogleSignIn = async () => {
   };
   
   return (
-    <div className="login-form-container">
+    <div className="auth-form-container">
       {/* Logo Section */}
       <div style={styles.logoSection}>
         <div style={styles.logo}>

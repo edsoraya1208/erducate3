@@ -278,7 +278,7 @@ const SignupForm = () => {
 
 
 return (
-  <div className="signup-form-container">
+  <div className="auth-form-container">
     {/* Logo Section with inline styles */}
     <div 
       className="logo-section"
@@ -440,7 +440,7 @@ return (
       
       <Button 
         type="button" 
-        variant="google" 
+        variant="google-signup" 
         fullWidth
         onClick={handleGoogleSignUp}
         disabled={isLoading}

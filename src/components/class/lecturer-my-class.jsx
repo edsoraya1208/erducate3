@@ -30,6 +30,11 @@ const LecturerMyClass = () => {
     name: "Prof. Johnson",
   };
 
+  // Helper function to get user display name
+  const getUserDisplayName = () => {
+    return currentUser.name || 'User';
+  };
+
   // Fetch class data if not passed via state
   useEffect(() => {
     const fetchClassData = async () => {
@@ -175,29 +180,40 @@ const LecturerMyClass = () => {
     return name?.split(' ').map(n => n[0]).join('').toUpperCase() || '??';
   };
 
+  // Shared header component
+  const Header = () => (
+    <header className="dashboard-header">
+      <div className="header-left">
+        <div className="logo-container">
+          <div className="logo-icon">
+            <img 
+              src="/logo.svg" 
+              alt="ERDucate Logo" 
+              className="custom-logo"
+            />
+          </div>
+          <span className="brand-name">
+            ERDucate
+          </span>
+        </div>
+      </div>
+      
+      <div className="header-right">
+        <nav className="nav-items">
+          <span className="nav-item" onClick={handleDashboardClick}>Dashboard</span>
+          <span className="nav-item">{getUserDisplayName()}</span>
+          <button className="logout-btn" onClick={handleLogout}>
+            Logout
+          </button>
+        </nav>
+      </div>
+    </header>
+  );
+
   if (!classData) {
     return (
       <div className="page-container">
-        <header className="dashboard-header">
-          <div className="header-left">
-            <div className="logo-container">
-             <img src="logo.svg" alt="ERDucate Logo" className="custom-logo" />
-              <span className="logo-text">ERDucate</span>
-            </div>
-          </div>
-          <div className="header-right">
-            <div className="nav-items">
-              <div className="nav-item" onClick={handleDashboardClick}>
-                Dashboard
-              </div>
-              <span className="nav-item">{currentUser.name}</span>
-            </div>
-            <button className="logout-btn" onClick={handleLogout}>
-              Logout
-            </button>
-          </div>
-        </header>
-
+        <Header />
         <main className="main-content">
           <div className="loading-container">
             <div className="loading-spinner"></div>
@@ -210,25 +226,7 @@ const LecturerMyClass = () => {
 
   return (
     <div className="page-container">
-      <header className="dashboard-header">
-        <div className="header-left">
-          <div className="logo-container">
-            <img src="/logo.svg" alt="ERDucate Logo" className="custom-logo" />
-            <span className="logo-text">ERDucate</span>
-          </div>
-        </div>
-        <div className="header-right">
-          <div className="nav-items">
-            <div className="nav-item" onClick={handleDashboardClick}>
-              Dashboard
-            </div>
-            <span className="nav-item">{currentUser.name}</span>
-          </div>
-          <button className="logout-btn" onClick={handleLogout}>
-            Logout
-          </button>
-        </div>
-      </header>
+      <Header />
 
       <main className="main-content">
         <div className="lecturer-my-class">

@@ -261,8 +261,7 @@ const LecturerDashboard = () => {
 
   // Handle class card click - navigate to specific class page
   const handleClassClick = (classItem) => {
-    // Navigate to class management page with class ID and pass class data
-    navigate(`/class/${classItem.id}`, {
+    navigate(`/lecturer/class/${classItem.id}`, {
       state: { classData: classItem }
     });
   };

@@ -259,6 +259,14 @@ const LecturerDashboard = () => {
     }
   };
 
+  // Handle class card click - navigate to specific class page
+  const handleClassClick = (classItem) => {
+    // Navigate to class management page with class ID and pass class data
+    navigate(`/class/${classItem.id}`, {
+      state: { classData: classItem }
+    });
+  };
+
   return (
     <div className="lecturer-dashboard">
       {/* TOP NAVIGATION HEADER */}
@@ -339,13 +347,21 @@ const LecturerDashboard = () => {
                 </div>
               ) : (
                 classes.map((classItem) => (
-                  <div key={classItem.id} className="class-card">
+                  <div 
+                    key={classItem.id} 
+                    className="class-card clickable-card"
+                    onClick={() => handleClassClick(classItem)} // Click to navigate to class page
+                    style={{ cursor: 'pointer' }}
+                  >
                     {/* Class Header with Title and Delete Button */}
                     <div className="class-header">
                       <h3 className="class-title">{classItem.title}</h3>
                       <button 
                         className="delete-btn"
-                        onClick={() => openDeleteModal(classItem.id, classItem.title)}
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent card click when delete button is clicked
+                          openDeleteModal(classItem.id, classItem.title);
+                        }}
                         title="Delete this class"
                       >
                         Delete Class
@@ -359,7 +375,10 @@ const LecturerDashboard = () => {
                         <span className="class-code">{classItem.classCode}</span>
                         <button 
                           className="copy-btn"
-                          onClick={() => handleCopyCode(classItem.classCode)}
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent card click when copy button is clicked
+                            handleCopyCode(classItem.classCode);
+                          }}
                           title="Copy class code"
                         >
                           Copy Code

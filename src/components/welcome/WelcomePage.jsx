@@ -21,7 +21,7 @@ const WelcomePage = () => {
 };
 
   return (
-    <div className="welcome-container">
+    <div className=" wp-body welcome-container">
       <section className="hero-section">
         <div className="hero-background">
           <div className="background-circles">

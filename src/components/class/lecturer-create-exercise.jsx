@@ -147,8 +147,7 @@ const LecturerCreateExercise = () => {
 
   // 🎨 RENDER: The actual UI components
   return (
-    <div className="create-exercise-container">
-      {/* 🏠 HEADER SECTION */}
+    <div className="ce-page create-exercise-container">      {/* 🏠 HEADER SECTION */}
       <header className="dashboard-header">
         <div className="header-left">
           {/* 🎨 LOGO AND BRAND SECTION */}

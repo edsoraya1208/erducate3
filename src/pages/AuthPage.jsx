@@ -17,7 +17,7 @@ const AuthPage = ({ auth, db, setMessage, googleProvider }) => {
   const [isLogin, setIsLogin] = useState(true);
 
   return (
-    <div className="auth-container">
+    <div className="auth-body auth-container">
       {/* Brand Section - Left Side */}
       <div className="brand-section">
         <div className="brand-content">

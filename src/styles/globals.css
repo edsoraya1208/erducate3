@@ -8,7 +8,7 @@
   box-sizing: border-box;
 }
 
-body {
+.auth-body {
   font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
                 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
   line-height: 1.6;

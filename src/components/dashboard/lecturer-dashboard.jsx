@@ -312,7 +312,7 @@ const LecturerDashboard = () => {
                 disabled={creating}
                 className="create-class-button-dashboard"
               >
-                {creating ? 'Creating...' : 'Create Class'}
+                {creating ? 'Creating...' : '+ New Class'}
               </button>
             </div>
           )}

@@ -12,6 +12,8 @@ import {
 import { db } from '../../config/firebase';
 import '../../styles/my-class-lect.css';
 import '../../styles/lecturer-shared-header.css';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from '../../config/firebase';
 
 const LecturerMyClass = () => {
   const { classId } = useParams();
@@ -26,14 +28,12 @@ const LecturerMyClass = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [loading, setLoading] = useState(false);
 
-  const currentUser = {
-    name: "Prof. Johnson",
-  };
+  const [user] = useAuthState(auth);
 
   // Helper function to get user display name
-  const getUserDisplayName = () => {
-    return currentUser.name || 'User';
-  };
+ const getUserDisplayName = () => {
+  return user?.displayName || user?.email?.split('@')[0] || 'User';
+};
 
   // Fetch class data if not passed via state
   useEffect(() => {

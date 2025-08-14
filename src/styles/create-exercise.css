@@ -111,7 +111,7 @@
 
 
 /* 📋 MAIN CONTENT */
-.main-content {
+.ce-main-content {
   max-width: 95%;
   margin: 0 auto;
   padding: 2rem;
@@ -441,7 +441,7 @@
     gap: 1rem;
   }
 
-  .main-content {
+  .ce-main-content {
     padding: 1rem;
     max-width: 100%;
   }

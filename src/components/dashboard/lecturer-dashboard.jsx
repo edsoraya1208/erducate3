@@ -1,121 +1,36 @@
 // src/components/dashboard/lecturer-dashboard.jsx
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { 
-  collection, 
-  addDoc, 
-  getDocs, 
-  deleteDoc, 
-  doc, 
-  query, 
-  where,
-  orderBy 
-} from 'firebase/firestore';
-import { db, auth } from '../../config/firebase';
-import { useAuthState } from 'react-firebase-hooks/auth';
+import React from 'react';
 import '../../styles/lecturer-shared-header.css';
 import '../../styles/lecturer-dashboard.css';
-import { useUser } from '../../contexts/UserContext'; 
 
-const LecturerDashboard = () => {
-  const [classes, setClasses] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
-  const [user, error] = useAuthState(auth);
-  const { getUserDisplayName } = useUser();
-  const navigate = useNavigate();
+const LecturerDashboard = ({
+  // State props
+  classes,
+  loading,
+  creating,
+  showCreateModal,
+  newClassName,
+  maxStudents,
+  deleteModal,
+  
+  // User data
+  getUserDisplayName,
+  
+  // Event handlers
+  onCreateClass,
+  onCloseCreateModal,
+  onClassNameChange,
+  onMaxStudentsChange,
+  onSubmitCreateClass,
+  onCopyCode,
+  onDeleteClass,
+  onConfirmDelete,
+  onCloseDeleteModal,
+  onLogout,
+  onClassClick
+}) => {
 
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newClassName, setNewClassName] = useState('');
-  const [maxStudents, setMaxStudents] = useState('');
-
-  const [deleteModal, setDeleteModal] = useState({
-    isOpen: false,
-    classId: null,
-    className: '',
-    isDeleting: false
-  });
-
-  // Generate unique class code
-  const generateClassCode = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let result = '';
-    for (let i = 0; i < 8; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
-  };
-
-  // Load classes from Firebase
-  const loadClasses = async () => {
-    try {
-      setLoading(true);
-      const classesRef = collection(db, 'classes');
-      // Filter classes by current instructor
-      const q = query(classesRef, where("instructorId", "==", user?.uid || ""));
-      const querySnapshot = await getDocs(q);
-      
-      const classesData = [];
-      querySnapshot.forEach((doc) => {
-        classesData.push({
-          id: doc.id,
-          ...doc.data()
-        });
-      });
-      
-      setClasses(classesData);
-    } catch (error) {
-      console.error('Error loading classes:', error);
-      alert('Error loading classes. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Load classes on component mount and when user changes
-  useEffect(() => {
-    if (user) {
-      loadClasses();
-    }
-  }, [user]);
-
-  // Create new class
-  const handleCreateClass = async () => {
-    if (!newClassName.trim()) return;
-    
-    try {
-      setCreating(true);
-      const classCode = generateClassCode();
-      
-      const newClass = {
-        title: newClassName.trim(),
-        classCode: classCode,
-        description: "Share this code with students to join your class",
-        maxStudents: maxStudents ? parseInt(maxStudents) : null,
-        currentStudents: 0,
-        createdAt: new Date(),
-        instructorId: user?.uid || "unknown",
-        instructorName: user?.displayName || user?.email || "Unknown Instructor"
-      };
-
-      await addDoc(collection(db, 'classes'), newClass);
-      await loadClasses();
-      
-      // Close modal and reset
-      setShowCreateModal(false);
-      setNewClassName('');
-      setMaxStudents('');
-      
-      alert(`Class "${newClassName}" created successfully with code: ${classCode}`);
-    } catch (error) {
-      console.error('Error creating class:', error);
-      alert('Error creating class. Please try again.');
-    } finally {
-      setCreating(false);
-    }
-  };
-
-  // Create Class Modal Component 
+  // Create Class Modal UI Component
   const CreateClassModal = () => (
     <div className="modal-overlay">
       <div className="modal-content">
@@ -126,7 +41,7 @@ const LecturerDashboard = () => {
           <input
             type="text"
             value={newClassName}
-            onChange={(e) => setNewClassName(e.target.value)}
+            onChange={(e) => onClassNameChange(e.target.value)}
             placeholder="e.g., Database Principles - CS301-G1"
             className="form-input"
             autoFocus
@@ -138,7 +53,7 @@ const LecturerDashboard = () => {
           <input
             type="number"
             value={maxStudents}
-            onChange={(e) => setMaxStudents(e.target.value)}
+            onChange={(e) => onMaxStudentsChange(e.target.value)}
             placeholder="Leave empty for unlimited"
             min="1"
             className="form-input"
@@ -147,17 +62,13 @@ const LecturerDashboard = () => {
         
         <div className="modal-buttons">
           <button
-            onClick={() => {
-              setShowCreateModal(false);
-              setNewClassName('');
-              setMaxStudents('');
-            }}
+            onClick={onCloseCreateModal}
             className="cancel-btn"
           >
             Cancel
           </button>
           <button
-            onClick={handleCreateClass}
+            onClick={onSubmitCreateClass}
             disabled={!newClassName.trim() || creating}
             className="create-class-button"
           >
@@ -168,55 +79,7 @@ const LecturerDashboard = () => {
     </div>
   );
 
-  // Function to handle copying class code to clipboard
-  const handleCopyCode = async (classCode) => {
-    try {
-      await navigator.clipboard.writeText(classCode);
-      alert(`Class code ${classCode} copied to clipboard!`);
-      // You can replace alert with a toast notification for better UX
-    } catch (error) {
-      console.error('Error copying to clipboard:', error);
-      alert('Error copying code to clipboard');
-    }
-  };
-
-  // Function to open delete confirmation modal
-  const openDeleteModal = (classId, className) => {
-    setDeleteModal({
-      isOpen: true,
-      classId,
-      className,
-      isDeleting: false
-    });
-  };
-
-  // Function to handle class deletion
-  const handleDeleteClass = async () => {
-    setDeleteModal(prev => ({ ...prev, isDeleting: true }));
-    
-    try {
-      await deleteDoc(doc(db, 'classes', deleteModal.classId));
-      // Remove the class from local state
-      setClasses(classes.filter(cls => cls.id !== deleteModal.classId));
-      
-      // Close modal and show success
-      setDeleteModal({ isOpen: false, classId: null, className: '', isDeleting: false });
-      alert(`Class "${deleteModal.className}" deleted successfully.`);
-    } catch (error) {
-      console.error('Error deleting class:', error);
-      alert('Error deleting class. Please try again.');
-      setDeleteModal(prev => ({ ...prev, isDeleting: false }));
-    }
-  };
-
-  // Function to close delete modal
-  const closeDeleteModal = () => {
-    if (!deleteModal.isDeleting) {
-      setDeleteModal({ isOpen: false, classId: null, className: '', isDeleting: false });
-    }
-  };
-
-  // Delete Confirmation Modal Component
+  // Delete Confirmation Modal UI Component
   const DeleteConfirmationModal = () => (
     <div className="modal-overlay">
       <div className="modal-content">
@@ -227,14 +90,14 @@ const LecturerDashboard = () => {
         </p>
         <div className="modal-buttons">
           <button
-            onClick={closeDeleteModal}
+            onClick={onCloseDeleteModal}
             disabled={deleteModal.isDeleting}
             className="cancel-btn"
           >
             Cancel
           </button>
           <button
-            onClick={handleDeleteClass}
+            onClick={onConfirmDelete}
             disabled={deleteModal.isDeleting}
             className="delete-btn"
           >
@@ -245,30 +108,9 @@ const LecturerDashboard = () => {
     </div>
   );
 
-  // Function to handle logout
-  const handleLogout = async () => {
-    const confirmLogout = window.confirm('Are you sure you want to logout?');
-    if (confirmLogout) {
-      try {
-        await auth.signOut();
-        navigate('/login');
-      } catch (error) {
-        console.error('Error logging out:', error);
-        alert('Error logging out. Please try again.');
-      }
-    }
-  };
-
-  // Handle class card click - navigate to specific class page
-  const handleClassClick = (classItem) => {
-    navigate(`/lecturer/class/${classItem.id}`, {
-      state: { classData: classItem }
-    });
-  };
-
   return (
     <div className="lecturer-dashboard">
-      {/* TOP NAVIGATION HEADER */}
+      {/* Navigation Header */}
       <header className="dashboard-header">
         <div className="header-left">
           <div className="logo-container">
@@ -289,26 +131,26 @@ const LecturerDashboard = () => {
           <nav className="nav-items">
             <span className="nav-item active">Dashboard</span>
             <span className="nav-item">{getUserDisplayName()}</span>
-            <button className="logout-btn" onClick={handleLogout}>
+            <button className="logout-btn" onClick={onLogout}>
               Logout
             </button>
           </nav>
         </div>
       </header>
 
-      {/* Main Content Area */}
+      {/* Main Dashboard Content */}
       <main className="dashboard-main">
         <div className="dashboard-container">
-          {/* Header Section with Title */}
+          {/* Page Title Section */}
           <div className="dashboard-header-section">            
             <h1 className="dashboard-title">Instructor's Dashboard</h1>
           </div>
 
-          {/* Create Class Button Container - Only show when there are existing classes */}
+          {/* Create Class Button - Show only when classes exist */}
           {classes.length > 0 && (
             <div className="create-class-container">
               <button 
-                onClick={() => setShowCreateModal(true)}
+                onClick={onCreateClass}
                 disabled={creating}
                 className="create-class-button-dashboard"
               >
@@ -317,15 +159,16 @@ const LecturerDashboard = () => {
             </div>
           )}
                     
-          {/* Loading State */}
+          {/* Loading State Display */}
           {loading ? (
             <div className="loading-container">
               <p>Loading classes...</p>
             </div>
           ) : (
-            /* Classes Grid */
+            /* Classes Grid Layout */
             <div className="classes-grid">
               {classes.length === 0 ? (
+                /* Empty State - No Classes Created Yet */
                 <div className="empty-state-container">
                   <div className="empty-state-content">
                     <div className="empty-state-icon">
@@ -336,7 +179,7 @@ const LecturerDashboard = () => {
                       You haven't created any classes yet. Start by creating your first class to manage students and exercises.
                     </p>
                     <button 
-                      onClick={() => setShowCreateModal(true)}
+                      onClick={onCreateClass}
                       disabled={creating}
                       className="create-class-button"
                     >
@@ -345,11 +188,12 @@ const LecturerDashboard = () => {
                   </div>
                 </div>
               ) : (
+                /* Class Cards Grid */
                 classes.map((classItem) => (
                   <div 
                     key={classItem.id} 
                     className="class-card clickable-card"
-                    onClick={() => handleClassClick(classItem)} // Click to navigate to class page
+                    onClick={() => onClassClick(classItem)}
                     style={{ cursor: 'pointer' }}
                   >
                     {/* Class Header with Title and Delete Button */}
@@ -358,8 +202,8 @@ const LecturerDashboard = () => {
                       <button 
                         className="delete-btn"
                         onClick={(e) => {
-                          e.stopPropagation(); // Prevent card click when delete button is clicked
-                          openDeleteModal(classItem.id, classItem.title);
+                          e.stopPropagation(); // Prevent card click
+                          onDeleteClass(classItem.id, classItem.title);
                         }}
                         title="Delete this class"
                       >
@@ -367,7 +211,7 @@ const LecturerDashboard = () => {
                       </button>
                     </div>
                     
-                    {/* Class Code Section */}
+                    {/* Class Code Section with Copy Functionality */}
                     <div className="class-code-section">
                       <div className="code-label">Class Code</div>
                       <div className="code-container">
@@ -375,8 +219,8 @@ const LecturerDashboard = () => {
                         <button 
                           className="copy-btn"
                           onClick={(e) => {
-                            e.stopPropagation(); // Prevent card click when copy button is clicked
-                            handleCopyCode(classItem.classCode);
+                            e.stopPropagation(); // Prevent card click
+                            onCopyCode(classItem.classCode);
                           }}
                           title="Copy class code"
                         >
@@ -393,7 +237,7 @@ const LecturerDashboard = () => {
         </div>
       </main>
 
-      {/* Modals */}
+      {/* Modal Components */}
       {showCreateModal && <CreateClassModal />}
       {deleteModal.isOpen && <DeleteConfirmationModal />}
     </div>

@@ -1,6 +1,5 @@
 /* 🎨 CREATE EXERCISE PAGE STYLES */
 
-
 * {
   margin: 0;
   padding: 0;
@@ -17,8 +16,6 @@
   min-height: 100vh;
   background-color: #f8f9fa;
 }
-
-
 
 .header-left {
   display: flex;
@@ -109,19 +106,20 @@
   font-weight: 600;
 }
 
-
-/* 📋 MAIN CONTENT */
+/* 📋 MAIN CONTENT - UPDATED TO MATCH DASHBOARD */
 .ce-main-content {
-  max-width: 95%;
-  margin: 0 auto;
-  padding: 2rem;
+  max-width: 1200px; /* Changed from 95% to match dashboard */
+  margin: 0 auto; /* Center the content */
+  padding: 32px; /* Match dashboard padding */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 }
 
 .page-title {
-  font-size: 2rem;
+  font-size: 2rem; /* INCREASED from default - matches dashboard title size */
   font-weight: 700;
   color: #1f2937;
   margin-bottom: 2rem;
+  text-align: left; /* Match dashboard alignment */
 }
 
 /* 📝 FORM STYLES */
@@ -150,7 +148,7 @@
   font-weight: 600;
   color: #374151;
   margin-bottom: 0.5rem;
-  font-size: 0.9rem;
+  font-size: 1rem; /* INCREASED from 0.9rem */
 }
 
 .form-input {
@@ -158,7 +156,7 @@
   padding: 12px 16px;
   border: 2px solid #e5e7eb;
   border-radius: 8px;
-  font-size: 0.9rem;
+  font-size: 1rem; /* INCREASED from 0.9rem */
   transition: all 0.2s;
   background: white;
 }
@@ -174,7 +172,7 @@
   padding: 12px 16px;
   border: 2px solid #e5e7eb;
   border-radius: 8px;
-  font-size: 0.9rem;
+  font-size: 1rem; /* INCREASED from 0.9rem */
   transition: all 0.2s;
   resize: vertical;
   min-height: 120px;
@@ -190,7 +188,7 @@
 .form-hint {
   display: block;
   color: #6b7280;
-  font-size: 0.8rem;
+  font-size: 0.9rem; /* INCREASED from 0.8rem */
   margin-top: 0.25rem;
 }
 
@@ -215,7 +213,7 @@
 }
 
 .section-title {
-  font-size: 1.1rem;
+  font-size: 1.2rem; /* INCREASED from 1.1rem */
   font-weight: 600;
   color: #374151;
 }
@@ -273,7 +271,7 @@
 }
 
 .upload-title {
-  font-size: 1.1rem;
+  font-size: 1.2rem; /* INCREASED from 1.1rem */
   font-weight: 600;
   color: #374151;
   margin: 0;
@@ -281,7 +279,7 @@
 
 .upload-text {
   color: #6b7280;
-  font-size: 0.9rem;
+  font-size: 1rem; /* INCREASED from 0.9rem */
   margin: 0.5rem 0;
 }
 
@@ -290,14 +288,15 @@
 }
 
 .browse-btn {
-  background: linear-gradient(135deg, #7b10a5, #5e17a5);  color: white;
+  background: linear-gradient(135deg, #7b10a5, #5e17a5);
+  color: white;
   border: none;
   color: white;
   padding: 10px 24px;
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 1rem; /* INCREASED from 0.9rem */
   transition: all 0.2s;
   margin: 0.5rem 0;
 }
@@ -309,13 +308,13 @@
 
 .file-info {
   color: #6b7280;
-  font-size: 0.8rem;
+  font-size: 0.9rem; /* INCREASED from 0.8rem */
 }
 
 .file-selected {
   color: #059669;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 1rem; /* INCREASED from 0.9rem */
   margin-top: 0.5rem;
 }
 
@@ -362,7 +361,7 @@
   padding-left: 1.5rem;
   position: relative;
   color: #92400e;
-  font-size: 0.85rem;
+  font-size: 0.9rem; /* INCREASED from 0.85rem */
 }
 
 .rubric-tips .tips-list li {
@@ -394,7 +393,7 @@
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 1rem; /* INCREASED from 0.9rem */
   transition: all 0.2s;
 }
 
@@ -404,14 +403,15 @@
 }
 
 .create-btn {
-  background: linear-gradient(135deg, #7b10a5, #5e17a5);  color: white;
+  background: linear-gradient(135deg, #7b10a5, #5e17a5);
+  color: white;
   border: none;
   color: white;
   padding: 12px 32px;
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 1rem; /* INCREASED from 0.9rem */
   transition: all 0.2s;
   box-shadow: 0 6px 12px rgba(173, 22, 249, 0.3);
 }
@@ -442,7 +442,7 @@
   }
 
   .ce-main-content {
-    padding: 1rem;
+    padding: 16px; /* Match dashboard mobile padding */
     max-width: 100%;
   }
 
@@ -472,6 +472,13 @@
   .cancel-btn,
   .create-btn {
     width: 100%;
+  }
+  
+  .page-title {
+    font-size: 2.0rem; /* Keep title size consistent on mobile */
+    text-align: center; /* Center on mobile like dashboard */
+    word-wrap: break-word;
+    margin: 0.5rem 0;
   }
 }
 

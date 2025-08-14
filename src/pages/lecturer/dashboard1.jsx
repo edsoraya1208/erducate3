@@ -49,29 +49,40 @@ const Dashboard1 = () => {
   };
 
   // Fetch classes from Firebase for current instructor
-  const loadClasses = async () => {
-    try {
-      setLoading(true);
-      const classesRef = collection(db, 'classes');
-      const q = query(classesRef, where("instructorId", "==", user?.uid || ""));
-      const querySnapshot = await getDocs(q);
-      
-      const classesData = [];
-      querySnapshot.forEach((doc) => {
-        classesData.push({
-          id: doc.id,
-          ...doc.data()
-        });
+  // Fetch classes from Firebase for current instructor
+const loadClasses = async () => {
+  try {
+    setLoading(true);
+    
+    // 🚀 ADD THESE DEBUG LOGS:
+    console.log('📚 Loading classes for user:', user?.uid);
+    console.log('🔍 Query: classes where instructorId ==', user?.uid || "");
+    
+    const classesRef = collection(db, 'classes');
+    const q = query(classesRef, where("instructorId", "==", user?.uid || ""));
+    const querySnapshot = await getDocs(q);
+    
+    const classesData = [];
+    querySnapshot.forEach((doc) => {
+      classesData.push({
+        id: doc.id,
+        ...doc.data()
       });
-      
-      setClasses(classesData);
-    } catch (error) {
-      console.error('Error loading classes:', error);
-      alert('Error loading classes. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    });
+    
+    console.log('📊 Classes found:', classesData.length);
+    console.log('📋 Classes data:', classesData);
+    
+    setClasses(classesData);
+  } catch (error) {
+    console.error('❌ Error loading classes:', error);
+    console.error('Error code:', error.code);
+    console.error('Error message:', error.message);
+    alert('Error loading classes. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Load classes when user is authenticated
   useEffect(() => {
@@ -81,40 +92,62 @@ const Dashboard1 = () => {
   }, [user]);
 
   // Create new class with generated code
-  const handleCreateClass = async () => {
-    if (!newClassName.trim()) return;
+  // Create new class with generated code
+const handleCreateClass = async () => {
+  if (!newClassName.trim()) return;
+  
+  try {
+    setCreating(true);
     
-    try {
-      setCreating(true);
-      const classCode = generateClassCode();
-      
-      const newClass = {
-        title: newClassName.trim(),
-        classCode: classCode,
-        description: "Share this code with students to join your class",
-        maxStudents: maxStudents ? parseInt(maxStudents) : null,
-        currentStudents: 0,
-        createdAt: new Date(),
-        instructorId: user?.uid || "unknown",
-        instructorName: user?.displayName || user?.email || "Unknown Instructor"
-      };
+    // 🚀 ADD THESE DEBUG LOGS HERE:
+    console.log('🔥 Starting class creation debug...');
+    console.log('🔐 Auth state:', auth.currentUser);
+    console.log('🆔 User ID:', auth.currentUser?.uid);
+    console.log('📧 User email:', auth.currentUser?.email);
+    console.log('👤 User authenticated:', !!auth.currentUser);
+    console.log('🏗️ Firebase config check:');
+    console.log('Project ID:', import.meta.env.VITE_FIREBASE_PROJECT_ID);
+    console.log('Auth Domain:', import.meta.env.VITE_FIREBASE_AUTH_DOMAIN);
+    console.log('Database instance:', db);
+    
+    const classCode = generateClassCode();
+    
+    const newClass = {
+      title: newClassName.trim(),
+      classCode: classCode,
+      description: "Share this code with students to join your class",
+      maxStudents: maxStudents ? parseInt(maxStudents) : null,
+      currentStudents: 0,
+      createdAt: new Date(),
+      instructorId: user?.uid || "unknown",
+      instructorName: user?.displayName || user?.email || "Unknown Instructor"
+    };
 
-      await addDoc(collection(db, 'classes'), newClass);
-      await loadClasses();
-      
-      // Reset modal state
-      setShowCreateModal(false);
-      setNewClassName('');
-      setMaxStudents('');
-      
-      alert(`Class "${newClassName}" created successfully with code: ${classCode}`);
-    } catch (error) {
-      console.error('Error creating class:', error);
-      alert('Error creating class. Please try again.');
-    } finally {
-      setCreating(false);
-    }
-  };
+    console.log('📋 Class data to be created:', newClass);
+    console.log('📂 Collection path: classes');
+
+    await addDoc(collection(db, 'classes'), newClass);
+    
+    console.log('✅ Class creation successful!');
+    await loadClasses();
+    
+    // Reset modal state
+    setShowCreateModal(false);
+    setNewClassName('');
+    setMaxStudents('');
+    
+    alert(`Class "${newClassName}" created successfully with code: ${classCode}`);
+  } catch (error) {
+    console.error('❌ Error creating class:');
+    console.error('Error code:', error.code);
+    console.error('Error message:', error.message);
+    console.error('Full error object:', error);
+    console.error('Error stack:', error.stack);
+    alert('Error creating class. Please try again.');
+  } finally {
+    setCreating(false);
+  }
+};
 
   // Copy class code to clipboard
   const handleCopyCode = async (classCode) => {

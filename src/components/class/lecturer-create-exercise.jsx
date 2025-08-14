@@ -180,7 +180,7 @@ const LecturerCreateExercise = () => {
         <form onSubmit={handleSubmit} className="exercise-form">
           {/* 📝 EXERCISE TITLE */}
           <div className="form-group">
-            <label htmlFor="title" className="form-label">Exercise Title</label>
+            <label htmlFor="title" className="ce-form-label">Exercise Title</label>
             <input
               type="text"
               id="title"
@@ -196,7 +196,7 @@ const LecturerCreateExercise = () => {
 
           {/* 📄 DESCRIPTION */}
           <div className="form-group">
-            <label htmlFor="description" className="form-label">Description</label>
+            <label htmlFor="description" className="ce-form-label">Description</label>
             <textarea
               id="description"
               name="description"
@@ -213,7 +213,7 @@ const LecturerCreateExercise = () => {
           {/* 📅 DUE DATE & MARKS ROW */}
           <div className="form-row">
             <div className="form-group half-width">
-              <label htmlFor="dueDate" className="form-label">Due Date</label>
+              <label htmlFor="dueDate" className="ce-form-label">Due Date</label>
               <input
                 type="date"
                 id="dueDate"
@@ -226,7 +226,7 @@ const LecturerCreateExercise = () => {
              
             </div>
             <div className="form-group half-width">
-              <label htmlFor="totalMarks" className="form-label">Total Marks</label>
+              <label htmlFor="totalMarks" className="ce-form-label">Total Marks</label>
               <input
                 type="number"
                 id="totalMarks"

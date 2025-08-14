@@ -139,12 +139,12 @@
   gap: 1.5rem;
 }
 
-.form-label {
+.ce-form-label {
   display: block;
   font-weight: 600;
   color: #374151;
-  margin-bottom: 0.5rem;
-  font-size: 1rem; /* INCREASED from 0.9rem */
+  margin-bottom: 0.9rem;
+  font-size: 16px; /* INCREASED from 0.9rem */
 }
 
 .form-input {

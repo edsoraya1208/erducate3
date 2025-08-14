@@ -457,8 +457,8 @@ return (
       {/* Additional Links */}
       <div className="auth-links">
         <p>
-          Already have an account? 
-          <a href="/auth" className="auth-link">Sign In</a>
+          Already have an account?
+          <a href="/auth" className="auth-link" style={{ color: 'blue', marginLeft: '8px' }}>Sign In</a>
         </p>
       </div>
     </form>

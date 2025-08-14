@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
-
 import { useNavigate } from 'react-router-dom';
-
 
 // Import Firebase instances
 import { auth, db } from '../../config/firebase';
@@ -15,9 +13,8 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 // Create Google provider
 const googleProvider = new GoogleAuthProvider();
 
-
-const LoginForm = () => {
-  const navigate = useNavigate(); // ✅ define navigate
+const LoginForm = ({ onSwitchToSignup }) => {
+  const navigate = useNavigate();
 
   // Form state management
   const [formData, setFormData] = useState({
@@ -25,14 +22,13 @@ const LoginForm = () => {
     password: ''
   });
 
-  // Message state for displaying feedback to users
-  const [message, setMessage] = useState({ text: '', type: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
-  // Add this state
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
+  
+  // Add message state to the component
+  const [message, setMessage] = useState({ text: '', type: '' });
 
   // Handle input changes
   const handleChange = (e) => {
@@ -51,7 +47,6 @@ const LoginForm = () => {
     setMessage({ text, type });
   };
 
-  
   // Handle form submission with role-based logic (email/password)
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -122,10 +117,10 @@ const LoginForm = () => {
       
       // Handle specific Firebase error codes
       switch (error.code) {
-         case 'auth/user-not-found':
+        case 'auth/user-not-found':
           errorMessage = `No password account found for this email. If you signed up with Google, try "Continue with Google" instead.`;
           break;
-          case 'auth/wrong-password':
+        case 'auth/wrong-password':
           errorMessage = `Incorrect password. If you signed up with Google, try "Continue with Google" instead.`;
           break;
         case 'auth/invalid-email':
@@ -154,94 +149,94 @@ const LoginForm = () => {
     }
   };
 
-// Handle Google sign-in with role-based logic
-const handleGoogleSignIn = async () => {
-  setIsLoading(true);
-  setMessage({ text: '', type: '' }); // Clear any previous messages
-  
-  // Check Firebase initialization
-  if (!auth || !db) {
-    showMessage('Firebase not initialized. Please refresh the page and try again.');
-    setIsLoading(false);
-    return;
-  }
-
-  try {
-    console.log('🔐 Attempting Google sign-in...');
+  // Handle Google sign-in with role-based logic
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    setMessage({ text: '', type: '' }); // Clear any previous messages
     
-    const result = await signInWithPopup(auth, googleProvider);
-    const user = result.user;
+    // Check Firebase initialization
+    if (!auth || !db) {
+      showMessage('Firebase not initialized. Please refresh the page and try again.');
+      setIsLoading(false);
+      return;
+    }
 
-    console.log('✅ Google authentication successful, user:', user.uid);
+    try {
+      console.log('🔐 Attempting Google sign-in...');
+      
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
 
-    // Get user document from Firestore
-    const userDocRef = doc(db, 'users', user.uid);
-    const userDoc = await getDoc(userDocRef);
+      console.log('✅ Google authentication successful, user:', user.uid);
 
-    if (userDoc.exists()) {
-      const userData = userDoc.data();
-      console.log('📄 Existing Google user found, role:', userData.role);
+      // Get user document from Firestore
+      const userDocRef = doc(db, 'users', user.uid);
+      const userDoc = await getDoc(userDocRef);
 
-      // Only show success message when we're sure the user has access
-      showMessage('Login successful! Redirecting...', 'success');
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        console.log('📄 Existing Google user found, role:', userData.role);
 
-      // Redirect based on user role
-      if (userData.role === 'lecturer') {
-        console.log('🎓 Redirecting to lecturer dashboard');
-        navigate('/lecturer/dashboard1');
+        // Only show success message when we're sure the user has access
+        showMessage('Login successful! Redirecting...', 'success');
+
+        // Redirect based on user role
+        if (userData.role === 'lecturer') {
+          console.log('🎓 Redirecting to lecturer dashboard');
+          navigate('/lecturer/dashboard1');
+        } else {
+          console.log('🎒 Redirecting to student dashboard');
+          navigate('/student-dashboard');
+        }
       } else {
-        console.log('🎒 Redirecting to student dashboard');
-        navigate('/student-dashboard');
+        // User doesn't exist in database - block access
+        console.log('❌ No account found for this Google user');
+        
+        try {
+          // Delete the Firebase user account completely (not just sign out)
+          await user.delete();
+          console.log('🗑️ Firebase user account deleted');
+        } catch (deleteError) {
+          console.error('❌ Error deleting user account:', deleteError);
+          // If deletion fails, at least sign them out
+          await auth.signOut();
+        }
+        
+        // Show error message with explicit 'error' type to ensure it doesn't auto-clear
+        showMessage('No account associated with this email address. Please sign up first.', 'error');
       }
-    } else {
-      // User doesn't exist in database - block access
-      console.log('❌ No account found for this Google user');
+    } catch (error) {
+      console.error('❌ Google sign-in error:', error);
       
-      try {
-        // Delete the Firebase user account completely (not just sign out)
-        await user.delete();
-        console.log('🗑️ Firebase user account deleted');
-      } catch (deleteError) {
-        console.error('❌ Error deleting user account:', deleteError);
-        // If deletion fails, at least sign them out
-        await auth.signOut();
+      let errorMessage = 'Google sign-in failed. Please try again.';
+      
+      // Handle specific Google sign-in errors
+      switch (error.code) {
+        case 'auth/popup-closed-by-user':
+        case 'auth/cancelled-popup-request':
+          errorMessage = 'Sign-in process was canceled. Please try again.';
+          break;
+        case 'auth/popup-blocked':
+          errorMessage = 'Pop-up was blocked by your browser. Please allow pop-ups and try again.';
+          break;
+        case 'auth/network-request-failed':
+          errorMessage = 'Network error. Please check your internet connection.';
+          break;
+        case 'auth/internal-error':
+          errorMessage = 'An internal error occurred. Please try again.';
+          break;
+        default:
+          errorMessage = `Google sign-in failed: ${error.message}`;
       }
       
-      // Show error message with explicit 'error' type to ensure it doesn't auto-clear
-      showMessage('No account associated with this email address. Please sign up first.', 'error');
+      // Explicitly set message type to 'error' to prevent auto-clearing
+      showMessage(errorMessage, 'error');
+    } finally {
+      setIsLoading(false);
     }
-  } catch (error) {
-    console.error('❌ Google sign-in error:', error);
-    
-    let errorMessage = 'Google sign-in failed. Please try again.';
-    
-    // Handle specific Google sign-in errors
-    switch (error.code) {
-      case 'auth/popup-closed-by-user':
-      case 'auth/cancelled-popup-request':
-        errorMessage = 'Sign-in process was canceled. Please try again.';
-        break;
-      case 'auth/popup-blocked':
-        errorMessage = 'Pop-up was blocked by your browser. Please allow pop-ups and try again.';
-        break;
-      case 'auth/network-request-failed':
-        errorMessage = 'Network error. Please check your internet connection.';
-        break;
-      case 'auth/internal-error':
-        errorMessage = 'An internal error occurred. Please try again.';
-        break;
-      default:
-        errorMessage = `Google sign-in failed: ${error.message}`;
-    }
-    
-    // Explicitly set message type to 'error' to prevent auto-clearing
-    showMessage(errorMessage, 'error');
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
-  // Add this handler function
+  // Handle forgot password
   const handleForgotPassword = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -286,10 +281,11 @@ const handleGoogleSignIn = async () => {
       setIsLoading(false);
     }
   };
-/* eye toggle hid eunhide pass nanti*/
+
+  // Toggle password visibility
   const togglePasswordVisibility = () => {
-  setShowPassword(!showPassword);
-};
+    setShowPassword(!showPassword);
+  };
 
   // Inline styles object
   const styles = {
@@ -461,19 +457,19 @@ const handleGoogleSignIn = async () => {
               padding: '4px'
             }}
           >
-    {showPassword ? (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
-        <line x1="1" y1="1" x2="23" y2="23"/>
-      </svg>
-    ) : (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-        <circle cx="12" cy="12" r="3"/>
-      </svg>
-    )}
-  </button>
-</div>
+            {showPassword ? (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            )}
+          </button>
+        </div>
 
         {/* Forgot Password Link */}
         <div style={styles.forgotPasswordContainer}>
@@ -546,7 +542,6 @@ const handleGoogleSignIn = async () => {
           {isLoading ? 'Signing In...' : 'Log In'}
         </Button>
         
-      
         <Button 
           type="button" 
           variant="google" 
@@ -562,6 +557,45 @@ const handleGoogleSignIn = async () => {
           </svg>
           {isLoading ? 'Signing In...' : 'Continue with Google'}
         </Button>
+
+        {/* Don't have an account link */}
+        <div style={{
+          textAlign: 'center',
+          marginTop: '0px',
+          paddingTop: '20px',
+        
+        }}>
+          <span style={{ color: '#6b7280', fontSize: '14px' }}>
+            Don't have an account?{' '}
+            <button
+              type="button"
+              onClick={onSwitchToSignup}
+              disabled={isLoading}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#3b82f6',
+                textDecoration: 'underline',
+                cursor: isLoading ? 'not-allowed' : 'pointer',
+                fontSize: '14px',
+                padding: '0',
+                fontWeight: '500'
+              }}
+              onMouseEnter={(e) => {
+                if (!isLoading) {
+                  e.target.style.color = '#1d4ed8';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isLoading) {
+                  e.target.style.color = '#3b82f6';
+                }
+              }}
+            >
+              Sign up
+            </button>
+          </span>
+        </div>
       </form>
     </div>
   );

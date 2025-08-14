@@ -7,7 +7,7 @@ import CreateExercisePage from './pages/lecturer/create-exercise';
 import { UserProvider } from './contexts/UserContext';
 
 // Lazy load components
-const WelcomePage = lazy(() => import('./components/welcome/WelcomePage'));
+const Welcome = lazy(() => import('./pages/Welcome'));
 const AuthPage = lazy(() => import('./pages/AuthPage'));
 const Dashboard1 = lazy(() => import('./pages/lecturer/dashboard1'));
 const MyClassLectPage = lazy(() => import('./pages/lecturer/my-class-lect-page'));
@@ -33,7 +33,7 @@ function App() {
         <Suspense fallback={<LoadingFallback />}>
           <Routes>
             {/* 📍 EXISTING ROUTES - These are your current pages */}
-            <Route path="/" element={<WelcomePage />} />
+            <Route path="/" element={<Welcome />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/lecturer/dashboard1" element={<Dashboard1 />} />
             <Route path="/lecturer/create-exercise" element={<CreateExercisePage />} />

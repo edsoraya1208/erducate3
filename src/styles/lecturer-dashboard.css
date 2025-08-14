@@ -38,7 +38,7 @@ HEADER SECTION
 .dashboard-header-section {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 2rem;
   flex-wrap: wrap;
   gap: 1rem;
@@ -47,11 +47,13 @@ HEADER SECTION
 
 
 .dashboard-title {
-  font-size: 32px;
-  font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 32px;
-  letter-spacing: -0.5px;
+  font-size: 2rem; /* Keep larger size */
+  text-align: left; /* Keep left alignment */
+  word-wrap: break-word;
+  margin-bottom: 2rem; /* Maintain original margin */
+  white-space: nowrap; /* Prevent text wrapping */
+  overflow: hidden; /* Hide overflow if needed */
+  text-overflow: ellipsis; /* Add ... if text is too long */
 }
 
 /* 
@@ -100,7 +102,6 @@ BUTTONS
   padding-right: 24px; /* Match class card padding */
 }
 
-/* 2. MODIFIED: Updated create-class-button-dashboard to maintain consistent sizing */
 .create-class-button-dashboard {
   background: linear-gradient(135deg, #7b10a5, #5e17a5);
   color: white;
@@ -212,7 +213,7 @@ CLASSES GRID & CARDS
   transform: translateY(-2px);
 }
 
-.class-header {
+.class-header-dashboard {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -469,8 +470,8 @@ RESPONSIVE DESIGN
   }
   
   .dashboard-title {
-    font-size: 1.8rem;
-    word-wrap: break-word;
+    font-size: 2.0rem; /* Slightly smaller but still prominent */
+    white-space: normal; /* Allow wrapping only on very small screens */
   }
 }
 
@@ -485,10 +486,11 @@ RESPONSIVE DESIGN
     align-items: stretch;
     gap: 1rem;
     padding: 1rem;
+    align-items: flex-start
   }
   
   .dashboard-title {
-    font-size: 1.5rem;
+    font-size: 2.0rem;
     text-align: center;
     word-wrap: break-word;
     margin: 0.5rem 0;
@@ -503,7 +505,7 @@ RESPONSIVE DESIGN
     padding: 20px;
   }
   
-  .class-header {
+  .class-header-dashboard {
     flex-direction: column;
     align-items: stretch;
     gap: 12px;

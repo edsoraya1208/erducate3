@@ -80,10 +80,18 @@
 /* ============================================
    MAIN CONTENT
    ============================================ */
-.main-content {
-  padding: 2rem;
-  max-width: 1200px; /* Adjust max width as needed */
-  margin: 0 auto;
+.mc-main-content {
+padding: 2rem 1rem;
+max-width: 1200px;
+margin: 0 auto;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+.mc-main-title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #1f2937;
+  margin: 0 0 2rem 0;
 }
 
 /* ============================================
@@ -94,6 +102,8 @@
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 /* Class Header */
@@ -105,12 +115,12 @@
 .class-info h1 {
   font-size: 2rem;
   font-weight: bold;
-  color: #1f2937; /* Dark gray - modify text color here */
+  color: #1f2937;
   margin: 0 0 0.5rem 0;
 }
 
 .class-info p {
-  color: #6b7280; /* Gray subtitle - modify color here */
+  color: #6b7280;
   margin: 0;
 }
 
@@ -461,7 +471,7 @@
    Modify breakpoints as needed
    ============================================ */
 @media (max-width: 768px) {
-  .main-content {
+  .mc-main-content {
     padding: 1rem;
   }
   

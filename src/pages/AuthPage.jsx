@@ -5,12 +5,12 @@ import SignupForm from '../components/auth/SignupForm';
 /**
  * AuthPage Component
  * This is the main authentication page that renders either the login or signup form.
- * It's crucial to pass down the Firebase-related props to the child components.
+ * The LoginForm now manages its own Firebase instances and state internally.
  * @param {object} props - The component props.
- * @param {object} props.auth - The Firebase Auth instance.
- * @param {object} props.db - The Firestore instance.
- * @param {function} props.setMessage - A function to display messages to the user.
- * @param {object} props.googleProvider - The Firebase GoogleAuthProvider instance.
+ * @param {object} props.auth - The Firebase Auth instance (still used by SignupForm).
+ * @param {object} props.db - The Firestore instance (still used by SignupForm).
+ * @param {function} props.setMessage - A function to display messages to the user (still used by SignupForm).
+ * @param {object} props.googleProvider - The Firebase GoogleAuthProvider instance (still used by SignupForm).
  */
 const AuthPage = ({ auth, db, setMessage, googleProvider }) => {
   // State to toggle between login and signup forms
@@ -33,29 +33,10 @@ const AuthPage = ({ auth, db, setMessage, googleProvider }) => {
       {/* Form Section - Right Side */}
       <div className="form-section">
         <div className="form-container">
-          {/* Auth Toggle */}
-          <div className="auth-toggle">
-            <button 
-              className={`toggle-btn ${isLogin ? 'active' : ''}`}
-              onClick={() => setIsLogin(true)}
-            >
-              Log In
-            </button>
-            <button 
-              className={`toggle-btn ${!isLogin ? 'active' : ''}`}
-              onClick={() => setIsLogin(false)}
-            >
-              Sign Up
-            </button>
-          </div>
-
-          {/* Conditional form rendering, now with props passed down */}
+          {/* Conditional form rendering */}
           {isLogin ? (
             <LoginForm
-              auth={auth}
-              db={db}
-              setMessage={setMessage}
-              googleProvider={googleProvider}
+              onSwitchToSignup={() => setIsLogin(false)}
             />
           ) : (
             <SignupForm
@@ -63,6 +44,7 @@ const AuthPage = ({ auth, db, setMessage, googleProvider }) => {
               db={db}
               setMessage={setMessage}
               googleProvider={googleProvider}
+              onSwitchToLogin={() => setIsLogin(true)}
             />
           )}
         </div>

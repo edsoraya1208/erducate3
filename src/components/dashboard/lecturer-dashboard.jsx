@@ -353,7 +353,7 @@ const LecturerDashboard = () => {
                     style={{ cursor: 'pointer' }}
                   >
                     {/* Class Header with Title and Delete Button */}
-                    <div className="class-header">
+                    <div className="class-header-dashboard">
                       <h3 className="class-title">{classItem.title}</h3>
                       <button 
                         className="delete-btn"

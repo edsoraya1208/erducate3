@@ -21,7 +21,8 @@ BASE LAYOUT & TYPOGRAPHY
 }
 
 .dashboard-main {
-  padding: 32px;
+  padding-top: 32px;
+  padding-bottom: 32px;
   min-height: calc(100vh - 80px);
 }
 
@@ -42,7 +43,7 @@ HEADER SECTION
   margin-bottom: 2rem;
   flex-wrap: wrap;
   gap: 1rem;
- padding: 0 1rem 0 0; /* top right bottom left */  margin-left: -5px;
+ padding: 0 1rem 0 0; /* top right bottom left */  
 }
 
 

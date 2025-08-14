@@ -42,7 +42,7 @@ HEADER SECTION
   margin-bottom: 2rem;
   flex-wrap: wrap;
   gap: 1rem;
-  padding: 0 1rem;
+ padding: 0 1rem 0 0; /* top right bottom left */  margin-left: -5px;
 }
 
 
@@ -222,7 +222,7 @@ CLASSES GRID & CARDS
 }
 
 .class-title {
-  font-size: 18px;
+  font-size: 1.5rem;
   font-weight: 600;
   color: #1f2937;
   line-height: 1.4;
@@ -235,7 +235,7 @@ CLASSES GRID & CARDS
 }
 
 .code-label {
-  font-size: 14px;
+  font-size: 1rem;
   font-weight: 600;
   color: #374151;
   margin-bottom: 8px;
@@ -246,7 +246,7 @@ CLASSES GRID & CARDS
   align-items: center;
   gap: 12px;
   margin-bottom: 12px;
-  
+  margin-top: 12px;;
 }
 
 .class-code {

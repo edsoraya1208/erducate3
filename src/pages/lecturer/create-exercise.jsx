@@ -1,5 +1,6 @@
 import React from 'react';
 import { useUser } from '../../contexts/UserContext';
+import { useNavigate } from 'react-router-dom'; // Add this import
 import LecturerCreateExercise from '../../components/class/lecturer-create-exercise.jsx';
 import '../../styles/lecturer-shared-header.css';
 import '../../styles/create-exercise.css';
@@ -7,6 +8,12 @@ import '../../styles/create-exercise.css';
 // 🏠 PAGE WRAPPER: Handles page-level concerns like layout, authentication, and navigation
 const CreateExercisePage = () => {
   const { getUserDisplayName } = useUser();
+  const navigate = useNavigate(); // Add this hook
+
+  // Define the dashboard click handler
+  const onDashboardClick = () => {
+    navigate('/lecturer/dashboard1'); // Adjust the path as needed
+  };
 
   return (
     <div className="ce-page create-exercise-container">
@@ -29,7 +36,7 @@ const CreateExercisePage = () => {
         
         <div className="header-right">
           <nav className="nav-items">
-            <span className="nav-item">Dashboard</span>
+            <span className="nav-item" onClick={onDashboardClick}>Dashboard</span>
             <span className="nav-item">{getUserDisplayName()}</span>
             <button className="logout-btn">Logout</button>
           </nav>

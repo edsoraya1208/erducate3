@@ -103,11 +103,10 @@
   font-weight: 600;
 }
 
-/* 📋 MAIN CONTENT - UPDATED TO MATCH DASHBOARD */
 .ce-main-content {
-  max-width: 1200px; /* Changed from 95% to match dashboard */
-  margin: 0 auto; /* Center the content */
-  padding: 32px; /* Match dashboard padding */
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 0; /* Only top and bottom padding */
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 }
 
@@ -473,7 +472,7 @@
   
   .page-title {
     font-size: 2.0rem; /* Keep title size consistent on mobile */
-    text-align: center; /* Center on mobile like dashboard */
+    text-align: flex-start; /* Center on mobile like dashboard */
     word-wrap: break-word;
     margin: 0.5rem 0;
   }

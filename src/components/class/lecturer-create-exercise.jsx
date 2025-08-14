@@ -322,7 +322,7 @@ const LecturerCreateExercise = () => {
 
         {/* 🎯 FORM BUTTONS */}
         <div className="form-actions">
-          <button type="button" className="cancel-btn" disabled={isLoading}>
+          <button type="button" className="ce-cancel-btn" disabled={isLoading}>
             Cancel
           </button>
           <button type="submit" className="create-btn" disabled={isLoading}>

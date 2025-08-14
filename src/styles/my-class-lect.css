@@ -71,10 +71,10 @@
    MAIN CONTENT
    ============================================ */
 .mc-main-content {
-padding: 2rem 1rem;
-max-width: 1200px;
-margin: 0 auto;
-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  padding: 2rem 0; /* Remove horizontal padding */
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 }
 
 .mc-main-title {

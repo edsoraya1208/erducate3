@@ -213,12 +213,18 @@
   background: linear-gradient(135deg, #7b10a5, #5e17a5);
   color: white;
   border: none;
-  padding: 0.75rem 1.5rem;
+  padding: 8px 16px;
   border-radius: 6px;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: all 0.3s ease;
   white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(94, 23, 165, 0.2);
+  /* ADDED: Fixed width to prevent shrinking */
+  min-width: 120px;
+  /* ADDED: Prevent button from growing/shrinking */
+  flex-shrink: 0;
 }
 
 .new-exercise-btn:hover {

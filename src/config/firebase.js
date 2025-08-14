@@ -4,13 +4,14 @@ import { getAuth, GoogleAuthProvider, connectAuthEmulator } from 'firebase/auth'
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getStorage, connectStorageEmulator } from 'firebase/storage';
 
+// 🔐 Now using environment variables instead of hardcoded values
 const firebaseConfig = {
-  apiKey: "AIzaSyAeGIuGHEwVy8YSWw4EVJnrG8mW_Oy9mzU",
-  authDomain: "test-login-93e07.firebaseapp.com",
-  projectId: "test-login-93e07",
-  storageBucket: "test-login-93e07.firebasestorage.app",
-  messagingSenderId: "474856125810",
-  appId: "1:474856125810:web:5b68c13345b59badc019eb",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
   measurementId: "G-SC7CWEBPHC"
 };
 

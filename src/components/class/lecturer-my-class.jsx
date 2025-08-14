@@ -214,7 +214,7 @@ const LecturerMyClass = () => {
     return (
       <div className="page-container">
         <Header />
-        <main className="main-content">
+        <main className="mc-main-content">
           <div className="loading-container">
             <div className="loading-spinner"></div>
             <p>Loading class data...</p>
@@ -224,149 +224,145 @@ const LecturerMyClass = () => {
     );
   }
 
-  return (
-    <div className="page-container">
-      <Header />
+return (
+  <div className="page-container">
+    <Header />
 
-      <main className="main-content">
-        <div className="lecturer-my-class">
-          <div className="class-header">
-            <div className="class-info">
-              <h1>My Class</h1>
-              <p>Overview of class exercises</p>
-            </div>
-          </div>
-
-          <div className="class-details">
-            <h2>{classData.name || 'Database Principles - CS301-G2'}</h2>
-            <p className="class-meta">{classData.courseCode || 'CS301'} • {classData.enrolledStudents || 42} students enrolled</p>
-          </div>
-
-          <div className="tab-navigation">
-            <button 
-              className={`tab-btn ${activeTab === 'exercises' ? 'active' : ''}`}
-              onClick={() => setActiveTab('exercises')}
-            >
-              Exercises
-            </button>
-            <button 
-              className={`tab-btn ${activeTab === 'students' ? 'active' : ''}`}
-              onClick={() => setActiveTab('students')}
-            >
-              Students
-            </button>
-          </div>
-
-          {activeTab === 'exercises' && (
-            <div className="exercises-content">
-              <div className="exercises-controls">
-                <div className="search-filter">
-                  <input 
-                    type="text"
-                    placeholder="Search exercises..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="search-input"
-                  />
-                  <select 
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="status-filter"
-                  >
-                    <option value="all">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="draft">Draft</option>
-                    <option value="completed">Completed</option>
-                  </select>
-                </div>
-                <button 
-                  className="new-exercise-btn"
-                  onClick={handleNewExercise}
-                >
-                  + New Exercise
-                </button>
-              </div>
-
-              <div className="exercise-grid">
-                {loading ? (
-                  <div className="loading">Loading exercises...</div>
-                ) : (
-                  filteredExercises.map((exercise) => (
-                    <div key={exercise.id} className="exercise-card">
-                      <div className="exercise-header">
-                        <h3>{exercise.title}</h3>
-                        <span className={`status-badge ${getStatusBadge(exercise.status)}`}>
-                          {exercise.status?.toUpperCase()}
-                        </span>
-                      </div>
-                      
-                      <div className="exercise-meta">
-                        <p>Due: {exercise.dueDate}</p>
-                        <p>{exercise.submissions || 0}/{exercise.maxSubmissions || 0} submissions</p>
-                        <p>{exercise.marks} marks</p>
-                      </div>
-
-                      <div className="exercise-actions">
-                        {exercise.status === 'draft' ? (
-                          <>
-                            <button 
-                              className="btn-class-lect btn-publish"
-                              onClick={() => handlePublishExercise(exercise.id)}
-                            >
-                              Publish
-                            </button>
-                            <button 
-                              className="btn btn-edit"
-                              onClick={() => handleEditExercise(exercise.id)}
-                            >
-                              Edit
-                            </button>
-                          </>
-                        ) : (
-                          <button 
-                            className="btn btn-view"
-                            onClick={() => handleViewSubmissions(exercise.id)}
-                          >
-                            View Submission
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'students' && (
-            <div className="students-content">
-              <h3>Enrolled Students</h3>
-              <div className="students-list">
-                {loading ? (
-                  <div className="loading">Loading students...</div>
-                ) : (
-                  students.map((student) => (
-                    <div key={student.id} className="student-item">
-                      <div className="student-avatar">
-                        {getInitials(student.name)}
-                      </div>
-                      <div className="student-info">
-                        <h4>{student.name}</h4>
-                        <p>{student.email}</p>
-                      </div>
-                      <div className="student-progress">
-                        {student.completedExercises || 0}/{exercises.length} exercises completed
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
+    <main className="mc-main-content">
+      {/* Main title outside the white container */}
+      <h1 className="mc-main-title">My Exercises</h1>
+      
+      <div className="lecturer-my-class">
+        <div className="class-details">
+          <h2>{classData.name || 'Database Principles - CS301-G2'}</h2>
+          <p className="class-meta">{classData.courseCode || 'CS301'} • {classData.enrolledStudents || 42} students enrolled</p>
         </div>
-      </main>
-    </div>
-  );
+
+        <div className="tab-navigation">
+          <button 
+            className={`tab-btn ${activeTab === 'exercises' ? 'active' : ''}`}
+            onClick={() => setActiveTab('exercises')}
+          >
+            Exercises
+          </button>
+          <button 
+            className={`tab-btn ${activeTab === 'students' ? 'active' : ''}`}
+            onClick={() => setActiveTab('students')}
+          >
+            Students
+          </button>
+        </div>
+
+        {activeTab === 'exercises' && (
+          <div className="exercises-content">
+            <div className="exercises-controls">
+              <div className="search-filter">
+                <input 
+                  type="text"
+                  placeholder="Search exercises..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="search-input"
+                />
+                <select 
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="status-filter"
+                >
+                  <option value="all">All Status</option>
+                  <option value="active">Active</option>
+                  <option value="draft">Draft</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </div>
+              <button 
+                className="new-exercise-btn"
+                onClick={handleNewExercise}
+              >
+                + New Exercise
+              </button>
+            </div>
+
+            <div className="exercise-grid">
+              {loading ? (
+                <div className="loading">Loading exercises...</div>
+              ) : (
+                filteredExercises.map((exercise) => (
+                  <div key={exercise.id} className="exercise-card">
+                    <div className="exercise-header">
+                      <h3>{exercise.title}</h3>
+                      <span className={`status-badge ${getStatusBadge(exercise.status)}`}>
+                        {exercise.status?.toUpperCase()}
+                      </span>
+                    </div>
+                    
+                    <div className="exercise-meta">
+                      <p>Due: {exercise.dueDate}</p>
+                      <p>{exercise.submissions || 0}/{exercise.maxSubmissions || 0} submissions</p>
+                      <p>{exercise.marks} marks</p>
+                    </div>
+
+                    <div className="exercise-actions">
+                      {exercise.status === 'draft' ? (
+                        <>
+                          <button 
+                            className="btn-class-lect btn-publish"
+                            onClick={() => handlePublishExercise(exercise.id)}
+                          >
+                            Publish
+                          </button>
+                          <button 
+                            className="btn btn-edit"
+                            onClick={() => handleEditExercise(exercise.id)}
+                          >
+                            Edit
+                          </button>
+                        </>
+                      ) : (
+                        <button 
+                          className="btn btn-view"
+                          onClick={() => handleViewSubmissions(exercise.id)}
+                        >
+                          View Submission
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'students' && (
+          <div className="students-content">
+            <h3>Enrolled Students</h3>
+            <div className="students-list">
+              {loading ? (
+                <div className="loading">Loading students...</div>
+              ) : (
+                students.map((student) => (
+                  <div key={student.id} className="student-item">
+                    <div className="student-avatar">
+                      {getInitials(student.name)}
+                    </div>
+                    <div className="student-info">
+                      <h4>{student.name}</h4>
+                      <p>{student.email}</p>
+                    </div>
+                    <div className="student-progress">
+                      {student.completedExercises || 0}/{exercises.length} exercises completed
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </main>
+  </div>
+);
 };
 
 export default LecturerMyClass;

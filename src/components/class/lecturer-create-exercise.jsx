@@ -174,7 +174,7 @@ const LecturerCreateExercise = () => {
       </header>
 
       {/* 📋 MAIN FORM SECTION */}
-      <main className="main-content">
+      <main className="ce-main-content">
         <h1 className="page-title">Create Exercise</h1>
         
         <form onSubmit={handleSubmit} className="exercise-form">

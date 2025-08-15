@@ -1,120 +1,410 @@
-/* Add these styles to your existing WelcomePage.css */
+/* Import fonts for rounded/bubble effect */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
-/* HAMBURGER MENU STYLES - Mobile Only */
-.hamburger-menu {
-  display: none;
-  flex-direction: column;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
-  background: none;
-  border: none;
+/* Modern CSS Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.hamburger-menu:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+.wp-body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  line-height: 1.6;
+  color: #333;
 }
 
-.hamburger-line {
-  width: 24px;
-  height: 3px;
-  background-color: white;
-  margin: 2px 0;
-  transition: all 0.3s ease;
-  border-radius: 2px;
+/* Welcome Container */
+.welcome-container {
+  min-height: 100vh;
+  background: #f8f9fa;
 }
 
-/* Hamburger animation when open */
-.hamburger-menu.open .hamburger-line:nth-child(1) {
-  transform: rotate(45deg) translate(6px, 6px);
+/* Hero Section */
+.hero-section {
+  position: relative;
+  background: linear-gradient(135deg, #7b10a5, #5e17a5);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  overflow: hidden;
 }
 
-.hamburger-menu.open .hamburger-line:nth-child(2) {
-  opacity: 0;
-}
 
-.hamburger-menu.open .hamburger-line:nth-child(3) {
-  transform: rotate(-45deg) translate(6px, -6px);
-}
-
-/* Mobile menu dropdown */
-.mobile-menu {
-  display: none;
+/* Floating background elements */
+.hero-background {
   position: absolute;
-  top: 100%;
+  top: 0;
   left: 0;
   right: 0;
-  background: linear-gradient(135deg, #7b10a5, #5e17a5);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  bottom: 0;
+  opacity: 0.35;
 }
 
-.mobile-menu.open {
-  display: block;
-  animation: slideDown 0.3s ease-out;
+.background-circles {
+  position: relative;
+  width: 100%;
+  height: 100%;
 }
 
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.circle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  animation: float 6s ease-in-out infinite;
 }
 
-.mobile-nav-items {
+.circle-1 {
+  width: 200px;
+  height: 200px;
+  top: 10%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.circle-2 {
+  width: 150px;
+  height: 150px;
+  top: 60%;
+  right: 15%;
+  animation-delay: 2s;
+}
+
+.circle-3 {
+  width: 100px;
+  height: 100px;
+  bottom: 20%;
+  left: 60%;
+  animation-delay: 4s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+/* Hero Content */
+.hero-content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  max-width: 900px;
+  color: white;
+}
+
+/* Logo Section */
+.logo-section {
+  margin-bottom: rem;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin-bottom: 2rem;
+  margin-left: auto;
+  margin-right: auto;
+  width: max-content;
+  transform: translateX(-12px); /* shift left slightly */
+}
+
+
+
+/* ERDucate title */
+.logo-text {
+  font-size: 4.8rem;
+  font-weight: 850;
+  margin: 0;
+  padding:0;
+  letter-spacing: -0.02em;
+  font-family: 'Nunito', sans-serif;
+}
+
+/* Subtitle */
+.hero-subtitle {
+  font-size: 1.6rem;
+  font-weight: 400;
+  margin-bottom: 2rem;
+  opacity: 0.95;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Description text */
+.hero-description {
+  font-size: 1.4rem;
+  line-height: 1.7;
+  margin-bottom: 3rem;
+  opacity: 0.85;
+  font-weight: 300;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ada get started and learn more*/
+.button-container {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 2rem;
+}
+
+.learn-more-btn {
+  padding: 14px 28px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border: 2px solid #2ec6cb;
+  background: transparent;
+  color: #2ec6cb;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+  min-width: 200px; /* Add this line */
+  text-align: center; /* Add this to center the text */
+  box-sizing: border-box; /* Add this for consistent sizing */
+  
+}
+
+.learn-more-btn:hover {
+  background: #2ec6cb;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(46, 198, 203, 0.3);
+}
+
+/* Get Started Button - EXACTLY matching the orange from image */
+.get-started-btn {
+  background: linear-gradient(135deg, #FF8A50 0%, #FF6B35 100%) !important;
+  color: white !important;
+  padding: 18px 40px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+  min-width: 200px;
+}
+
+.get-started-btn:hover {
+  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 107, 53, 0.6);
+}
+
+/* Features Section - Light gray background like in image */
+.features-section {
+  padding: 80px 20px;
+  background: #F8F9FA;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 300px); /* Fixed width instead of minmax */
+  grid-auto-rows: 1fr;
+  gap: 40px;
+  justify-content: center; /* Centers the grid columns */
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  gap: 45px; /* Increased gap for better spacing */
+}
+
+/* Feature Cards - White background with subtle shadow */
+.feature-card {
+  background: white;
+  padding: 40px 30px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  border: 1px solid #E5E7EB;
+  height: 100%;
+  max-width: 500px; /* Limit max width */
   display: flex;
   flex-direction: column;
-  padding: 16px 0;
+  justify-content: center; /* Centers content vertically */
+  align-items: center; /* Centers content horizontally */
+  min-height: 280px; /* Set minimum height to make them taller */
+  
 }
 
-.mobile-nav-item {
+.feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+/* Feature Icons - Circular colored backgrounds */
+.feature-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* Different background colors for each icon to match image */
+.feature-card:nth-child(1) .feature-icon {
+  background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+}
+
+.feature-card:nth-child(2) .feature-icon {
+  background: linear-gradient(135deg, #df8e02 0%, #D97706 100%);
+}
+
+.feature-card:nth-child(3) .feature-icon {
+  background: linear-gradient(135deg, #34ca0b 0%, #0ee31c 100%);
+}
+
+.feature-card:nth-child(4) .feature-icon {
+  background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+}
+
+.feature-icon svg {
   color: white;
-  font-size: 16px;
-  padding: 12px 24px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  border: none;
-  background: none;
-  text-align: left;
-  width: 100%;
+  fill: white;
 }
 
-.mobile-nav-item:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+/* Feature Titles */
+.feature-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #1F2937;
+  margin-bottom: 16px;
+  font-family: 'Inter', sans-serif;
 }
 
-.mobile-nav-item.active {
-  background-color: rgba(255, 255, 255, 0.15);
-  font-weight: 500;
+/* Feature Descriptions */
+.feature-description {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #6B7280;
+  margin: 0;
+  font-weight: 400;
 }
 
-.mobile-nav-item.logout-btn {
-  background: linear-gradient(135deg, #FF8A50 0%, #FF6B35 100%) !important;
-  margin: 8px 16px;
-  border-radius: 25px;
-  text-align: center;
+/* Mobile Responsive Design - First breakpoint for tablets and smaller laptops */
+@media (max-width: 1024px) {
+  .features-grid {
+    grid-template-columns: repeat(2, 280px); /* Slightly smaller cards for medium screens */
+    gap: 35px; /* Adjusted gap for medium screens */
+  }
 }
 
-/* Update your existing mobile responsive styles */
+/* Mobile Responsive Design - Main tablet breakpoint */
 @media (max-width: 768px) {
-  /* Make sure your header has position relative for the dropdown */
-  .dashboard-header {
-    position: relative;
+  /* Hero section adjustments for mobile */
+  .hero-section {
+    padding: 40px 20px;
+    min-height: 90vh; /* Slightly reduced height for mobile */
   }
   
-  /* Hide desktop navigation on mobile */
-  .nav-items {
-    display: none;
+  /* Logo adjustments for mobile */
+  .logo {
+    flex-direction: column;
+    gap: 16px;
+    transform: none; /* Remove left shift on mobile */
   }
   
-  /* Show hamburger menu on mobile */
-  .hamburger-menu {
-    display: flex;
+  /* Text size adjustments for mobile readability */
+  .logo-text {
+    font-size: 3rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.3rem;
+  }
+  
+  .hero-description {
+    font-size: 1.1rem; /* Slightly larger for better mobile readability */
+    margin-bottom: 2.5rem; /* Adjusted spacing */
+  }
+  
+  /* Feature cards switch to single column layout on mobile */
+  .features-grid {
+    grid-template-columns: 1fr; /* Single column layout for mobile */
+    gap: 25px; /* Reduced gap for mobile to fit more content */
+    padding: 0 15px; /* Adjusted padding for mobile screens */
+  }
+  
+  /* Features section padding adjustment for mobile */
+  .features-section {
+    padding: 60px 15px; /* Reduced padding for mobile */
+  }
+  
+  /* Feature cards optimization for mobile single column */
+  .feature-card {
+    max-width: 100%; /* Full width in mobile single column */
+    margin: 0 auto; /* Center cards in mobile layout */
+    min-height: 240px; /* Slightly reduced height for mobile */
+  }
+  
+  /* Button container stacked layout for mobile */
+  .button-container {
+    flex-direction: column; /* Stack buttons vertically on mobile */
+    gap: 15px; /* Reduced gap between stacked buttons */
+  }
+  
+  /* Button adjustments for mobile */
+  .learn-more-btn {
+    width: auto; /* Flexible width for mobile */
+    max-width: 280px; /* Maximum width constraint for mobile */
+    min-width: 200px; /* Maintain minimum readable size */
+  }
+}
+
+/* Small mobile devices responsive design */
+@media (max-width: 480px) {
+  /* Further text size adjustments for small mobile screens */
+  .logo-text {
+    font-size: 2.5rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.1rem;
+  }
+  
+  .hero-description {
+    font-size: 1rem; /* Standard size for small mobile screens */
+  }
+  
+  /* Button size adjustment for small mobile screens */
+  .get-started-btn {
+    padding: 16px 32px;
+    font-size: 1rem;
+  }
+  
+  /* Feature card padding adjustment for small mobile screens */
+  .feature-card {
+    padding: 25px 20px; /* Reduced padding for small screens */
+    min-height: 220px; /* Slightly smaller for very small screens */
+  }
+  
+  /* Features section padding for very small screens */
+  .features-section {
+    padding: 50px 10px; /* Minimal padding for small screens */
+  }
+  
+  /* Feature grid padding adjustment for small screens */
+  .features-grid {
+    gap: 20px; /* Tighter spacing for small screens */
+    padding: 0 10px; /* Minimal side padding */
   }
 }

@@ -300,17 +300,30 @@
   font-weight: 400;
 }
 
-/* Responsive Design */
+/* Mobile Responsive Design - First breakpoint for tablets and smaller laptops */
+@media (max-width: 1024px) {
+  .features-grid {
+    grid-template-columns: repeat(2, 280px); /* Slightly smaller cards for medium screens */
+    gap: 35px; /* Adjusted gap for medium screens */
+  }
+}
+
+/* Mobile Responsive Design - Main tablet breakpoint */
 @media (max-width: 768px) {
+  /* Hero section adjustments for mobile */
   .hero-section {
     padding: 40px 20px;
+    min-height: 90vh; /* Slightly reduced height for mobile */
   }
   
+  /* Logo adjustments for mobile */
   .logo {
     flex-direction: column;
     gap: 16px;
+    transform: none; /* Remove left shift on mobile */
   }
   
+  /* Text size adjustments for mobile readability */
   .logo-text {
     font-size: 3rem;
   }
@@ -320,20 +333,46 @@
   }
   
   .hero-description {
-    font-size: 1rem;
+    font-size: 1.1rem; /* Slightly larger for better mobile readability */
+    margin-bottom: 2.5rem; /* Adjusted spacing */
   }
   
+  /* Feature cards switch to single column layout on mobile */
   .features-grid {
-    grid-template-columns: 1fr;
-    gap: 30px;
+    grid-template-columns: 1fr; /* Single column layout for mobile */
+    gap: 25px; /* Reduced gap for mobile to fit more content */
+    padding: 0 15px; /* Adjusted padding for mobile screens */
   }
   
+  /* Features section padding adjustment for mobile */
   .features-section {
-    padding: 60px 20px;
+    padding: 60px 15px; /* Reduced padding for mobile */
+  }
+  
+  /* Feature cards optimization for mobile single column */
+  .feature-card {
+    max-width: 100%; /* Full width in mobile single column */
+    margin: 0 auto; /* Center cards in mobile layout */
+    min-height: 240px; /* Slightly reduced height for mobile */
+  }
+  
+  /* Button container stacked layout for mobile */
+  .button-container {
+    flex-direction: column; /* Stack buttons vertically on mobile */
+    gap: 15px; /* Reduced gap between stacked buttons */
+  }
+  
+  /* Button adjustments for mobile */
+  .learn-more-btn {
+    width: auto; /* Flexible width for mobile */
+    max-width: 280px; /* Maximum width constraint for mobile */
+    min-width: 200px; /* Maintain minimum readable size */
   }
 }
 
+/* Small mobile devices responsive design */
 @media (max-width: 480px) {
+  /* Further text size adjustments for small mobile screens */
   .logo-text {
     font-size: 2.5rem;
   }
@@ -342,38 +381,30 @@
     font-size: 1.1rem;
   }
   
+  .hero-description {
+    font-size: 1rem; /* Standard size for small mobile screens */
+  }
+  
+  /* Button size adjustment for small mobile screens */
   .get-started-btn {
     padding: 16px 32px;
     font-size: 1rem;
   }
   
+  /* Feature card padding adjustment for small mobile screens */
   .feature-card {
-    padding: 30px 20px;
+    padding: 25px 20px; /* Reduced padding for small screens */
+    min-height: 220px; /* Slightly smaller for very small screens */
   }
-}
-
-/* Update mobile responsive layout */
-@media (max-width: 768px) {
+  
+  /* Features section padding for very small screens */
+  .features-section {
+    padding: 50px 10px; /* Minimal padding for small screens */
+  }
+  
+  /* Feature grid padding adjustment for small screens */
   .features-grid {
-    grid-template-columns: repeat(2, 1fr); /* Keep 2 columns on mobile */
-    gap: 20px;
-    padding: 0 10px;
-  }
-  
-  .feature-card {
-    padding: 30px 15px;
-  }
-}
-
-@media (max-width: 768px) {
-  .button-container {
-    flex-direction: column;
-    gap: 15px;
-  }
-  
-.learn-more-btn {
-    width: auto; /* Change from 100% to auto */
-    max-width: 280px;
-    min-width: 200px; /* Add this to maintain minimum size */
+    gap: 20px; /* Tighter spacing for small screens */
+    padding: 0 10px; /* Minimal side padding */
   }
 }

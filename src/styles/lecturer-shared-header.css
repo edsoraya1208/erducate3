@@ -1,23 +1,16 @@
-/* 
-  HEADER STYLES
-  Top navigation bar with purple background
-*/
+/* HEADER STYLES - Main container */
 .dashboard-header {
-  background: linear-gradient(135deg, #7b10a5, #5e17a5);  color: white;
+  background: linear-gradient(135deg, #7b10a5, #5e17a5);
+  color: white;
   padding: 16px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-
 }
 
-
-/* 
-  LOGO SECTION
-  Left side of header with ERDucate branding
-*/
+/* LEFT SECTION - Logo and branding */
 .header-left {
   display: flex;
   align-items: center;
@@ -27,33 +20,21 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  gap: 12px !important; /* Force the gap */
-  transform: translateZ(0); /* Force hardware acceleration */
+  gap: 12px !important;
+  transform: translateZ(0);
 }
 
-/* 
-  CUSTOM LOGO STYLES
-  Controls the size and positioning of the ERDucate logo image
-*/
 .custom-logo {
-  width: 200px;           /* Sets logo width */
-  height: 60px;           /* Sets logo height */
-  margin-left: -60px;     /* Moves logo left (negative = leftward) */
-  margin-right: -65px;    /* Reduces space after logo */
+  width: 200px;
+  height: 60px;
+  margin-left: -60px;
+  margin-right: -65px;
 }
-
-/* 
-  BRAND NAME STYLES  
-  Styles for the "ERDucate" text next to logo
-*/
-
 
 .logo-icon {
   display: flex;
   align-items: center;
 }
-
-
 
 .logo-text {
   color: white;
@@ -63,17 +44,14 @@
 }
 
 .brand-name {
-  font-family: 'Nunito', sans-serif;  /* Custom font */
-  font-size: 38px;                    /* Large text size */
-  font-weight: 1000;                  /* Extra bold */
-  letter-spacing: 1px;                /* Space between letters */
-  color: white;                       /* Keep text white */
+  font-family: 'Nunito', sans-serif;
+  font-size: 38px;
+  font-weight: 1000;
+  letter-spacing: 1px;
+  color: white;
 }
 
-/* 
-  NAVIGATION SECTION
-  Right side of header with navigation items
-*/
+/* RIGHT SECTION - Navigation and logout */
 .header-right {
   display: flex;
   align-items: center;
@@ -103,35 +81,27 @@
   font-weight: 500;
 }
 
-/* 
-  LOGOUT BUTTON
-  Orange logout button in the header
-*/
+/* LOGOUT BUTTON */
 .logout-btn {
-  background: linear-gradient(135deg, #FF8A50 0%, #FF6B35 100%) !important;  color: white;
+  background: linear-gradient(135deg, #FF8A50 0%, #FF6B35 100%) !important;
+  color: white;
   border: none;
   padding: 10px 20px;
-  border-radius: 25px; /* Rounded pill shape */
+  border-radius: 25px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  
-  
 }
 
 .logout-btn:hover {
-  background-color: #ea580c; /* Darker orange on hover */
+  background-color: #ea580c;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
 }
 
-  ACCESSIBILITY IMPROVEMENTS
-  Better focus states for keyboard navigation
-*/
-.logout-btn:focus,
-.delete-btn:focus,
-.copy-btn:focus {
+/* ACCESSIBILITY */
+.logout-btn:focus, .delete-btn:focus, .copy-btn:focus {
   outline: 2px solid #4a12bb;
   outline-offset: 2px;
 }
@@ -139,4 +109,72 @@
 .nav-item:focus {
   outline: 2px solid rgba(255, 255, 255, 0.5);
   outline-offset: 2px;
+}
+
+/* MOBILE RESPONSIVE STYLES */
+@media (max-width: 768px) {
+  .dashboard-header {
+    padding: 12px 16px;
+    flex-wrap: wrap;
+    min-height: 60px;
+  }
+  
+  .custom-logo {
+    width: 120px;
+    height: 36px;
+    margin-left: -30px;
+    margin-right: -30px;
+  }
+  
+  .brand-name {
+    font-size: 24px;
+    font-weight: 800;
+  }
+  
+  .nav-items {
+    gap: 12px;
+  }
+  
+  .nav-item {
+    font-size: 14px;
+    padding: 6px 8px;
+  }
+  
+  .logout-btn {
+    padding: 8px 16px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-header {
+    padding: 8px 12px;
+  }
+  
+  .custom-logo {
+    width: 80px;
+    height: 24px;
+    margin-left: -20px;
+    margin-right: -20px;
+  }
+  
+  .brand-name {
+    font-size: 18px;
+    font-weight: 700;
+  }
+  
+  .nav-items {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  
+  .nav-item {
+    font-size: 12px;
+    padding: 4px 6px;
+  }
+  
+  .logout-btn {
+    padding: 6px 12px;
+    font-size: 11px;
+  }
 }

@@ -1,27 +1,72 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/WelcomePage.css';
 
 const Welcome = () => {
   const navigate = useNavigate();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleGetStarted = () => {
     navigate('/auth');
   };
 
   const handleLearnMore = () => {
-  const element = document.querySelector('.features-section');
-  const elementPosition = element.offsetTop;
-  const offsetPosition = elementPosition - 0; // 100px offset from top
+    const element = document.querySelector('.features-section');
+    const elementPosition = element.offsetTop;
+    const offsetPosition = elementPosition - 0;
 
-  window.scrollTo({
-    top: offsetPosition,
-    behavior: 'smooth'
-  });
-};
+    window.scrollTo({
+      top: offsetPosition,
+      behavior: 'smooth'
+    });
+  };
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
 
   return (
-    <div className=" wp-body welcome-container">
+    <div className="wp-body welcome-container">
+      {/* ADD THIS: Header with hamburger menu */}
+      <header className="dashboard-header">
+        <div className="header-left">
+          <div className="logo-container">
+            <div className="logo-icon">
+              {/* Your existing logo SVG */}
+            </div>
+            <h1 className="brand-name">ERDucate</h1>
+          </div>
+        </div>
+
+        <div className="header-right">
+          {/* Desktop Navigation */}
+          <nav className="nav-items">
+            <div className="nav-item">Home</div>
+            <div className="nav-item">Features</div>
+            <button className="nav-item logout-btn" onClick={handleGetStarted}>Get Started</button>
+          </nav>
+
+          {/* Mobile Hamburger Menu */}
+          <button 
+            className={`hamburger-menu ${isMobileMenuOpen ? 'open' : ''}`} 
+            onClick={toggleMobileMenu}
+          >
+            <div className="hamburger-line"></div>
+            <div className="hamburger-line"></div>
+            <div className="hamburger-line"></div>
+          </button>
+        </div>
+
+        {/* Mobile Menu Dropdown */}
+        <div className={`mobile-menu ${isMobileMenuOpen ? 'open' : ''}`}>
+          <nav className="mobile-nav-items">
+            <button className="mobile-nav-item">Home</button>
+            <button className="mobile-nav-item" onClick={handleLearnMore}>Features</button>
+            <button className="mobile-nav-item logout-btn" onClick={handleGetStarted}>Get Started</button>
+          </nav>
+        </div>
+      </header>
+
       <section className="hero-section">
         <div className="hero-background">
           <div className="background-circles">
@@ -40,7 +85,6 @@ const Welcome = () => {
                   viewBox="0 0 1024.5 576"
                   preserveAspectRatio="xMidYMid meet"
                 >
-
                   <defs>
                     <clipPath id="54c61c8446">
                       <path d="M 0 0.140625 L 1024 0.140625 L 1024 575.859375 L 0 575.859375 Z M 0 0.140625 " />

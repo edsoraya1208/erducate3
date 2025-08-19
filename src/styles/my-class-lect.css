@@ -209,7 +209,7 @@
   min-width: 120px;
 }
 
-.new-exercise-btn {
+.new-exercise-btn  {
   background: linear-gradient(135deg, #7b10a5, #5e17a5);
   color: white;
   border: none;
@@ -340,12 +340,28 @@
 }
 
 .btn-view {
-  background-color: #8b5fbf; /* Purple view button - modify color here */
+  background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
   color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(94, 23, 165, 0.2);
+  /* ADDED: Fixed width to prevent shrinking */
+  min-width: 120px;
+  /* ADDED: Prevent button from growing/shrinking */
+  flex-shrink: 0;
 }
 
+
 .btn-view:hover {
-  background-color: #7c3aed;
+background: linear-gradient(135deg, #00a085 0%, #00896b 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 184, 148, 0.3);
 }
 
 /* ============================================

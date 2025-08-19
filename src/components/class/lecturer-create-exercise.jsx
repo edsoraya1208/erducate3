@@ -321,7 +321,7 @@ const LecturerCreateExercise = () => {
                   Browse Files
                 </button>
                 <small className="file-info">
-                  Supported formats: PNG, JPG, GIF, WebP (Max 10MB)
+                  Supported formats: PNG, JPG, GIF, WebP (Max 2MB)
                 </small>
                 {formData.answerSchemeFile && (
                   <p className="file-selected">
@@ -362,7 +362,7 @@ const LecturerCreateExercise = () => {
                   Browse Files
                 </button>
                 <small className="file-info">
-                  Supported format: PDF (Max 10MB)
+                  Supported format: PDF (Max 2MB)
                 </small>
                 {formData.rubricFile && (
                   <p className="file-selected">

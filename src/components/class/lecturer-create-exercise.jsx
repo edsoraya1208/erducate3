@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useUser } from '../../contexts/UserContext';
 
-// 🔥 FIREBASE IMPORTS
+// 🔥 FIREBASE IMPORTS - Only for Firestore (exercise data)
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '../../config/firebase';
+import { db } from '../../config/firebase';
+
+// 🌤️ CLOUDINARY IMPORT - For file uploads
+import { uploadToCloudinary } from '../../config/cloudinary';
 
 // 🎯 MAIN COMPONENT: This handles the create exercise form logic and UI
 const LecturerCreateExercise = () => {
@@ -32,45 +34,59 @@ const LecturerCreateExercise = () => {
     }));
   };
 
-  // 📁 HANDLE FILE UPLOADS: For answer scheme and rubric files
+  // 📁 HANDLE FILE UPLOADS: Enhanced validation for answer scheme and rubric files
   const handleFileUpload = (e, fileType) => {
     const file = e.target.files[0];
-    if (file) {
-      // Validate file size (2MB limit)
-      if (file.size > 2 * 1024 * 1024) {
-        alert('File size must be less than 2MB');
+    if (!file) return;
+
+    // 🛡️ ENHANCED FILE VALIDATION
+    try {
+      // Size validation (10MB limit)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        alert('File size must be less than 10MB');
+        e.target.value = ''; // Clear the input
         return;
       }
-      
+
+      // 📝 TYPE VALIDATION based on field
+      if (fileType === 'answerSchemeFile') {
+        // Answer scheme should be images only
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+          alert('Answer scheme must be an image file (JPG, PNG, GIF, WebP)');
+          e.target.value = '';
+          return;
+        }
+      } else if (fileType === 'rubricFile') {
+        // Rubric should be PDF only
+        if (file.type !== 'application/pdf') {
+          alert('Rubric must be a PDF file');
+          e.target.value = '';
+          return;
+        }
+      }
+
+      // 🔒 FILENAME VALIDATION - Prevent malicious filenames
+      const sanitizedName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+      if (sanitizedName !== file.name) {
+        console.warn('Filename was sanitized for security');
+      }
+
+      // ✅ FILE ACCEPTED
       setFormData(prev => ({
         ...prev,
         [fileType]: file
       }));
-    }
-  };
 
-  // 🔥 FIREBASE HELPER FUNCTION: Upload file to Firebase Storage
-  const uploadFileToStorage = async (file, folder) => {
-    if (!file) return null;
-    
-    try {
-      // Create unique filename with timestamp
-      const fileName = `${Date.now()}_${file.name}`;
-      const fileRef = ref(storage, `${folder}/${fileName}`);
-      
-      // Upload file
-      const snapshot = await uploadBytes(fileRef, file);
-      
-      // Get download URL
-      const downloadURL = await getDownloadURL(snapshot.ref);
-      return downloadURL;
     } catch (error) {
-      console.error(`Error uploading ${folder} file:`, error);
-      throw error;
+      console.error('File validation error:', error);
+      alert('Error validating file. Please try again.');
+      e.target.value = '';
     }
   };
 
-  // 🚀 SUBMIT FORM: This connects to Firebase
+  // 🚀 SUBMIT FORM: This uploads to Cloudinary and saves to Firestore
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -80,36 +96,78 @@ const LecturerCreateExercise = () => {
       return;
     }
 
+    // ✅ VALIDATION: Ensure user is authenticated
+    if (!user || !user.uid) {
+      alert('You must be logged in to create exercises');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      // 📤 STEP 1: Upload files to Firebase Storage
-      let answerSchemeURL = null;
-      let rubricURL = null;
+      // 🌤️ STEP 1: Upload files to Cloudinary (replaces Firebase Storage)
+      let answerSchemeData = null;
+      let rubricData = null;
 
       if (formData.answerSchemeFile) {
-        console.log('Uploading answer scheme...');
-        answerSchemeURL = await uploadFileToStorage(formData.answerSchemeFile, 'answer-schemes');
+        console.log('Uploading answer scheme to Cloudinary...');
+        try {
+          answerSchemeData = await uploadToCloudinary(
+            formData.answerSchemeFile, 
+            'answer-schemes' // Cloudinary folder
+          );
+          console.log('✅ Answer scheme uploaded:', answerSchemeData.url);
+        } catch (uploadError) {
+          throw new Error(`Answer scheme upload failed: ${uploadError.message}`);
+        }
       }
 
       if (formData.rubricFile) {
-        console.log('Uploading rubric...');
-        rubricURL = await uploadFileToStorage(formData.rubricFile, 'rubrics');
+        console.log('Uploading rubric to Cloudinary...');
+        try {
+          rubricData = await uploadToCloudinary(
+            formData.rubricFile, 
+            'rubrics' // Cloudinary folder
+          );
+          console.log('✅ Rubric uploaded:', rubricData.url);
+        } catch (uploadError) {
+          throw new Error(`Rubric upload failed: ${uploadError.message}`);
+        }
       }
 
       // 🗄️ STEP 2: Save exercise data to Firestore
       const exerciseData = {
-        title: formData.title,
-        description: formData.description,
+        title: formData.title.trim(),
+        description: formData.description.trim(),
         dueDate: formData.dueDate || null,
-        totalMarks: parseInt(formData.totalMarks),
-        answerSchemeURL: answerSchemeURL,
-        answerSchemeFileName: formData.answerSchemeFile?.name || null,
-        rubricURL: rubricURL,
-        rubricFileName: formData.rubricFile?.name || null,
-        // ✅ Use actual logged-in user instead of hardcoded
+        totalMarks: parseInt(formData.totalMarks) || 100,
+        
+        // 🌤️ CLOUDINARY DATA - More detailed for AI integration
+        answerScheme: answerSchemeData ? {
+          url: answerSchemeData.url,           // Direct access URL
+          publicId: answerSchemeData.publicId, // For transformations/deletions
+          originalName: answerSchemeData.originalName,
+          fileType: answerSchemeData.fileType,
+          fileSize: answerSchemeData.fileSize,
+          width: answerSchemeData.width,       // Useful for image analysis
+          height: answerSchemeData.height,
+          format: answerSchemeData.format,
+          uploadedAt: answerSchemeData.createdAt
+        } : null,
+        
+        rubric: rubricData ? {
+          url: rubricData.url,
+          publicId: rubricData.publicId,
+          originalName: rubricData.originalName,
+          fileType: rubricData.fileType,
+          fileSize: rubricData.fileSize,
+          format: rubricData.format,
+          uploadedAt: rubricData.createdAt
+        } : null,
+        
+        // ✅ User and metadata
         createdBy: getUserDisplayName(),
-        createdById: user?.uid || null, // Also store user ID for database queries
+        createdById: user.uid,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         status: 'active'
@@ -119,7 +177,7 @@ const LecturerCreateExercise = () => {
       const docRef = await addDoc(collection(db, 'exercises'), exerciseData);
       
       console.log('✅ Exercise created with ID:', docRef.id);
-      alert('Exercise created successfully!');
+      alert('Exercise created successfully! Files uploaded to Cloudinary.');
       
       // 🔄 RESET FORM: Clear form after successful submission
       setFormData({
@@ -132,12 +190,22 @@ const LecturerCreateExercise = () => {
       });
       
       // Clear file inputs
-      document.getElementById('answerScheme').value = '';
-      document.getElementById('rubric').value = '';
+      const answerSchemeInput = document.getElementById('answerScheme');
+      const rubricInput = document.getElementById('rubric');
+      if (answerSchemeInput) answerSchemeInput.value = '';
+      if (rubricInput) rubricInput.value = '';
       
     } catch (error) {
       console.error('❌ Error creating exercise:', error);
-      alert('Error creating exercise. Please check the console and try again.');
+      
+      // 🚨 BETTER ERROR HANDLING
+      if (error.message.includes('Upload failed')) {
+        alert(`File upload error: ${error.message}`);
+      } else if (error.message.includes('Firestore')) {
+        alert('Database error. Files uploaded but exercise not saved. Please contact support.');
+      } else {
+        alert(`Error creating exercise: ${error.message}`);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -241,10 +309,13 @@ const LecturerCreateExercise = () => {
                   Browse Files
                 </button>
                 <small className="file-info">
-                  Supported formats: PNG, JPG (Max 10MB)
+                  Supported formats: PNG, JPG, GIF, WebP (Max 10MB)
                 </small>
                 {formData.answerSchemeFile && (
-                  <p className="file-selected">Selected: {formData.answerSchemeFile.name}</p>
+                  <p className="file-selected">
+                    ✅ Selected: {formData.answerSchemeFile.name} 
+                    ({(formData.answerSchemeFile.size / 1024 / 1024).toFixed(2)} MB)
+                  </p>
                 )}
               </div>
             </div>
@@ -282,7 +353,10 @@ const LecturerCreateExercise = () => {
                   Supported format: PDF (Max 10MB)
                 </small>
                 {formData.rubricFile && (
-                  <p className="file-selected">Selected: {formData.rubricFile.name}</p>
+                  <p className="file-selected">
+                    ✅ Selected: {formData.rubricFile.name}
+                    ({(formData.rubricFile.size / 1024 / 1024).toFixed(2)} MB)
+                  </p>
                 )}
               </div>
             </div>
@@ -299,9 +373,10 @@ const LecturerCreateExercise = () => {
             </div>
             <ul className="tips-list">
               <li>Ensure all ERD components are clearly visible</li>
-              <li>Use Crow's Foot notation</li>
+              <li>Use Crow's Foot notation for consistency</li>
               <li>Include all required entities, relationships, and attributes</li>
-              <li>High resolution images work best for AI detection</li>
+              <li>High resolution images (1080p+) work best for AI analysis</li>
+              <li>Avoid shadows, glare, or tilted angles</li>
             </ul>
           </div>
 
@@ -313,9 +388,10 @@ const LecturerCreateExercise = () => {
             </div>
             <ul className="tips-list">
               <li>Include clear marking criteria and point allocations</li>
-              <li>Specify requirements for each component</li>
+              <li>Specify requirements for each ERD component</li>
               <li>Ensure PDF is readable and well-formatted</li>
-              <li>Include any specific grading guidelines</li>
+              <li>Include specific grading guidelines for AI processing</li>
+              <li>Use consistent terminology throughout</li>
             </ul>
           </div>
         </div>

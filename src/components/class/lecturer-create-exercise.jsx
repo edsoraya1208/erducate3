@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom'; 
 import { useUser } from '../../contexts/UserContext';
 
 // 🔥 FIREBASE IMPORTS - Only for Firestore (exercise data)
@@ -11,6 +12,8 @@ import { uploadToCloudinary } from '../../config/cloudinary';
 // 🎯 MAIN COMPONENT: This handles the create exercise form logic and UI
 const LecturerCreateExercise = () => {
   const { user, getUserDisplayName } = useUser();
+  const [searchParams] = useSearchParams(); 
+  const classId = searchParams.get('classId'); 
 
   // 📝 STATE MANAGEMENT: These store all form data
   const [formData, setFormData] = useState({
@@ -89,6 +92,12 @@ const LecturerCreateExercise = () => {
   // 🚀 SUBMIT FORM: This uploads to Cloudinary and saves to Firestore
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // ⚠️ ADD THIS VALIDATION (after e.preventDefault()):
+    if (!classId) {
+      alert('No class selected. Please access this page from a specific class.');
+      return;
+    }
     
     // ⚠️ VALIDATION: Check if required fields are filled
     if (!formData.title || !formData.description) {
@@ -174,7 +183,10 @@ const LecturerCreateExercise = () => {
       };
 
       console.log('Saving exercise to Firestore...');
-      const docRef = await addDoc(collection(db, 'exercises'), exerciseData);
+      console.log('About to save to path:', `classes/${classId}/exercises`);
+      console.log('ClassID value:', classId);
+      const docRef = await addDoc(collection(db, 'classes', classId, 'exercises'), exerciseData);
+
       
       console.log('✅ Exercise created with ID:', docRef.id);
       alert('Exercise created successfully! Files uploaded to Cloudinary.');

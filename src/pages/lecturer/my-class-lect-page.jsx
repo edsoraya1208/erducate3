@@ -64,10 +64,7 @@ const MyClassLectPage = () => {
   const fetchExercises = async () => {
     try {
       setLoading(true);
-      const q = query(
-        collection(db, 'exercises'), 
-        where('classId', '==', classId)
-      );
+      const q = query(collection(db, 'classes', classId, 'exercises'));
       const querySnapshot = await getDocs(q);
       const exercisesData = [];
       

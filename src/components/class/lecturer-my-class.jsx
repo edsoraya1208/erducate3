@@ -85,8 +85,11 @@ const LecturerMyClass = ({
         
         <div className="lecturer-my-class">
           <div className="class-details">
-            <h2>{classData.name || classData.title || 'Database Principles - CS301-G2'}</h2>
-            <p className="class-meta">{classData.courseCode || 'CS301'} • {classData.enrolledStudents || classData.currentStudents || 42} students enrolled</p>
+            <h2>{classData.name || classData.title}</h2>
+            {/* Updated to use actual classData properties without hardcoded fallbacks */}
+            <p className="class-meta">
+              {students?.length || 0} students enrolled
+            </p>
           </div>
 
           <div className="tab-navigation">

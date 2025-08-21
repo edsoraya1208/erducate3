@@ -470,7 +470,7 @@ RESPONSIVE DESIGN
 }
 
 /* Small tablets (portrait tablets, large phones landscape) */
-@media (max-width: 820px) {
+@media (max-width: 850px) {
  .dashboard-title {
    font-size: 1.8rem;
    white-space: nowrap; /* No line breaks */
@@ -481,9 +481,7 @@ RESPONSIVE DESIGN
  }
  
  
- .create-class-container {
-   padding-right: 32px; /* Match card + margin */
- }
+
 }
 
 /* Mobile devices */
@@ -543,9 +541,7 @@ RESPONSIVE DESIGN
    align-self: flex-start;
  }
  
- .create-class-container {
-   padding-right: 20px; /* Match card padding */
- }
+ 
  
  .create-class-button-dashboard {
    min-width: 80px;
@@ -583,9 +579,7 @@ RESPONSIVE DESIGN
    padding: 16px 20px;
  }
  
- .create-class-container {
-   padding-right: 20px; /* Match main padding */
- }
+
 }
 
 /* Small phones */
@@ -601,7 +595,5 @@ RESPONSIVE DESIGN
  
  
  
- .create-class-container {
-   padding-right: 20px; /* Match card spacing */
- }
+ 
 }

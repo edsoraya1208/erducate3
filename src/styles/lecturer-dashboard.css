@@ -543,6 +543,8 @@ RESPONSIVE DESIGN
  
  .create-class-button-dashboard {
    min-width: 80px;
+  margin-right: -0.2rem; /* ADD THIS LINE */
+
  }
  
  /* Empty state mobile */

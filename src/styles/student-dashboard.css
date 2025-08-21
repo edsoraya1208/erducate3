@@ -215,7 +215,7 @@ CLASSES GRID & CARDS
   transform: translateY(-2px);
 }
 
-.class-header-dashboard {
+.stud-class-header-dashboard {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -253,7 +253,7 @@ CLASSES GRID & CARDS
   color: #2d3748;
 }
 
-.info-value.class-code {
+.info-value.stud-class-code {
   background-color: #f3f4f6;
   color: #3b82f6;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
@@ -559,7 +559,7 @@ RESPONSIVE DESIGN
     padding: 20px;
   }
   
-  .class-header-dashboard {
+  .stud-class-header-dashboard {
     flex-direction: column;
     align-items: stretch;
     gap: 12px;
@@ -575,7 +575,7 @@ RESPONSIVE DESIGN
     gap: 8px;
   }
 
-  .info-value.class-code {
+  .info-value.stud-class-code {
     align-self: flex-start;
   }
   

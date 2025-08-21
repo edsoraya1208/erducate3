@@ -452,6 +452,7 @@ MODAL
 }
 
 /* 
+/*
 ==============================================
 RESPONSIVE DESIGN
 ==============================================
@@ -464,7 +465,8 @@ RESPONSIVE DESIGN
  }
  
  .dashboard-title {
-   font-size: 2.0rem;
+   font-size: 2.2rem; /* CHANGED: Made bigger from 2.0rem */
+   text-align: left; /* CHANGED: Added left alignment */
    white-space: normal;
  }
 }
@@ -472,16 +474,14 @@ RESPONSIVE DESIGN
 /* Small tablets (portrait tablets, large phones landscape) */
 @media (max-width: 850px) {
  .dashboard-title {
-   font-size: 1.8rem;
+   font-size: 2.0rem; /* CHANGED: Made bigger from 1.8rem */
+   text-align: left; /* CHANGED: Added left alignment */
    white-space: nowrap; /* No line breaks */
  }
  
  .dashboard-main {
    padding: 16px 24px; /* Side spacing */
  }
- 
- 
-
 }
 
 /* Mobile devices */
@@ -498,8 +498,8 @@ RESPONSIVE DESIGN
  }
  
  .dashboard-title {
-   font-size: 1.5rem;
-   text-align: center;
+   font-size: 1.8rem; /* CHANGED: Made bigger from 1.5rem */
+   text-align: left; /* CHANGED: Changed from center to left */
    width: 100%;
    margin: 0.5rem 0;
  }
@@ -541,8 +541,6 @@ RESPONSIVE DESIGN
    align-self: flex-start;
  }
  
- 
- 
  .create-class-button-dashboard {
    min-width: 80px;
  }
@@ -571,29 +569,25 @@ RESPONSIVE DESIGN
 /* Large phones */
 @media (max-width: 600px) {
  .dashboard-title {
-   font-size: 1.6rem;
+   font-size: 1.7rem; /* CHANGED: Made bigger from 1.6rem */
+   text-align: left; /* CHANGED: Added left alignment */
    white-space: nowrap;
  }
  
  .dashboard-main {
    padding: 16px 20px;
  }
- 
-
 }
 
 /* Small phones */
 @media (max-width: 480px) {
  .dashboard-title {
-   font-size: 1.4rem;
+   font-size: 1.6rem; /* CHANGED: Made bigger from 1.4rem */
+   text-align: left; /* CHANGED: Added left alignment */
    white-space: nowrap;
  }
  
  .dashboard-main {
    padding: 16px;
  }
- 
- 
- 
- 
 }

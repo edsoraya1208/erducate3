@@ -256,7 +256,7 @@ CLASSES GRID & CARDS
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 16px;
   font-weight: 600;
-  padding: 4px 12px; /* Keep original padding */
+  padding: 6px 12px; /* Keep original padding */
   border-radius: 6px;
   border: 1px solid #d1d5db;
   min-width: 100px;

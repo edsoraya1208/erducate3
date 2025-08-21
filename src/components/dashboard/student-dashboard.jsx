@@ -54,7 +54,7 @@ const StudentDashboard = ({
         <div className="stud-modal-buttons">
           <button
             onClick={onCloseJoinModal}
-            className="cancel-btn"
+            className="stud-cancel-btn"
           >
             Cancel
           </button>
@@ -91,7 +91,7 @@ const StudentDashboard = ({
           <button
             onClick={onCloseLeaveModal}
             disabled={leaveModal.isLeaving}
-            className="cancel-btn"
+            className="stud-cancel-btn"
           >
             Cancel
           </button>

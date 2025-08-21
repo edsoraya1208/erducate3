@@ -22,6 +22,9 @@ const studentDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
   
+  // ADDED: Mobile menu state for header
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
   // Modal states
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [classCode, setClassCode] = useState('');
@@ -36,6 +39,20 @@ const studentDashboard = () => {
   const [user, error] = useAuthState(auth);
   const { getUserDisplayName } = useUser();
   const navigate = useNavigate();
+
+  // ADDED: Header functions
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
+
+  const onDashboardClick = () => {
+    navigate('/student/dashboard');
+    closeMobileMenu();
+  };
 
   // Fetch joined classes from Firebase for current student
   const loadJoinedClasses = async () => {
@@ -255,6 +272,72 @@ const studentDashboard = () => {
 
   return (
     <div className="dashboard-page">
+      {/* ADDED: Dashboard Header using your existing lecturer-shared-header.css */}
+      <header className="dashboard-header">
+        <div className="header-left">
+          <div className="logo-container">
+            <div className="logo-icon">
+              <img 
+                src="/logo.svg" 
+                alt="ERDucate Logo" 
+                className="custom-logo"
+              />
+            </div>
+            <span className="brand-name">
+              ERDucate
+            </span>
+          </div>
+        </div>
+        
+        <div className="header-right">
+          {/* Desktop Navigation */}
+          <nav className="nav-items desktop-nav">
+            <span className="nav-item" onClick={onDashboardClick}>Dashboard</span>
+            <span className="nav-item">{getUserDisplayName()}</span>
+            <button className="logout-btn" onClick={handleLogout}>
+              Logout
+            </button>
+          </nav>
+
+          {/* Hamburger Button */}
+          <button 
+            className="hamburger-btn"
+            onClick={toggleMobileMenu}
+            aria-label="Toggle mobile menu"
+          >
+            <div className={`hamburger-line ${isMobileMenuOpen ? 'open' : ''}`}></div>
+            <div className={`hamburger-line ${isMobileMenuOpen ? 'open' : ''}`}></div>
+            <div className={`hamburger-line ${isMobileMenuOpen ? 'open' : ''}`}></div>
+          </button>
+
+          {/* Mobile Navigation */}
+          <div className={`mobile-nav ${isMobileMenuOpen ? 'open' : ''}`}>
+            <div className="mobile-nav-overlay" onClick={closeMobileMenu}></div>
+            <div className="mobile-nav-content">
+              <span 
+                className="nav-item" 
+                onClick={() => {
+                  onDashboardClick();
+                  closeMobileMenu();
+                }}
+              >
+                Dashboard
+              </span>
+              <span className="nav-item">{getUserDisplayName()}</span>
+              <button 
+                className="logout-btn" 
+                onClick={() => {
+                  handleLogout();
+                  closeMobileMenu();
+                }}
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+      
       <StudentDashboard 
         // State props
         joinedClasses={joinedClasses}

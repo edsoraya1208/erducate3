@@ -109,33 +109,11 @@ const StudentDashboard = ({
 
   return (
     <div className="student-dashboard">
-      {/* Navigation Header */}
-      <header className="dashboard-header">
-        <div className="header-left">
-          <div className="logo-container">
-            <div className="logo-icon">
-              <img 
-                src="/logo.svg" 
-                alt="ERDucate Logo" 
-                className="custom-logo"
-              />
-            </div>
-            <span className="brand-name">
-              ERDucate
-            </span>
-          </div>
-        </div>
-        
-        <div className="header-right">
-          <nav className="nav-items">
-            <span className="nav-item active">Dashboard</span>
-            <span className="nav-item">{getUserDisplayName()}</span>
-            <button className="logout-btn" onClick={onLogout}>
-              Logout
-            </button>
-          </nav>
-        </div>
-      </header>
+      {/* REMOVED: Navigation Header - Now using global dashboard header */}
+      {/* 
+      The header component was removed to prevent duplicate headers.
+      The global dashboard header (with hamburger functionality) will be used instead.
+      */}
 
       {/* Main Dashboard Content */}
       <main className="stud-dashboard-main">

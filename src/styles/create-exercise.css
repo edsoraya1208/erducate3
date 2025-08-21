@@ -393,12 +393,12 @@
   transition: all 0.2s;
 }
 
-.cancel-btn:hover {
+.ce-cancel-btn:hover {
   border-color: #d1d5db;
   background-color: #f9fafb;
 }
 
-.create-btn {
+.ce-create-btn {
   background: linear-gradient(135deg, #7b10a5, #5e17a5);
   color: white;
   border: none;
@@ -465,7 +465,7 @@
     flex-direction: column;
   }
 
-  .cancel-btn,
+  .ce-cancel-btn,
   .create-btn {
     width: 100%;
   }

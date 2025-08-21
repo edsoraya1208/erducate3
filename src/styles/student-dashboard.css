@@ -1,0 +1,777 @@
+
+
+/* 
+==============================================
+BASE LAYOUT & TYPOGRAPHY - FIXED
+==============================================
+*/
+.student-dashboard {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+
+}
+
+/* Add this new rule to ensure consistent font inheritance */
+.student-dashboard * {
+  font-family: inherit; /* This ensures all elements inherit from the header */
+}
+
+.stud-dashboard-page {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.stud-dashboard-main {
+  padding-top: 32px;
+  padding-bottom: 32px;
+  min-height: calc(100vh - 80px);
+}
+
+.stud-dashboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* 
+==============================================
+HEADER SECTION
+==============================================
+*/
+.stud-dashboard-header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0 1rem 0 0;
+}
+
+.stud-dashboard-title {
+  font-size: 2rem;
+  text-align: left;
+  word-wrap: break-word;
+  margin-bottom: 2rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 
+==============================================
+BUTTONS - ENSURE CONSISTENT SIZING
+==============================================
+*/
+.join-class-button {
+  background: linear-gradient(135deg, #6B73FF 0%, #9061F9 100%);
+  color: white;
+  border: none;
+  padding: 14px 32px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(107, 115, 255, 0.3);
+  min-width: 100px;
+  /* ADDED: Ensure consistent font inheritance */
+  font-family: inherit;
+  line-height: 1.2; /* Consistent line height */
+}
+
+.join-class-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(107, 115, 255, 0.4);
+  background: linear-gradient(135deg, #6B73FF 0%, #9061F9 100%);
+}
+
+.join-class-button:active {
+  transform: translateY(0);
+}
+
+.join-class-button:disabled {
+  background: linear-gradient(135deg, #6B73FF 0%, #9061F9 100%);
+  opacity: 0.9;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.join-class-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+  margin-top: -29px;
+  padding-right: 24px;
+}
+
+.join-class-button-dashboard {
+  background: linear-gradient(135deg, #6B73FF 0%, #9061F9 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(107, 115, 255, 0.2);
+  min-width: 120px;
+  flex-shrink: 0;
+  /* ADDED: Ensure consistent font inheritance */
+  font-family: inherit;
+  line-height: 1.2;
+}
+
+.join-class-button-dashboard:hover {
+  background: linear-gradient(135deg, #6B73FF 0%, #9061F9 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(107, 115, 255, 0.3);
+}
+
+.leave-btn {
+  background: linear-gradient(135deg, #e60202 0%, #ee2424 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  min-width: 120px;
+  flex-shrink: 0;
+  /* ADDED: Ensure consistent font inheritance */
+  font-family: inherit;
+  line-height: 1.2;
+}
+
+.leave-btn:hover {
+  background: linear-gradient(135deg, #cc0000 0%, #d41f1f 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(230, 2, 2, 0.3);
+}
+
+.cancel-btn {
+  background: #f5f5f5;
+  padding: 14px 32px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 300;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0 20px;
+  min-width: 80px;
+  max-width: 100px;
+  color: #666666;
+  /* ADDED: Ensure consistent font inheritance */
+  font-family: inherit;
+  line-height: 1.2;
+}
+
+.cancel-btn:hover {
+  background: #e8e8e8;
+}
+
+.delete-btn {
+  flex: 1;
+  background: #e53e3e;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  /* ADDED: Ensure consistent font inheritance */
+  font-family: inherit;
+  line-height: 1.2;
+}
+
+.delete-btn:hover {
+  background: #c53030;
+}
+
+
+/* 
+==============================================
+HEADER SECTION
+==============================================
+*/
+.stud-dashboard-header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0 1rem 0 0; /* top right bottom left */
+}
+
+.stud-dashboard-title {
+  font-size: 2rem; /* Keep larger size */
+  text-align: left; /* Keep left alignment */
+  word-wrap: break-word;
+  margin-bottom: 2rem; /* Maintain original margin */
+  white-space: nowrap; /* Prevent text wrapping */
+  overflow: hidden; /* Hide overflow if needed */
+  text-overflow: ellipsis; /* Add ... if text is too long */
+}
+
+/* 
+==============================================
+BUTTONS
+==============================================
+*/
+.join-class-button {
+  background: linear-gradient(135deg, #6B73FF 0%, #9061F9 100%);
+  color: white;
+  border: none;
+  padding: 14px 32px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(107, 115, 255, 0.3);
+  min-width: 100px;
+}
+
+.join-class-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(107, 115, 255, 0.4);
+  background: linear-gradient(135deg, #6B73FF 0%, #9061F9 100%);
+}
+
+.join-class-button:active {
+  transform: translateY(0);
+}
+
+.join-class-button:disabled {
+  background: linear-gradient(135deg, #6B73FF 0%, #9061F9 100%);
+  opacity: 0.9;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Join button positioned above classes grid */
+.join-class-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+  margin-top: -29px;
+  padding-right: 24px; /* Match class card padding */
+}
+
+.join-class-button-dashboard {
+  background: linear-gradient(135deg, #6B73FF 0%, #9061F9 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(107, 115, 255, 0.2);
+  min-width: 120px;
+  flex-shrink: 0;
+}
+
+.join-class-button-dashboard:hover {
+  background: linear-gradient(135deg, #6B73FF 0%, #9061F9 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(107, 115, 255, 0.3);
+}
+
+.leave-btn {
+  background: linear-gradient(135deg, #e60202 0%, #ee2424 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  min-width: 120px;
+  flex-shrink: 0;
+}
+
+.leave-btn:hover {
+  background: linear-gradient(135deg, #cc0000 0%, #d41f1f 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(230, 2, 2, 0.3);
+}
+
+.cancel-btn {
+  background: #f5f5f5;
+  padding: 14px 32px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 300;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0 20px; /* Shorter padding = shorter button */
+  min-width: 80px; /* Minimum width to keep it readable */
+  max-width: 100px; /* Maximum width to keep it compact */
+  color: #666666;
+}
+
+.cancel-btn:hover {
+  background: #e8e8e8;
+}
+
+.delete-btn {
+  flex: 1;
+  background: #e53e3e;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.delete-btn:hover {
+  background: #c53030;
+}
+
+/* 
+==============================================
+CLASSES GRID & CARDS
+==============================================
+*/
+.classes-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+.class-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.class-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.class-header-dashboard {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  gap: 16px;
+}
+
+.class-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.4;
+  flex: 1;
+}
+
+.class-info-section {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 16px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.info-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.info-value {
+  font-weight: 500;
+  color: #2d3748;
+}
+
+.info-value.class-code {
+  background-color: #f3f4f6;
+  color: #3b82f6;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  min-width: 100px;
+  text-align: center;
+  width: 102px;
+  box-sizing: border-box;
+}
+
+.class-description {
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.4;
+  margin: 16px 0 0 0;
+}
+
+/* 
+==============================================
+STATE DISPLAYS
+==============================================
+*/
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.loading-container p {
+  font-size: 18px;
+  color: #666;
+  font-weight: 500;
+}
+
+.no-classes {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #666;
+}
+
+.no-classes p {
+  font-size: 18px;
+  margin: 0;
+}
+
+/* Empty State */
+.stud-empty-state-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  padding: 2rem;
+  margin-top: -40px;
+}
+
+.stud-empty-state-content {
+  text-align: center;
+  max-width: 800px;
+  width: 100%; /* Ensures it responds to max-width properly */
+  background: white;
+  padding: 3rem 2rem;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid #f0f0f0;
+}
+
+.stud-empty-state-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem;
+  background: linear-gradient(135deg, #7b10a5, #5e17a5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.stud-empty-class {
+width: 80px;
+  height: 100px;
+}
+
+.stud-empty-state-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #2d3748;
+  margin: 0 0 1rem 0;
+}
+
+.stud-empty-state-description {
+  font-size: 16px;
+  color: #718096;
+  line-height: 1.6;
+  margin: 0 0 1rem 0;
+  max-width: 400px;
+  margin-left: auto; /* Centers the description within its container */
+  margin-right: auto; /* Centers the description within its container */
+  text-align: center;
+}
+
+.stud-empty-state-content .join-class-button {
+  margin-top: 2rem;
+}
+/* 
+==============================================
+MODAL
+==============================================
+*/
+.stud-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 50px;
+  z-index: 1000;
+}
+
+.stud-modal-content {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  width: 700px;
+  max-width: 90vw;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.stud-modal-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.stud-modal-text {
+  font-size: 17px;
+  color: #555;
+  margin-bottom: 20px;
+}
+
+.stud-modal-description {
+  font-size: 16px;
+  color: #718096;
+  margin-bottom: 32px;
+  line-height: 1.5;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-label {
+  display: block;
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: #555;
+}
+
+.form-input {
+  width: 100%;
+  border: 1px solid #dddddd;
+  border-radius: 6px;
+  padding: 14px 12px;
+  font-size: 16px;
+  transition: border-color 0.2s ease;
+  height: 48px;
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #6B73FF;
+  box-shadow: 0 0 0 2px rgba(107, 115, 255, 0.1);
+}
+
+.form-input::placeholder {
+  color: #a0aec0;
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+}
+
+.stud-modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  align-items: center; /* Ensure buttons align properly */
+}
+
+.stud-modal-buttons button {
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  height: 44px; /* Fixed height for all modal buttons */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+/* Help Section */
+.help-section {
+  background-color: #e6fffa;
+  border: 1px solid #b2f5ea;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  align-items: flex-start;
+  text-align: left;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.help-icon {
+  font-size: 16px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.help-content {
+  flex: 1;
+}
+
+.help-content strong {
+  color: #2d3748;
+  font-weight: 600;
+  font-size: 14px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.help-content p {
+  color: #4a5568;
+  font-size: 13px;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* 
+==============================================
+RESPONSIVE DESIGN
+==============================================
+*/
+
+/* Medium screens (tablets, small laptops) */
+@media (max-width: 1024px) {
+  .stud-dashboard-header-section {
+    padding: 0 2rem;
+  }
+  
+  .stud-dashboard-title {
+    font-size: 2.0rem; /* Slightly smaller but still prominent */
+    white-space: normal; /* Allow wrapping only on very small screens */
+  }
+}
+
+/* Mobile devices */
+@media (max-width: 768px) {
+  .stud-dashboard-main {
+    padding: 16px;
+  }
+  
+  .stud-dashboard-header-section {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    padding: 1rem;
+    align-items: flex-start;
+  }
+  
+  .stud-dashboard-title {
+    font-size: 2.0rem;
+    text-align: center;
+    word-wrap: break-word;
+    margin: 0.5rem 0;
+  }
+  
+  .join-class-button {
+    align-self: flex-end;
+    margin-top: 1rem;
+  }
+  
+  .class-card {
+    padding: 20px;
+  }
+  
+  .class-header-dashboard {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .leave-btn {
+    align-self: flex-end;
+  }
+  
+  .info-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .info-value.class-code {
+    align-self: flex-start;
+  }
+  
+  /* Empty state responsive */
+  .stud-empty-state-content {
+    margin: 1rem;
+    padding: 2rem 1.5rem;
+    max-width: none; /* Removes max-width constraint on mobile */
+  }
+  
+  .stud-empty-state-title {
+    font-size: 20px;
+  }
+  
+  .stud-empty-state-description {
+    font-size: 14px;
+    max-width: none; /* Removes max-width constraint on mobile */
+  }
+  
+  .cancel-btn {
+    align-self: flex-end;
+  }
+
+  .join-class-container {
+    padding-right: 20px; /* Match mobile class card padding */
+    margin-bottom: 16px;
+    justify-content: center;
+  }
+  
+  /* Ensure buttons maintain size on mobile */
+  .join-class-button-dashboard,
+  .leave-btn {
+    min-width: 100px; /* Slightly smaller on mobile but still consistent */
+  }
+  
+  .stud-modal-content {
+    padding: 32px 24px;
+    margin: 20px;
+  }
+  
+  .stud-modal-buttons {
+    flex-direction: column;
+  }
+}

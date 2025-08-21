@@ -528,4 +528,82 @@ background: linear-gradient(135deg, #00a085 0%, #00896b 100%);
     flex-direction: column;
     align-items: flex-start;
   }
+
+  .mc-main-title {
+    font-size: 1.8rem;
+    text-align: center;
+    /* ADDED: Better vertical alignment */
+    line-height: 2.2;
+    margin: 0 0 2rem 0;
+    /* ADDED: Ensure consistent vertical positioning */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.04rem; /* This maintains consistent height (1.7rem * 1.2 line-height) */
+  }
+}
+
+/* Replace your existing mobile styles with this fixed version */
+
+/* Add these media queries to match your dashboard pattern */
+
+/* Tablets, small laptops */
+@media (max-width: 1024px) {
+  .mc-main-title {
+    font-size: 2.2rem;
+    text-align: left;
+    white-space: normal;
+  }
+}
+
+/* Small tablets (portrait tablets, large phones landscape) */
+@media (max-width: 850px) {
+  .mc-main-title {
+    font-size: 2.0rem;
+    text-align: left;
+    white-space: nowrap; /* No line breaks */
+  }
+}
+
+/* Mobile devices */
+@media (max-width: 768px) {
+  .tab-navigation {
+    padding: 0 1rem;
+  }
+  
+  .tab-btn {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .exercise-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .mc-main-title {
+    font-size: 1.8rem;
+    text-align: left;
+    width: 100%;
+    margin: 0.5rem 0 2rem 0;
+    white-space: nowrap;
+  }
+}
+
+/* Large phones */
+@media (max-width: 600px) {
+  .mc-main-title {
+    font-size: 1.7rem;
+    text-align: left;
+    white-space: nowrap;
+  }
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+  .mc-main-title {
+    font-size: 1.7rem;
+    text-align: center;
+    white-space: nowrap;
+  }
 }

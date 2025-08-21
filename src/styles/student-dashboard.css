@@ -13,8 +13,8 @@ BASE LAYOUT & TYPOGRAPHY - FIXED
 }
 
 /* Add this new rule to ensure consistent font inheritance */
-.student-dashboard * {
-  font-family: inherit; /* This ensures all elements inherit from the header */
+.stud-dashboard-main * {
+  font-family: inherit;
 }
 
 .stud-dashboard-page {

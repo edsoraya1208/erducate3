@@ -413,7 +413,7 @@ const LecturerCreateExercise = () => {
           <button type="button" className="ce-cancel-btn" disabled={isLoading}>
             Cancel
           </button>
-          <button type="submit" className="create-btn" disabled={isLoading}>
+          <button type="submit" className="ce-create-btn" disabled={isLoading}>
             {isLoading ? 'Creating Exercise...' : 'Create Exercise'}
           </button>
         </div>

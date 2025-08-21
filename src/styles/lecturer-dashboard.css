@@ -584,8 +584,8 @@ RESPONSIVE DESIGN
 /* Small phones */
 @media (max-width: 480px) {
  .dashboard-title {
-   font-size: 1.6rem; /* CHANGED: Made bigger from 1.4rem */
-   text-align: left; /* CHANGED: Added left alignment */
+   font-size: 1.7rem; /* CHANGED: Made bigger from 1.4rem */
+   text-align: center; /* CHANGED: Added left alignment */
    white-space: nowrap;
  }
  

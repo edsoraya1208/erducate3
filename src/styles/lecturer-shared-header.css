@@ -192,7 +192,8 @@
   margin-top: 24px;
   width: 100%;
   justify-content: center;
-  height: 45px;
+  height: 35px;
+  font-size: 18px;
 }
 
 /* LOGOUT BUTTON */

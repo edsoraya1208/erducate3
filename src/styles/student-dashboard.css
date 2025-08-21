@@ -248,8 +248,9 @@ CLASSES GRID & CARDS
 
 .info-item {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   margin-bottom: 8px;
+  gap: 12px;
 }
 
 .info-label {
@@ -278,7 +279,7 @@ CLASSES GRID & CARDS
   box-sizing: border-box;
 }
 
-.class-description {
+.stud-class-description {
   color: #6b7280;
   font-size: 14px;
   line-height: 1.4;
@@ -570,9 +571,9 @@ RESPONSIVE DESIGN
   }
   
   .stud-class-header-dashboard {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
+    flex-direction: row; /* Keep in one row */
+   align-items: center;
+   gap: 12px;
   }
   
   .leave-btn {
@@ -612,12 +613,16 @@ RESPONSIVE DESIGN
   .join-class-container {
     padding-right: 20px;
     margin-bottom: 16px;
-    justify-content: center;
+    justify-content: flex-end;
   }
   
   .join-class-button-dashboard,
   .leave-btn {
     min-width: 100px;
+  }
+  .join-class-button-dashboard    {
+  min-width: 80px;
+  margin-right: -0.2rem; 
   }
   
   .stud-modal-content {

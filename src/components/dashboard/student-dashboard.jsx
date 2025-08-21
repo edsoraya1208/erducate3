@@ -196,7 +196,7 @@ const StudentDashboard = ({
                     style={{ cursor: 'pointer' }}
                   >
                     {/* Class Header with Title and Leave Button */}
-                    <div className="class-header-dashboard">
+                    <div className="stud-class-header-dashboard">
                       <h3 className="class-title">{classItem.title}</h3>
                       <button 
                         className="leave-btn"

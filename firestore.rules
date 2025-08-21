@@ -11,32 +11,109 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
     
-    // Helper function to check if user is a lecturer
+    // FIXED: Safe lecturer check with proper null handling
     function isLecturer() {
       return isAuthenticated() &&
              exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.keys().hasAll(['role']) &&
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'lecturer';
+    }
+    
+    // FIXED: Safe student check with proper null handling
+    function isStudent() {
+      return isAuthenticated() &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.keys().hasAll(['role']) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'student';
+    }
+    
+    // NEW: Check if user owns a specific class
+    function ownsClass(classId) {
+      return isAuthenticated() &&
+             exists(/databases/$(database)/documents/classes/$(classId)) &&
+             get(/databases/$(database)/documents/classes/$(classId)).data.instructorId == request.auth.uid;
     }
     
     // Users collection rules
     match /users/{userId} {
       allow create: if isAuthenticated() && isOwner(userId);
-      allow update: if isAuthenticated() && (isOwner(userId) || isLecturer());
-      allow read: if isAuthenticated() && (isOwner(userId) || isLecturer());
-      allow delete: if false;
+      allow update: if isAuthenticated() && isOwner(userId);
+      allow read: if isAuthenticated() && isOwner(userId);
+      allow delete: if false; // Never allow user deletion
     }
 
     // Classes collection rules
     match /classes/{classId} {
+      // CREATE: Only lecturers can create classes
       allow create: if isLecturer();
-      allow read: if isLecturer();
-      allow update: if isLecturer() && resource.data.instructorId == request.auth.uid;
-      allow delete: if isLecturer() && resource.data.instructorId == request.auth.uid;
+      
+      // READ: 
+      // - Lecturers can read their own classes
+      // - Students can read classes (needed to join with class codes)
+      allow read: if isAuthenticated() && (
+        (isLecturer() && resource.data.instructorId == request.auth.uid) ||
+        isStudent()
+      );
+      
+      // UPDATE/DELETE: Only class owner
+      allow update, delete: if isAuthenticated() && 
+                              resource.data.instructorId == request.auth.uid;
     }
     
-    // ADD THIS: Exercises subcollection rules
+    // Student-Class enrollment collection - SECURE BUT FUNCTIONAL
+    match /studentClasses/{enrollmentId} {
+      // CREATE: Students can only create enrollments for themselves
+      allow create: if isAuthenticated() && 
+                       isStudent() && 
+                       request.resource.data.studentId == request.auth.uid;
+      
+      // READ: 
+      // - Students can read their own enrollments
+      // - Lecturers can read enrollments for their classes
+      allow read: if isAuthenticated() && (
+        (isStudent() && resource.data.studentId == request.auth.uid) ||
+        (isLecturer() && ownsClass(resource.data.classId))
+      );
+      
+      // UPDATE: Only lecturers can update enrollments (for status changes, etc.)
+      allow update: if isAuthenticated() && 
+                       isLecturer() && 
+                       ownsClass(resource.data.classId);
+      
+      // DELETE: Students can delete their own enrollments (leave class)
+      allow delete: if isAuthenticated() && 
+                       isStudent() && 
+                       resource.data.studentId == request.auth.uid;
+    }
+    
+    // Exercises subcollection rules
     match /classes/{classId}/exercises/{exerciseId} {
-      allow create, read, update, delete: if isLecturer();
+      // CREATE/UPDATE/DELETE: Only class owner
+      allow create, update, delete: if isAuthenticated() && ownsClass(classId);
+      
+      // READ: 
+      // - Class owner can read
+      // - Students enrolled in the class can read
+      allow read: if isAuthenticated() && (
+        ownsClass(classId) ||
+        (isStudent() && 
+         exists(/databases/$(database)/documents/studentClasses/$(request.auth.uid + '_' + classId)))
+      );
+    }
+    
+    // Student progress tracking (future-proof)
+    match /studentProgress/{progressId} {
+      // Students can only manage their own progress
+      allow create, read, update: if isAuthenticated() && 
+                                     isStudent() && 
+                                     request.resource.data.studentId == request.auth.uid;
+      
+      // Lecturers can read student progress for their classes
+      allow read: if isAuthenticated() && 
+                     isLecturer() && 
+                     ownsClass(resource.data.classId);
+      
+      allow delete: if false; // Preserve student work
     }
     
     // Deny all other collections by default

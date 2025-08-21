@@ -75,17 +75,19 @@ BUTTONS - BASE STYLES
 /* Primary gradient buttons */
 .join-class-button,
 .join-class-button-dashboard {
-  background: linear-gradient(135deg, #7b10a5, #5e17a5);
+background: linear-gradient(135deg, #7b10a5, #5e17a5);
   color: white;
   border: none;
-  padding: 14px 32px;
-  border-radius: 8px;
-  font-size: 16px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 16px rgba(123, 16, 165, 0.3);
-  min-width: 150px; /* Change this value */
-  width: 150px;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(94, 23, 165, 0.2);
+  min-width: 120px;
+  flex-shrink: 0;
 }
 
 /* Join class button (main) */
@@ -135,9 +137,13 @@ BUTTONS - BASE STYLES
 .leave-btn {
   background: linear-gradient(135deg, #e60202 0%, #ee2424 100%);
   color: white;
+  border: none;
   padding: 8px 16px;
   border-radius: 6px;
   font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
   white-space: nowrap;
   min-width: 120px;
   flex-shrink: 0;
@@ -167,14 +173,18 @@ BUTTONS - BASE STYLES
 
 /* Delete button */
 .stud-delete-btn {
-  flex: 1;
-  background: #e53e3e;
+    background: linear-gradient(135deg, #e60202 0%, #ee2424 100%);
   color: white;
-  border-radius: 8px;
-  padding: 16px 24px;
-  font-size: 16px;
-  font-weight: 600;
-  transition: all 0.2s ease;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  min-width: 120px;
+  flex-shrink: 0;
 }
 
 .stud-delete-btn:hover {

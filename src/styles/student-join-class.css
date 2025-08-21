@@ -56,7 +56,7 @@
   margin-bottom: 8px;
 }
 
-.class-code-input {
+.stud-class-code-input {
   width: 100%;
   padding: 16px;
   border: 1px solid #e2e8f0;
@@ -67,14 +67,14 @@
   box-sizing: border-box;
 }
 
-.class-code-input:focus {
+.stud-class-code-input:focus {
   outline: none;
   border-color: #6B73FF;
   box-shadow: 0 0 0 3px rgba(107, 115, 255, 0.1);
   background-color: white;
 }
 
-.class-code-input::placeholder {
+.stud-class-code-input::placeholder {
   color: #a0aec0;
   text-transform: uppercase;
   font-size: 13px;

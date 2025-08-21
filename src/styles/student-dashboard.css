@@ -63,7 +63,7 @@ BUTTONS - BASE STYLES
 .join-class-button-dashboard,
 .leave-btn,
 .stud-cancel-btn,
-.delete-btn {
+.stud-delete-btn {
   border: none;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -166,7 +166,7 @@ BUTTONS - BASE STYLES
 }
 
 /* Delete button */
-.delete-btn {
+.stud-delete-btn {
   flex: 1;
   background: #e53e3e;
   color: white;
@@ -177,7 +177,7 @@ BUTTONS - BASE STYLES
   transition: all 0.2s ease;
 }
 
-.delete-btn:hover {
+.stud-delete-btn:hover {
   background: #c53030;
 }
 

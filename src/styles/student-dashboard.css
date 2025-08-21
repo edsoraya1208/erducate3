@@ -1,18 +1,14 @@
-
-
 /* 
 ==============================================
-BASE LAYOUT & TYPOGRAPHY - FIXED
+BASE LAYOUT & TYPOGRAPHY
 ==============================================
 */
 .student-dashboard {
   min-height: 100vh;
   background-color: #f5f5f5;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-
 }
 
-/* Add this new rule to ensure consistent font inheritance */
 .stud-dashboard-main * {
   font-family: inherit;
 }
@@ -60,30 +56,51 @@ HEADER SECTION
 
 /* 
 ==============================================
-BUTTONS - ENSURE CONSISTENT SIZING
+BUTTONS - BASE STYLES
 ==============================================
 */
-.join-class-button {
-  background: linear-gradient(135deg, #6B73FF 0%, #9061F9 100%);
+.join-class-button,
+.join-class-button-dashboard,
+.leave-btn,
+.cancel-btn,
+.delete-btn {
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  line-height: 1.2;
+  font-weight: 500;
+}
+
+/* Primary gradient buttons */
+.join-class-button,
+.join-class-button-dashboard {
+  background: linear-gradient(135deg, #7b10a5, #5e17a5);
   color: white;
   border: none;
   padding: 14px 32px;
   border-radius: 8px;
   font-size: 16px;
-  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(123, 16, 165, 0.3);
+  min-width: 150px; /* Change this value */
+  width: 150px;
+}
+
+/* Join class button (main) */
+.join-class-button {
+  padding: 14px 32px;
+  font-size: 16px;
+  font-weight: 650;
   box-shadow: 0 4px 16px rgba(107, 115, 255, 0.3);
   min-width: 100px;
-  /* ADDED: Ensure consistent font inheritance */
-  font-family: inherit;
-  line-height: 1.2; /* Consistent line height */
 }
 
 .join-class-button:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(107, 115, 255, 0.4);
-  background: linear-gradient(135deg, #6B73FF 0%, #9061F9 100%);
+  background: linear-gradient(135deg, #7b10a5, #5e17a5);
 }
 
 .join-class-button:active {
@@ -91,257 +108,86 @@ BUTTONS - ENSURE CONSISTENT SIZING
 }
 
 .join-class-button:disabled {
-  background: linear-gradient(135deg, #6B73FF 0%, #9061F9 100%);
+  background: linear-gradient(135deg, #7b10a5, #5e17a5);
   opacity: 0.9;
   cursor: not-allowed;
   transform: none;
 }
 
+/* Join class button (dashboard) */
+.join-class-button-dashboard {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(107, 115, 255, 0.2);
+  min-width: 120px;
+  flex-shrink: 0;
+}
+
+.join-class-button-dashboard:hover {
+  background: linear-gradient(135deg, #7b10a5, #5e17a5);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(107, 115, 255, 0.3);
+}
+
+/* Leave button */
+.leave-btn {
+  background: linear-gradient(135deg, #e60202 0%, #ee2424 100%);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  white-space: nowrap;
+  min-width: 120px;
+  flex-shrink: 0;
+}
+
+.leave-btn:hover {
+  background: linear-gradient(135deg, #cc0000 0%, #d41f1f 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(230, 2, 2, 0.3);
+}
+
+/* Cancel button */
+.cancel-btn {
+  background: #f5f5f5;
+  padding: 0 20px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 300;
+  min-width: 80px;
+  max-width: 100px;
+  color: #666666;
+}
+
+.cancel-btn:hover {
+  background: #e8e8e8;
+}
+
+/* Delete button */
+.delete-btn {
+  flex: 1;
+  background: #e53e3e;
+  color: white;
+  border-radius: 8px;
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.delete-btn:hover {
+  background: #c53030;
+}
+
+/* Button containers */
 .join-class-container {
   display: flex;
   justify-content: flex-end;
   margin-bottom: 16px;
   margin-top: -29px;
   padding-right: 24px;
-}
-
-.join-class-button-dashboard {
-  background: linear-gradient(135deg, #6B73FF 0%, #9061F9 100%);
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  white-space: nowrap;
-  box-shadow: 0 2px 4px rgba(107, 115, 255, 0.2);
-  min-width: 120px;
-  flex-shrink: 0;
-  /* ADDED: Ensure consistent font inheritance */
-  font-family: inherit;
-  line-height: 1.2;
-}
-
-.join-class-button-dashboard:hover {
-  background: linear-gradient(135deg, #6B73FF 0%, #9061F9 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(107, 115, 255, 0.3);
-}
-
-.leave-btn {
-  background: linear-gradient(135deg, #e60202 0%, #ee2424 100%);
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  white-space: nowrap;
-  min-width: 120px;
-  flex-shrink: 0;
-  /* ADDED: Ensure consistent font inheritance */
-  font-family: inherit;
-  line-height: 1.2;
-}
-
-.leave-btn:hover {
-  background: linear-gradient(135deg, #cc0000 0%, #d41f1f 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(230, 2, 2, 0.3);
-}
-
-.cancel-btn {
-  background: #f5f5f5;
-  padding: 14px 32px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 300;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  padding: 0 20px;
-  min-width: 80px;
-  max-width: 100px;
-  color: #666666;
-  /* ADDED: Ensure consistent font inheritance */
-  font-family: inherit;
-  line-height: 1.2;
-}
-
-.cancel-btn:hover {
-  background: #e8e8e8;
-}
-
-.delete-btn {
-  flex: 1;
-  background: #e53e3e;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 16px 24px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  /* ADDED: Ensure consistent font inheritance */
-  font-family: inherit;
-  line-height: 1.2;
-}
-
-.delete-btn:hover {
-  background: #c53030;
-}
-
-
-/* 
-==============================================
-HEADER SECTION
-==============================================
-*/
-.stud-dashboard-header-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-  gap: 1rem;
-  padding: 0 1rem 0 0; /* top right bottom left */
-}
-
-.stud-dashboard-title {
-  font-size: 2rem; /* Keep larger size */
-  text-align: left; /* Keep left alignment */
-  word-wrap: break-word;
-  margin-bottom: 2rem; /* Maintain original margin */
-  white-space: nowrap; /* Prevent text wrapping */
-  overflow: hidden; /* Hide overflow if needed */
-  text-overflow: ellipsis; /* Add ... if text is too long */
-}
-
-/* 
-==============================================
-BUTTONS
-==============================================
-*/
-.join-class-button {
-  background: linear-gradient(135deg, #6B73FF 0%, #9061F9 100%);
-  color: white;
-  border: none;
-  padding: 14px 32px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 16px rgba(107, 115, 255, 0.3);
-  min-width: 100px;
-}
-
-.join-class-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(107, 115, 255, 0.4);
-  background: linear-gradient(135deg, #6B73FF 0%, #9061F9 100%);
-}
-
-.join-class-button:active {
-  transform: translateY(0);
-}
-
-.join-class-button:disabled {
-  background: linear-gradient(135deg, #6B73FF 0%, #9061F9 100%);
-  opacity: 0.9;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* Join button positioned above classes grid */
-.join-class-container {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 16px;
-  margin-top: -29px;
-  padding-right: 24px; /* Match class card padding */
-}
-
-.join-class-button-dashboard {
-  background: linear-gradient(135deg, #6B73FF 0%, #9061F9 100%);
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  white-space: nowrap;
-  box-shadow: 0 2px 4px rgba(107, 115, 255, 0.2);
-  min-width: 120px;
-  flex-shrink: 0;
-}
-
-.join-class-button-dashboard:hover {
-  background: linear-gradient(135deg, #6B73FF 0%, #9061F9 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(107, 115, 255, 0.3);
-}
-
-.leave-btn {
-  background: linear-gradient(135deg, #e60202 0%, #ee2424 100%);
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  white-space: nowrap;
-  min-width: 120px;
-  flex-shrink: 0;
-}
-
-.leave-btn:hover {
-  background: linear-gradient(135deg, #cc0000 0%, #d41f1f 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(230, 2, 2, 0.3);
-}
-
-.cancel-btn {
-  background: #f5f5f5;
-  padding: 14px 32px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 300;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  padding: 0 20px; /* Shorter padding = shorter button */
-  min-width: 80px; /* Minimum width to keep it readable */
-  max-width: 100px; /* Maximum width to keep it compact */
-  color: #666666;
-}
-
-.cancel-btn:hover {
-  background: #e8e8e8;
-}
-
-.delete-btn {
-  flex: 1;
-  background: #e53e3e;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 16px 24px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.delete-btn:hover {
-  background: #c53030;
 }
 
 /* 
@@ -472,7 +318,7 @@ STATE DISPLAYS
 .stud-empty-state-content {
   text-align: center;
   max-width: 800px;
-  width: 100%; /* Ensures it responds to max-width properly */
+  width: 100%;
   background: white;
   padding: 3rem 2rem;
   border-radius: 16px;
@@ -493,7 +339,7 @@ STATE DISPLAYS
 }
 
 .stud-empty-class {
-width: 80px;
+  width: 80px;
   height: 100px;
 }
 
@@ -510,14 +356,15 @@ width: 80px;
   line-height: 1.6;
   margin: 0 0 1rem 0;
   max-width: 400px;
-  margin-left: auto; /* Centers the description within its container */
-  margin-right: auto; /* Centers the description within its container */
+  margin-left: auto;
+  margin-right: auto;
   text-align: center;
 }
 
 .stud-empty-state-content .join-class-button {
   margin-top: 2rem;
 }
+
 /* 
 ==============================================
 MODAL
@@ -611,7 +458,7 @@ MODAL
   justify-content: flex-end;
   gap: 12px;
   margin-top: 24px;
-  align-items: center; /* Ensure buttons align properly */
+  align-items: center;
 }
 
 .stud-modal-buttons button {
@@ -621,12 +468,11 @@ MODAL
   cursor: pointer;
   transition: all 0.2s ease;
   border: none;
-  height: 44px; /* Fixed height for all modal buttons */
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-
 
 /* Help Section */
 .help-section {
@@ -679,8 +525,8 @@ RESPONSIVE DESIGN
   }
   
   .stud-dashboard-title {
-    font-size: 2.0rem; /* Slightly smaller but still prominent */
-    white-space: normal; /* Allow wrapping only on very small screens */
+    font-size: 2.0rem;
+    white-space: normal;
   }
 }
 
@@ -692,10 +538,9 @@ RESPONSIVE DESIGN
   
   .stud-dashboard-header-section {
     flex-direction: column;
-    align-items: stretch;
+    align-items: flex-start;
     gap: 1rem;
     padding: 1rem;
-    align-items: flex-start;
   }
   
   .stud-dashboard-title {
@@ -738,7 +583,7 @@ RESPONSIVE DESIGN
   .stud-empty-state-content {
     margin: 1rem;
     padding: 2rem 1.5rem;
-    max-width: none; /* Removes max-width constraint on mobile */
+    max-width: none;
   }
   
   .stud-empty-state-title {
@@ -747,7 +592,7 @@ RESPONSIVE DESIGN
   
   .stud-empty-state-description {
     font-size: 14px;
-    max-width: none; /* Removes max-width constraint on mobile */
+    max-width: none;
   }
   
   .cancel-btn {
@@ -755,15 +600,14 @@ RESPONSIVE DESIGN
   }
 
   .join-class-container {
-    padding-right: 20px; /* Match mobile class card padding */
+    padding-right: 20px;
     margin-bottom: 16px;
     justify-content: center;
   }
   
-  /* Ensure buttons maintain size on mobile */
   .join-class-button-dashboard,
   .leave-btn {
-    min-width: 100px; /* Slightly smaller on mobile but still consistent */
+    min-width: 100px;
   }
   
   .stud-modal-content {

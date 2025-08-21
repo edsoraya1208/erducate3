@@ -142,7 +142,7 @@ const StudentDashboard = ({
         <div className="stud-dashboard-container">
           {/* Page Title Section */}
           <div className="stud-dashboard-header-section">            
-            <h1 className="stud-dashboard-title">Student Dashboard</h1>
+            <h1 className="stud-dashboard-title">Student's Dashboard</h1>
           </div>
 
           {/* Join Class Button - Show only when classes exist */}

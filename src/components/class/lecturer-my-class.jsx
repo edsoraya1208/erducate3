@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import '../../styles/my-class-lect.css';
 import '../../styles/lecturer-shared-header.css';
 
@@ -32,34 +32,84 @@ const LecturerMyClass = ({
 }) => {
 
   // Shared header component
-  const Header = () => (
-    <header className="dashboard-header">
-      <div className="header-left">
-        <div className="logo-container">
-          <div className="logo-icon">
-            <img 
-              src="/logo.svg" 
-              alt="ERDucate Logo" 
-              className="custom-logo"
-            />
+  const Header = () => {
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    const toggleMobileMenu = () => {
+      setIsMobileMenuOpen(!isMobileMenuOpen);
+    };
+
+    const closeMobileMenu = () => {
+      setIsMobileMenuOpen(false);
+    };
+
+    return (
+      <header className="dashboard-header">
+        <div className="header-left">
+          <div className="logo-container">
+            <div className="logo-icon">
+              <img 
+                src="/logo.svg" 
+                alt="ERDucate Logo" 
+                className="custom-logo"
+              />
+            </div>
+            <span className="brand-name">
+              ERDucate
+            </span>
           </div>
-          <span className="brand-name">
-            ERDucate
-          </span>
         </div>
-      </div>
-      
-      <div className="header-right">
-        <nav className="nav-items">
-          <span className="nav-item" onClick={onDashboardClick}>Dashboard</span>
-          <span className="nav-item">{getUserDisplayName()}</span>
-          <button className="logout-btn" onClick={onLogout}>
-            Logout
+        
+        <div className="header-right">
+          {/* Desktop Navigation */}
+          <nav className="nav-items desktop-nav">
+            <span className="nav-item" onClick={onDashboardClick}>Dashboard</span>
+            <span className="nav-item">{getUserDisplayName()}</span>
+            <button className="logout-btn" onClick={onLogout}>
+              Logout
+            </button>
+          </nav>
+
+          {/* Hamburger Button */}
+          <button 
+            className="hamburger-btn"
+            onClick={toggleMobileMenu}
+            aria-label="Toggle mobile menu"
+          >
+            <div className={`hamburger-line ${isMobileMenuOpen ? 'open' : ''}`}></div>
+            <div className={`hamburger-line ${isMobileMenuOpen ? 'open' : ''}`}></div>
+            <div className={`hamburger-line ${isMobileMenuOpen ? 'open' : ''}`}></div>
           </button>
-        </nav>
-      </div>
-    </header>
-  );
+
+          {/* Mobile Navigation */}
+          <div className={`mobile-nav ${isMobileMenuOpen ? 'open' : ''}`}>
+            <div className="mobile-nav-overlay" onClick={closeMobileMenu}></div>
+            <div className="mobile-nav-content">
+              <span 
+                className="nav-item" 
+                onClick={() => {
+                  onDashboardClick();
+                  closeMobileMenu();
+                }}
+              >
+                Dashboard
+              </span>
+              <span className="nav-item">{getUserDisplayName()}</span>
+              <button 
+                className="logout-btn" 
+                onClick={() => {
+                  onLogout();
+                  closeMobileMenu();
+                }}
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+    );
+  };
 
   if (!classData) {
     return (

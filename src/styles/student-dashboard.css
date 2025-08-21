@@ -536,9 +536,19 @@ RESPONSIVE DESIGN
   }
   
   .stud-dashboard-title {
-    font-size: 2.0rem;
-    white-space: normal;
+      font-size: 2.2rem;
+      text-align: left;
+      white-space: normal;
   }
+}
+
+
+@media (max-width: 850px) {
+   .stud-dashboard-title {
+        font-size: 2.0rem;
+        text-align: left;
+        white-space: nowrap;
+    }
 }
 
 /* Mobile devices */
@@ -555,9 +565,9 @@ RESPONSIVE DESIGN
   }
   
   .stud-dashboard-title {
-    font-size: 2.0rem;
-    text-align: center;
-    word-wrap: break-word;
+    font-size: 1.8rem;
+    text-align: left;
+    width: 100%;
     margin: 0.5rem 0;
   }
   
@@ -631,4 +641,21 @@ RESPONSIVE DESIGN
   }
   
  
+}
+
+@media (max-width: 600px) {
+    .dashboard-title {
+        font-size: 1.7rem;
+        text-align: left;
+        white-space: nowrap;
+    }
+}
+
+
+@media (max-width: 600px) {
+    .dashboard-title {
+        font-size: 1.7rem;
+        text-align: left;
+        white-space: nowrap;
+    }
 }

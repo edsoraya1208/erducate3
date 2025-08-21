@@ -95,7 +95,7 @@ const LoginForm = ({ onSwitchToSignup }) => {
           navigate('/lecturer/dashboard1');        
         } else {
           console.log('🎒 Redirecting to student dashboard');
-          navigate('/student-dashboard');
+          navigate('/student/dashboard');
         }
       } else {
         // Create new user document with default role
@@ -186,7 +186,7 @@ const LoginForm = ({ onSwitchToSignup }) => {
           navigate('/lecturer/dashboard1');
         } else {
           console.log('🎒 Redirecting to student dashboard');
-          navigate('/student-dashboard');
+          navigate('/student/dashboard');
         }
       } else {
         // User doesn't exist in database - block access

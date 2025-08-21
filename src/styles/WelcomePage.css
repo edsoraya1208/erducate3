@@ -313,7 +313,7 @@
   /* Hero section adjustments for mobile */
   .hero-section {
     padding: 40px 20px;
-    min-height: 90vh; /* Slightly reduced height for mobile */
+    min-height: 100vh; /* Slightly reduced height for mobile */
   }
   
   /* Logo adjustments for mobile */

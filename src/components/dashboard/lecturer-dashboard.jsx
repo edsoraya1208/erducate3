@@ -1,5 +1,5 @@
 // src/components/dashboard/lecturer-dashboard.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import '../../styles/lecturer-shared-header.css';
 import '../../styles/lecturer-dashboard.css';
 
@@ -29,6 +29,17 @@ const LecturerDashboard = ({
   onLogout,
   onClassClick
 }) => {
+
+  // State for mobile menu
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
 
   // Create Class Modal UI Component
   const CreateClassModal = () => (
@@ -128,12 +139,42 @@ const LecturerDashboard = ({
         </div>
         
         <div className="header-right">
-          <nav className="nav-items">
+          {/* Desktop Navigation */}
+          <nav className="nav-items desktop-nav">
             <span className="nav-item active">Dashboard</span>
             <span className="nav-item">{getUserDisplayName()}</span>
             <button className="logout-btn" onClick={onLogout}>
               Logout
             </button>
+          </nav>
+
+          {/* Mobile Hamburger Button */}
+          <button 
+            className="hamburger-btn"
+            onClick={toggleMobileMenu}
+            aria-label="Toggle menu"
+          >
+            <span className={`hamburger-line ${isMobileMenuOpen ? 'open' : ''}`}></span>
+            <span className={`hamburger-line ${isMobileMenuOpen ? 'open' : ''}`}></span>
+            <span className={`hamburger-line ${isMobileMenuOpen ? 'open' : ''}`}></span>
+          </button>
+
+          {/* Mobile Navigation Menu */}
+          <nav className={`mobile-nav ${isMobileMenuOpen ? 'open' : ''}`}>
+            <div className="mobile-nav-overlay" onClick={closeMobileMenu}></div>
+            <div className="mobile-nav-content">
+              <span className="nav-item active" onClick={closeMobileMenu}>Dashboard</span>
+              <span className="nav-item" onClick={closeMobileMenu}>{getUserDisplayName()}</span>
+              <button 
+                className="logout-btn" 
+                onClick={() => {
+                  onLogout();
+                  closeMobileMenu();
+                }}
+              >
+                Logout
+              </button>
+            </div>
           </nav>
         </div>
       </header>

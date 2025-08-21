@@ -98,7 +98,7 @@ const StudentDashboard = ({
           <button
             onClick={onConfirmLeave}
             disabled={leaveModal.isLeaving}
-            className="delete-btn"
+            className="stud-delete-btn"
           >
             {leaveModal.isLeaving ? 'Leaving...' : 'Leave Class'}
           </button>

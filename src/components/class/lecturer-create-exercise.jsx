@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom'; 
 import { useUser } from '../../contexts/UserContext';
 
+
 // 🔥 FIREBASE IMPORTS - Only for Firestore (exercise data)
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../config/firebase';
@@ -225,200 +226,202 @@ const LecturerCreateExercise = () => {
 
   // 🎨 RENDER: The form UI components
   return (
-    <main className="ce-main-content">
-      <h1 className="page-title">Create Exercise</h1>
-      
-      <form onSubmit={handleSubmit} className="exercise-form">
-        {/* 📝 EXERCISE TITLE */}
-        <div className="form-group">
-          <label htmlFor="title" className="ce-form-label">Exercise Title</label>
-          <input
-            type="text"
-            id="title"
-            name="title"
-            value={formData.title}
-            onChange={handleInputChange}
-            placeholder="e.g., Exercise 3A - University Database"
-            className="form-input"
-            required
-            disabled={isLoading}
-          />
-        </div>
-
-        {/* 📄 DESCRIPTION */}
-        <div className="form-group">
-          <label htmlFor="description" className="ce-form-label">Description</label>
-          <textarea
-            id="description"
-            name="description"
-            value={formData.description}
-            onChange={handleInputChange}
-            placeholder="Provide exercise instructions and requirements..."
-            className="form-textarea"
-            rows="6"
-            required
-            disabled={isLoading}
-          />
-        </div>
-
-        {/* 📅 DUE DATE & MARKS ROW */}
-        <div className="form-row">
-          <div className="form-group half-width">
-            <label htmlFor="dueDate" className="ce-form-label">Due Date</label>
+    <div className="page-container">
+      <main className="ce-main-content">
+        <h1 className="page-title">Create Exercise</h1>
+        
+        <form onSubmit={handleSubmit} className="exercise-form">
+          {/* 📝 EXERCISE TITLE */}
+          <div className="form-group">
+            <label htmlFor="title" className="ce-form-label">Exercise Title</label>
             <input
-              type="date"
-              id="dueDate"
-              name="dueDate"
-              value={formData.dueDate}
+              type="text"
+              id="title"
+              name="title"
+              value={formData.title}
               onChange={handleInputChange}
+              placeholder="e.g., Exercise 3A - University Database"
               className="form-input"
+              required
               disabled={isLoading}
             />
           </div>
-          <div className="form-group half-width">
-            <label htmlFor="totalMarks" className="ce-form-label">Total Marks</label>
-            <input
-              type="number"
-              id="totalMarks"
-              name="totalMarks"
-              value={formData.totalMarks}
+
+          {/* 📄 DESCRIPTION */}
+          <div className="form-group">
+            <label htmlFor="description" className="ce-form-label">Description</label>
+            <textarea
+              id="description"
+              name="description"
+              value={formData.description}
               onChange={handleInputChange}
-              className="form-input"
-              min="1"
+              placeholder="Provide exercise instructions and requirements..."
+              className="form-textarea"
+              rows="6"
+              required
               disabled={isLoading}
             />
           </div>
-        </div>
 
-        {/* 📁 UPLOAD SECTIONS - 2 COLUMN LAYOUT */}
-        <div className="upload-sections-container">
-          {/* ANSWER SCHEME SECTION */}
-          <div className="upload-section">
-            <div className="section-header">
-              <span className="folder-icon">📁</span>
-              <h3 className="section-title">Answer Scheme</h3>
+          {/* 📅 DUE DATE & MARKS ROW */}
+          <div className="form-row">
+            <div className="form-group half-width">
+              <label htmlFor="dueDate" className="ce-form-label">Due Date</label>
+              <input
+                type="date"
+                id="dueDate"
+                name="dueDate"
+                value={formData.dueDate}
+                onChange={handleInputChange}
+                className="form-input"
+                disabled={isLoading}
+              />
             </div>
-            
-            <div className="upload-area">
-              <div className="upload-content">
-                <div className="upload-icon">📁</div>
-                <h4 className="upload-title">Upload Answer Scheme</h4>
-                <p className="upload-text">Drag and drop your ERD image here or click to browse</p>
-                <input
-                  type="file"
-                  id="answerScheme"
-                  accept="image/*"
-                  onChange={(e) => handleFileUpload(e, 'answerSchemeFile')}
-                  className="file-input"
-                  disabled={isLoading}
-                />
-                <button 
-                  type="button" 
-                  className="browse-btn"
-                  onClick={() => document.getElementById('answerScheme').click()}
-                  disabled={isLoading}
-                >
-                  Browse Files
-                </button>
-                <small className="file-info">
-                  Supported formats: PNG, JPG, GIF, WebP (Max 2MB)
-                </small>
-                {formData.answerSchemeFile && (
-                  <p className="file-selected">
-                    ✅ Selected: {formData.answerSchemeFile.name} 
-                    ({(formData.answerSchemeFile.size / 1024 / 1024).toFixed(2)} MB)
-                  </p>
-                )}
+            <div className="form-group half-width">
+              <label htmlFor="totalMarks" className="ce-form-label">Total Marks</label>
+              <input
+                type="number"
+                id="totalMarks"
+                name="totalMarks"
+                value={formData.totalMarks}
+                onChange={handleInputChange}
+                className="form-input"
+                min="1"
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+
+          {/* 📁 UPLOAD SECTIONS - 2 COLUMN LAYOUT */}
+          <div className="upload-sections-container">
+            {/* ANSWER SCHEME SECTION */}
+            <div className="upload-section">
+              <div className="section-header">
+                <span className="folder-icon">📁</span>
+                <h3 className="section-title">Answer Scheme</h3>
+              </div>
+              
+              <div className="upload-area">
+                <div className="upload-content">
+                  <div className="upload-icon">📁</div>
+                  <h4 className="upload-title">Upload Answer Scheme</h4>
+                  <p className="upload-text">Drag and drop your ERD image here or click to browse</p>
+                  <input
+                    type="file"
+                    id="answerScheme"
+                    accept="image/*"
+                    onChange={(e) => handleFileUpload(e, 'answerSchemeFile')}
+                    className="file-input"
+                    disabled={isLoading}
+                  />
+                  <button 
+                    type="button" 
+                    className="browse-btn"
+                    onClick={() => document.getElementById('answerScheme').click()}
+                    disabled={isLoading}
+                  >
+                    Browse Files
+                  </button>
+                  <small className="file-info">
+                    Supported formats: PNG, JPG, GIF, WebP (Max 2MB)
+                  </small>
+                  {formData.answerSchemeFile && (
+                    <p className="file-selected">
+                      ✅ Selected: {formData.answerSchemeFile.name} 
+                      ({(formData.answerSchemeFile.size / 1024 / 1024).toFixed(2)} MB)
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* RUBRIC SECTION */}
+            <div className="upload-section">
+              <div className="section-header">
+                <span className="folder-icon">📋</span>
+                <h3 className="section-title">Rubric</h3>
+              </div>
+              
+              <div className="upload-area">
+                <div className="upload-content">
+                  <div className="upload-icon">📋</div>
+                  <h4 className="upload-title">Upload Rubric</h4>
+                  <p className="upload-text">Drag and drop your PDF rubric here or click to browse</p>
+                  <input
+                    type="file"
+                    id="rubric"
+                    accept=".pdf"
+                    onChange={(e) => handleFileUpload(e, 'rubricFile')}
+                    className="file-input"
+                    disabled={isLoading}
+                  />
+                  <button 
+                    type="button" 
+                    className="browse-btn"
+                    onClick={() => document.getElementById('rubric').click()}
+                    disabled={isLoading}
+                  >
+                    Browse Files
+                  </button>
+                  <small className="file-info">
+                    Supported format: PDF (Max 2MB)
+                  </small>
+                  {formData.rubricFile && (
+                    <p className="file-selected">
+                      ✅ Selected: {formData.rubricFile.name}
+                      ({(formData.rubricFile.size / 1024 / 1024).toFixed(2)} MB)
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* RUBRIC SECTION */}
-          <div className="upload-section">
-            <div className="section-header">
-              <span className="folder-icon">📋</span>
-              <h3 className="section-title">Rubric</h3>
-            </div>
-            
-            <div className="upload-area">
-              <div className="upload-content">
-                <div className="upload-icon">📋</div>
-                <h4 className="upload-title">Upload Rubric</h4>
-                <p className="upload-text">Drag and drop your PDF rubric here or click to browse</p>
-                <input
-                  type="file"
-                  id="rubric"
-                  accept=".pdf"
-                  onChange={(e) => handleFileUpload(e, 'rubricFile')}
-                  className="file-input"
-                  disabled={isLoading}
-                />
-                <button 
-                  type="button" 
-                  className="browse-btn"
-                  onClick={() => document.getElementById('rubric').click()}
-                  disabled={isLoading}
-                >
-                  Browse Files
-                </button>
-                <small className="file-info">
-                  Supported format: PDF (Max 2MB)
-                </small>
-                {formData.rubricFile && (
-                  <p className="file-selected">
-                    ✅ Selected: {formData.rubricFile.name}
-                    ({(formData.rubricFile.size / 1024 / 1024).toFixed(2)} MB)
-                  </p>
-                )}
+          {/* 💡 TIPS ROW - 2 COLUMN LAYOUT */}
+          <div className="tips-row">
+            {/* ANSWER SCHEME TIPS */}
+            <div className="tips-section">
+              <div className="tips-header">
+                <span className="bulb-icon">💡</span>
+                <span className="tips-title">Answer Scheme Tips</span>
               </div>
+              <ul className="tips-list">
+                <li>Ensure all ERD components are clearly visible</li>
+                <li>Use Crow's Foot notation for consistency</li>
+                <li>Include all required entities, relationships, and attributes</li>
+                <li>High resolution images (1080p+) work best for AI analysis</li>
+                <li>Avoid shadows, glare, or tilted angles</li>
+              </ul>
+            </div>
+
+            {/* RUBRIC TIPS */}
+            <div className="tips-section rubric-tips">
+              <div className="tips-header">
+                <span className="tips-icon">📋</span>
+                <span className="tips-title">Rubric Tips</span>
+              </div>
+              <ul className="tips-list">
+                <li>Include clear marking criteria and point allocations</li>
+                <li>Specify requirements for each ERD component</li>
+                <li>Ensure PDF is readable and well-formatted</li>
+                <li>Include specific grading guidelines for AI processing</li>
+                <li>Use consistent terminology throughout</li>
+              </ul>
             </div>
           </div>
-        </div>
 
-        {/* 💡 TIPS ROW - 2 COLUMN LAYOUT */}
-        <div className="tips-row">
-          {/* ANSWER SCHEME TIPS */}
-          <div className="tips-section">
-            <div className="tips-header">
-              <span className="bulb-icon">💡</span>
-              <span className="tips-title">Answer Scheme Tips</span>
-            </div>
-            <ul className="tips-list">
-              <li>Ensure all ERD components are clearly visible</li>
-              <li>Use Crow's Foot notation for consistency</li>
-              <li>Include all required entities, relationships, and attributes</li>
-              <li>High resolution images (1080p+) work best for AI analysis</li>
-              <li>Avoid shadows, glare, or tilted angles</li>
-            </ul>
+          {/* 🎯 FORM BUTTONS */}
+          <div className="form-actions">
+            <button type="button" className="ce-cancel-btn" disabled={isLoading}>
+              Cancel
+            </button>
+            <button type="submit" className="ce-create-btn" disabled={isLoading}>
+              {isLoading ? 'Creating Exercise...' : 'Create Exercise'}
+            </button>
           </div>
-
-          {/* RUBRIC TIPS */}
-          <div className="tips-section rubric-tips">
-            <div className="tips-header">
-              <span className="tips-icon">📋</span>
-              <span className="tips-title">Rubric Tips</span>
-            </div>
-            <ul className="tips-list">
-              <li>Include clear marking criteria and point allocations</li>
-              <li>Specify requirements for each ERD component</li>
-              <li>Ensure PDF is readable and well-formatted</li>
-              <li>Include specific grading guidelines for AI processing</li>
-              <li>Use consistent terminology throughout</li>
-            </ul>
-          </div>
-        </div>
-
-        {/* 🎯 FORM BUTTONS */}
-        <div className="form-actions">
-          <button type="button" className="ce-cancel-btn" disabled={isLoading}>
-            Cancel
-          </button>
-          <button type="submit" className="ce-create-btn" disabled={isLoading}>
-            {isLoading ? 'Creating Exercise...' : 'Create Exercise'}
-          </button>
-        </div>
-      </form>
-    </main>
+        </form>
+      </main>
+    </div>
   );
 };
 

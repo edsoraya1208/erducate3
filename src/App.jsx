@@ -11,6 +11,7 @@ const Welcome = lazy(() => import('./pages/Welcome'));
 const AuthPage = lazy(() => import('./pages/AuthPage'));
 const Dashboard1 = lazy(() => import('./pages/lecturer/dashboard1'));
 const MyClassLectPage = lazy(() => import('./pages/lecturer/my-class-lect-page'));
+const JoinClassStud = lazy(() => import('./pages/student/join-class-stud'));
 
 // Loading component with better styling
 const LoadingFallback = () => (
@@ -38,13 +39,7 @@ function App() {
             <Route path="/lecturer/dashboard1" element={<Dashboard1 />} />
             <Route path="/lecturer/create-exercise" element={<CreateExercisePage />} />
             <Route path="/lecturer/class/:classId" element={<MyClassLectPage />} />
-
-            {/* 🚀 OPTIONAL: Add more lecturer routes */}
-            {/* <Route path="/lecturer/profile" element={<LecturerProfile />} /> */}
-            {/* <Route path="/lecturer/classes/:classId" element={<ClassDetails />} /> */}
-            
-            {/* 🛡️ OPTIONAL: Add protected routes (requires authentication) */}
-            {/* <Route path="/lecturer/*" element={<ProtectedRoute><LecturerRoutes /></ProtectedRoute>} /> */}
+            <Route path= "/student/join-class" element={<JoinClassStud />} />
             
             {/* 🎯 OPTIONAL: Add 404 page for unknown routes */}
             {/* <Route path="*" element={<NotFound />} /> */}

@@ -191,7 +191,7 @@ const StudentDashboard = ({
                 joinedClasses.map((classItem) => (
                   <div 
                     key={classItem.id} 
-                    className="class-card clickable-card"
+                    className="stud-class-card clickable-card"
                     onClick={() => onClassClick(classItem)}
                     style={{ cursor: 'pointer' }}
                   >

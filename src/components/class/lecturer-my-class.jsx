@@ -25,6 +25,8 @@ const LecturerMyClass = ({
   onStatusFilterChange,
   onPublishExercise,
   onEditExercise,
+  onDeleteExercise, // 🆕 NEW: Added delete handler prop
+  onDraftExerciseClick, // 🆕 NEW: Added draft click handler prop
   onViewSubmissions,
   onNewExercise,
   onDashboardClick,
@@ -61,7 +63,6 @@ const LecturerMyClass = ({
         </div>
         
         <div className="header-right">
-          {/* Desktop Navigation */}
           <nav className="nav-items desktop-nav">
             <span className="nav-item" onClick={onDashboardClick}>Dashboard</span>
             <span className="nav-item">{getUserDisplayName()}</span>
@@ -70,7 +71,6 @@ const LecturerMyClass = ({
             </button>
           </nav>
 
-          {/* Hamburger Button */}
           <button 
             className="hamburger-btn"
             onClick={toggleMobileMenu}
@@ -81,7 +81,6 @@ const LecturerMyClass = ({
             <div className={`hamburger-line ${isMobileMenuOpen ? 'open' : ''}`}></div>
           </button>
 
-          {/* Mobile Navigation */}
           <div className={`mobile-nav ${isMobileMenuOpen ? 'open' : ''}`}>
             <div className="mobile-nav-overlay" onClick={closeMobileMenu}></div>
             <div className="mobile-nav-content">
@@ -130,13 +129,11 @@ const LecturerMyClass = ({
       <Header />
 
       <main className="mc-main-content">
-        {/* Main title outside the white container */}
         <h1 className="mc-main-title">My Exercises</h1>
         
         <div className="lecturer-my-class">
           <div className="class-details">
             <h2>{classData.name || classData.title}</h2>
-            {/* Updated to use actual classData properties without hardcoded fallbacks */}
             <p className="class-meta">
               {students?.length || 0} students enrolled
             </p>
@@ -192,7 +189,13 @@ const LecturerMyClass = ({
                   <div className="loading">Loading exercises...</div>
                 ) : (
                   exercises.map((exercise) => (
-                    <div key={exercise.id} className="exercise-card">
+                    <div 
+                      key={exercise.id} 
+                      className={`exercise-card ${exercise.status === 'draft' ? 'draft-clickable' : ''}`}
+                      // 🆕 NEW: Make draft exercises clickable for editing
+                      onClick={exercise.status === 'draft' ? () => onDraftExerciseClick(exercise.id) : undefined}
+                      style={exercise.status === 'draft' ? { cursor: 'pointer' } : {}}
+                    >
                       <div className="exercise-header">
                         <h3>{exercise.title}</h3>
                         <span className={`status-badge ${getStatusBadge(exercise.status)}`}>
@@ -207,28 +210,59 @@ const LecturerMyClass = ({
                       </div>
 
                       <div className="exercise-actions">
+                        {/* 🔄 UPDATED: Enhanced button logic for different statuses */}
                         {exercise.status === 'draft' ? (
                           <>
                             <button 
                               className="btn-class-lect btn-publish"
-                              onClick={() => onPublishExercise(exercise.id)}
+                              onClick={(e) => {
+                                e.stopPropagation(); // 🆕 NEW: Prevent card click when clicking button
+                                onPublishExercise(exercise.id);
+                              }}
                             >
                               Publish
                             </button>
                             <button 
-                              className="btn btn-edit"
-                              onClick={() => onEditExercise(exercise.id)}
+                              className="btn btn-delete"
+                              onClick={(e) => {
+                                e.stopPropagation(); // 🆕 NEW: Prevent card click when clicking button
+                                onDeleteExercise(exercise.id);
+                              }}
                             >
-                              Edit
+                              Delete
+                            </button>
+                          </>
+                        ) : exercise.status === 'active' ? (
+                          <>
+                            <button 
+                              className="btn btn-view"
+                              onClick={() => onViewSubmissions(exercise.id)}
+                            >
+                              View Submission
+                            </button>
+                            <button 
+                              className="btn btn-delete"
+                              onClick={() => onDeleteExercise(exercise.id)}
+                            >
+                              Delete
                             </button>
                           </>
                         ) : (
-                          <button 
-                            className="btn btn-view"
-                            onClick={() => onViewSubmissions(exercise.id)}
-                          >
-                            View Submission
-                          </button>
+                          // 🆕 NEW: For completed exercises, show view submissions and delete
+                          <>
+                            <button 
+                              className="btn btn-view"
+                              onClick={() => onViewSubmissions(exercise.id)}
+                            >
+                              View Submission
+                            </button>
+                            <button 
+                              className="btn btn-delete"
+                              onClick={() => onDeleteExercise(exercise.id)}
+                            >
+                              Delete
+                            </button>
+                          </>
                         )}
                       </div>
                     </div>

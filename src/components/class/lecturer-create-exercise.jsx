@@ -1,19 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // 🔄 UPDATED: Added useEffect
 import { useSearchParams } from 'react-router-dom'; 
 import { useUser } from '../../contexts/UserContext';
 
 // 🔥 FIREBASE IMPORTS - Only for Firestore (exercise data)
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'firebase/firestore'; // 🔄 UPDATED: Added getDoc, updateDoc
 import { db } from '../../config/firebase';
 
 // 🌤️ CLOUDINARY IMPORT - For file uploads
 import { uploadToCloudinary } from '../../config/cloudinary';
 
 // 🎯 MAIN COMPONENT: This handles the create exercise form logic and UI
-const LecturerCreateExercise = ({ onCancel }) => { // Added onCancel prop
+// 🔄 UPDATED: Added classId prop and enhanced cancel functionality + draft loading
+const LecturerCreateExercise = ({ onCancel, classId: propClassId }) => { 
   const { user, getUserDisplayName } = useUser();
   const [searchParams] = useSearchParams(); 
-  const classId = searchParams.get('classId'); 
+  // 🔄 UPDATED: Use classId from props if available, fallback to searchParams
+  const classId = propClassId || searchParams.get('classId');
+  // 🆕 NEW: Get draftId from URL to load existing draft
+  const draftId = searchParams.get('draftId'); 
 
   // 📝 STATE MANAGEMENT: These store all form data
   const [formData, setFormData] = useState({
@@ -27,6 +31,51 @@ const LecturerCreateExercise = ({ onCancel }) => { // Added onCancel prop
 
   // ⏳ LOADING STATE: Show loading during submission
   const [isLoading, setIsLoading] = useState(false);
+  // 🆕 NEW: Track if we're editing a draft
+  const [isEditingDraft, setIsEditingDraft] = useState(false);
+
+  // 🆕 NEW: Load draft data when draftId exists
+  useEffect(() => {
+    const loadDraftData = async () => {
+      if (!draftId || !classId) return;
+
+      try {
+        setIsLoading(true);
+        console.log('Loading draft exercise:', draftId);
+        
+        const draftRef = doc(db, 'classes', classId, 'exercises', draftId);
+        const draftSnap = await getDoc(draftRef);
+        
+        if (draftSnap.exists()) {
+          const draftData = draftSnap.data();
+          console.log('Draft data loaded:', draftData);
+          
+          // Pre-fill form with draft data
+          setFormData({
+            title: draftData.title || '',
+            description: draftData.description || '',
+            dueDate: draftData.dueDate || '',
+            totalMarks: draftData.totalMarks?.toString() || '100',
+            answerSchemeFile: null, // Files can't be pre-loaded, user needs to re-upload
+            rubricFile: null
+          });
+          
+          setIsEditingDraft(true);
+          console.log('✅ Draft loaded successfully');
+        } else {
+          console.warn('Draft not found');
+          alert('Draft exercise not found. Starting with empty form.');
+        }
+      } catch (error) {
+        console.error('Error loading draft:', error);
+        alert('Failed to load draft. Starting with empty form.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadDraftData();
+  }, [draftId, classId]);
 
   // 🎯 HANDLE INPUT CHANGES: Updates state when user types
   const handleInputChange = (e) => {
@@ -87,6 +136,131 @@ const LecturerCreateExercise = ({ onCancel }) => { // Added onCancel prop
       alert('Error validating file. Please try again.');
       e.target.value = '';
     }
+  };
+
+  // 🆕 NEW: Save as draft function
+  const saveDraft = async () => {
+    // Only save if there's meaningful content
+    if (!formData.title.trim() && !formData.description.trim()) {
+      console.log('No content to save as draft');
+      return false;
+    }
+
+    if (!classId || !user?.uid) {
+      console.warn('Cannot save draft: missing classId or user');
+      return false;
+    }
+
+    try {
+      setIsLoading(true);
+      console.log('Saving draft exercise...');
+
+      // 🌤️ Upload files if they exist (same as regular submit but mark as draft)
+      let answerSchemeData = null;
+      let rubricData = null;
+
+      if (formData.answerSchemeFile) {
+        console.log('Uploading answer scheme for draft...');
+        answerSchemeData = await uploadToCloudinary(
+          formData.answerSchemeFile, 
+          'answer-schemes'
+        );
+      }
+
+      if (formData.rubricFile) {
+        console.log('Uploading rubric for draft...');
+        rubricData = await uploadToCloudinary(
+          formData.rubricFile, 
+          'rubrics'
+        );
+      }
+
+      // 📝 Create draft exercise data
+      const draftData = {
+        title: formData.title.trim() || 'Untitled Exercise',
+        description: formData.description.trim() || 'No description provided',
+        dueDate: formData.dueDate || null,
+        totalMarks: parseInt(formData.totalMarks) || 100,
+        
+        answerScheme: answerSchemeData ? {
+          url: answerSchemeData.url,
+          publicId: answerSchemeData.publicId,
+          originalName: answerSchemeData.originalName,
+          fileType: answerSchemeData.fileType,
+          fileSize: answerSchemeData.fileSize,
+          width: answerSchemeData.width,
+          height: answerSchemeData.height,
+          format: answerSchemeData.format,
+          uploadedAt: answerSchemeData.createdAt
+        } : null,
+        
+        rubric: rubricData ? {
+          url: rubricData.url,
+          publicId: rubricData.publicId,
+          originalName: rubricData.originalName,
+          fileType: rubricData.fileType,
+          fileSize: rubricData.fileSize,
+          format: rubricData.format,
+          uploadedAt: rubricData.createdAt
+        } : null,
+        
+        createdBy: getUserDisplayName(),
+        createdById: user.uid,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        status: 'draft' // 🆕 KEY DIFFERENCE: Mark as draft
+      };
+
+      // Save to Firestore
+      const docRef = await addDoc(collection(db, 'classes', classId, 'exercises'), draftData);
+      console.log('✅ Draft saved with ID:', docRef.id);
+      
+      return true; // Success
+      
+    } catch (error) {
+      console.error('❌ Error saving draft:', error);
+      alert('Failed to save draft. Changes will be lost.');
+      return false; // Failed
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 🔄 UPDATED: Enhanced cancel handler with draft saving (but not when editing existing draft)
+  const handleCancel = async () => {
+    const hasContent = formData.title.trim() || 
+                      formData.description.trim() || 
+                      formData.answerSchemeFile || 
+                      formData.rubricFile ||
+                      formData.dueDate;
+
+    // 🆕 NEW: Don't save as new draft if we're already editing a draft
+    if (hasContent && !isEditingDraft) {
+      const shouldSave = window.confirm(
+        'You have unsaved changes. Would you like to save this as a draft?\n\n' +
+        '• Click "OK" to save as draft\n' +
+        '• Click "Cancel" to discard changes'
+      );
+      
+      if (shouldSave) {
+        const saved = await saveDraft();
+        if (saved) {
+          alert('Exercise saved as draft! You can continue editing it later.');
+        }
+      }
+    } else if (hasContent && isEditingDraft) {
+      // When editing a draft, just confirm they want to discard changes
+      const shouldDiscard = window.confirm(
+        'You have unsaved changes to this draft. Are you sure you want to discard them?'
+      );
+      
+      if (!shouldDiscard) {
+        return; // Don't navigate away
+      }
+    }
+    
+    // Call the parent's onCancel function
+    onCancel();
   };
 
   // 🚀 SUBMIT FORM: This uploads to Cloudinary and saves to Firestore
@@ -179,7 +353,7 @@ const LecturerCreateExercise = ({ onCancel }) => { // Added onCancel prop
         createdById: user.uid,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-        status: 'active'
+        status: 'active' // 🔄 UPDATED: Keep as active for regular submit
       };
 
       console.log('Saving exercise to Firestore...');
@@ -206,6 +380,9 @@ const LecturerCreateExercise = ({ onCancel }) => { // Added onCancel prop
       const rubricInput = document.getElementById('rubric');
       if (answerSchemeInput) answerSchemeInput.value = '';
       if (rubricInput) rubricInput.value = '';
+
+      // Navigate back after successful creation
+      onCancel();
       
     } catch (error) {
       console.error('❌ Error creating exercise:', error);
@@ -227,7 +404,10 @@ const LecturerCreateExercise = ({ onCancel }) => { // Added onCancel prop
   return (
     <div className="page-container">
       <main className="ce-main-content">
-        <h1 className="page-title">Create Exercise</h1>
+        <h1 className="page-title">
+          {/* 🆕 NEW: Dynamic title based on whether editing draft or creating new */}
+          {isEditingDraft ? 'Edit Draft Exercise' : 'Create Exercise'}
+        </h1>
         
         <form onSubmit={handleSubmit} className="exercise-form">
           {/* 📝 EXERCISE TITLE */}
@@ -415,12 +595,15 @@ const LecturerCreateExercise = ({ onCancel }) => { // Added onCancel prop
               type="button" 
               className="ce-cancel-btn" 
               disabled={isLoading}
-              onClick={onCancel}
+              onClick={handleCancel} // 🔄 UPDATED: Now uses enhanced handleCancel
             >
               Cancel
             </button>
             <button type="submit" className="ce-create-btn" disabled={isLoading}>
-              {isLoading ? 'Creating Exercise...' : 'Create Exercise'}
+              {isLoading ? 
+                (isEditingDraft ? 'Updating Exercise...' : 'Creating Exercise...') : 
+                (isEditingDraft ? 'Update & Publish' : 'Create Exercise')
+              }
             </button>
           </div>
         </form>

@@ -244,7 +244,7 @@ const LecturerMyClass = ({
               <div className="students-list">
                 {loading ? (
                   <div className="loading">Loading students...</div>
-                ) : (
+                ) : students && students.length > 0 ? (
                   students.map((student) => (
                     <div key={student.id} className="student-item">
                       <div className="student-avatar">
@@ -259,6 +259,10 @@ const LecturerMyClass = ({
                       </div>
                     </div>
                   ))
+                ) : (
+                  <div className="no-students" style={{textAlign: 'center', padding: '20px', color: '#666'}}>
+                    <p>No students enrolled in this class yet.</p>
+                  </div>
                 )}
               </div>
             </div>

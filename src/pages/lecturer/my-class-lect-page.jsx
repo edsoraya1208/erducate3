@@ -85,29 +85,46 @@ const MyClassLectPage = () => {
 
   // Fetch students from Firebase
   const fetchStudents = async () => {
-    try {
-      setLoading(true);
-      const q = query(
-        collection(db, 'enrollments'), 
-        where('classId', '==', classId)
-      );
-      const querySnapshot = await getDocs(q);
-      const studentsData = [];
+  try {
+    setLoading(true);
+    console.log('Fetching students for classId:', classId);
+    
+    // Get enrollments for this class from 'studentClasses' collection
+    const enrollmentsQuery = query(
+      collection(db, 'studentClasses'),
+      where('classId', '==', classId)
+    );
+    const enrollmentSnapshot = await getDocs(enrollmentsQuery);
+    
+    console.log('Found enrollments:', enrollmentSnapshot.size);
+    
+    // Use the data directly from enrollment records (no need to fetch user documents)
+    const studentsData = [];
+    
+    enrollmentSnapshot.forEach((enrollmentDoc) => {
+      const enrollmentData = enrollmentDoc.data();
+      console.log('Enrollment data:', enrollmentData);
       
-      querySnapshot.forEach((doc) => {
-        studentsData.push({
-          id: doc.id,
-          ...doc.data()
-        });
+      // Use the student info that's already stored in the enrollment
+      studentsData.push({
+        id: enrollmentData.studentId,
+        name: enrollmentData.studentName || enrollmentData.displayName || 'Unknown Student',
+        email: enrollmentData.studentEmail || 'No email',
+        completedExercises: enrollmentData.completedExercises || 0,
+        enrolledAt: enrollmentData.enrolledAt || enrollmentData.createdAt
       });
-      
-      setStudents(studentsData);
-    } catch (error) {
-      console.error('Error fetching students:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    });
+    
+    console.log('Final students data:', studentsData);
+    setStudents(studentsData);
+    
+  } catch (error) {
+    console.error('Error fetching students:', error);
+    setStudents([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Load data based on active tab
   useEffect(() => {

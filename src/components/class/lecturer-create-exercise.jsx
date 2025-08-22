@@ -29,6 +29,13 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId }) => {
   const [isLoading, setIsLoading] = useState(Boolean(draftId));
   const [isEditingDraft, setIsEditingDraft] = useState(Boolean(draftId));
 
+  // 🆕 NEW: Modal state management
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [modalType, setModalType] = useState(''); // 'save-draft' or 'discard-changes'
+  
+  // 🔙 NEW: Browser back button detection
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
   // 🆕 NEW: Load draft data when draftId exists
   useEffect(() => {
     const loadDraftData = async () => {
@@ -71,6 +78,53 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId }) => {
 
     loadDraftData();
   }, [draftId, classId]);
+
+  // 🔙 NEW: Browser back button and page refresh detection
+  useEffect(() => {
+    const checkUnsavedChanges = () => {
+      const hasContent = formData.title.trim() || 
+                        formData.description.trim() || 
+                        formData.answerSchemeFile || 
+                        formData.rubricFile ||
+                        formData.dueDate;
+      setHasUnsavedChanges(hasContent);
+    };
+
+    checkUnsavedChanges();
+  }, [formData]);
+
+  // 🔙 NEW: Handle browser back/refresh/close
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+        return e.returnValue;
+      }
+    };
+
+    const handlePopState = (e) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        // Push current state back to prevent navigation
+        window.history.pushState(null, '', window.location.href);
+        // Show our custom modal
+        setModalType(isEditingDraft ? 'discard-changes' : 'save-draft');
+        setShowCancelModal(true);
+      }
+    };
+
+    // Add current state to history stack for back button detection
+    window.history.pushState(null, '', window.location.href);
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [hasUnsavedChanges, isEditingDraft]);
 
   // 🎯 HANDLE INPUT CHANGES: Updates state when user types
   const handleInputChange = (e) => {
@@ -230,43 +284,46 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId }) => {
     }
   };
 
-  // Enhanced cancel handler with draft saving
-  const handleCancel = async () => {
+  // 🆕 NEW: Modal handlers
+  const handleCancelClick = () => {
     const hasContent = formData.title.trim() || 
                       formData.description.trim() || 
                       formData.answerSchemeFile || 
                       formData.rubricFile ||
                       formData.dueDate;
 
-    // Don't save as new draft if we're already editing a draft
     if (hasContent && !isEditingDraft) {
-      const shouldSave = window.confirm(
-        'You have unsaved changes. Would you like to save this as a draft?\n\n' +
-        '• Click "OK" to save as draft\n' +
-        '• Click "Cancel" to discard changes'
-      );
-      
-      if (shouldSave) {
-        const saved = await saveDraft();
-        if (saved) {
-          alert('Exercise saved as draft! You can continue editing it later.');
-        }
-      }
+      setModalType('save-draft');
+      setShowCancelModal(true);
     } else if (hasContent && isEditingDraft) {
-      // When editing a draft, just confirm they want to discard changes
-      const shouldDiscard = window.confirm(
-        'You have unsaved changes to this draft. Are you sure you want to discard them?'
-      );
-      
-      if (!shouldDiscard) {
-        return; // Don't navigate away
-      }
+      setModalType('discard-changes');
+      setShowCancelModal(true);
+    } else {
+      // No content to save, just cancel
+      onCancel();
     }
-    
-    // Call the parent's onCancel function
+  };
+
+  const handleModalSaveDraft = async () => {
+    setShowCancelModal(false);
+    const saved = await saveDraft();
+    if (saved) {
+      alert('Exercise saved as draft! You can continue editing it later.');
+    }
+    setHasUnsavedChanges(false); // Clear the unsaved changes flag
     onCancel();
   };
 
+  const handleModalDiscardChanges = () => {
+    setShowCancelModal(false);
+    setHasUnsavedChanges(false); // Clear the unsaved changes flag
+    onCancel();
+  };
+
+  const handleModalCancel = () => {
+    setShowCancelModal(false);
+  };
+  
   // 🚀 SUBMIT FORM: This uploads to Cloudinary and saves to Firestore
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -386,6 +443,8 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId }) => {
         answerSchemeFile: null,
         rubricFile: null
       });
+      
+      setHasUnsavedChanges(false); // Clear the unsaved changes flag
       
       // Clear file inputs
       const answerSchemeInput = document.getElementById('answerScheme');
@@ -619,7 +678,7 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId }) => {
               type="button" 
               className="ce-cancel-btn" 
               disabled={isLoading}
-              onClick={handleCancel}
+              onClick={handleCancelClick}
             >
               Cancel
             </button>
@@ -631,6 +690,61 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId }) => {
             </button>
           </div>
         </form>
+
+        {/* 🆕 NEW: Custom Modal Overlay */}
+        {showCancelModal && (
+          <div className="ce-modal-overlay">
+            <div className="ce-modal">
+              <div className="ce-modal-header">
+                <h3 className="ce-modal-title">
+                  {modalType === 'save-draft' ? 'Save Draft?' : 'Discard Changes?'}
+                </h3>
+              </div>
+              
+              <div className="ce-modal-body">
+                {modalType === 'save-draft' ? (
+                  <p>You have unsaved changes. Would you like to save this as a draft?</p>
+                ) : (
+                  <p>You have unsaved changes to this draft. Are you sure you want to discard them?</p>
+                )}
+              </div>
+              
+              <div className="ce-modal-actions">
+                {modalType === 'save-draft' ? (
+                  <>
+                    <button 
+                      className="ce-modal-btn ce-modal-btn-secondary" 
+                      onClick={handleModalDiscardChanges}
+                    >
+                      Discard Changes
+                    </button>
+                    <button 
+                      className="ce-modal-btn ce-modal-btn-primary" 
+                      onClick={handleModalSaveDraft}
+                    >
+                      Save as Draft
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button 
+                      className="ce-modal-btn ce-modal-btn-secondary" 
+                      onClick={handleModalCancel}
+                    >
+                      Keep Editing
+                    </button>
+                    <button 
+                      className="ce-modal-btn ce-modal-btn-danger" 
+                      onClick={handleModalDiscardChanges}
+                    >
+                      Discard Changes
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

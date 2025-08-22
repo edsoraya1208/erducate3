@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom'; 
 import { useUser } from '../../contexts/UserContext';
 
-
 // 🔥 FIREBASE IMPORTS - Only for Firestore (exercise data)
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../config/firebase';
@@ -11,7 +10,7 @@ import { db } from '../../config/firebase';
 import { uploadToCloudinary } from '../../config/cloudinary';
 
 // 🎯 MAIN COMPONENT: This handles the create exercise form logic and UI
-const LecturerCreateExercise = () => {
+const LecturerCreateExercise = ({ onCancel }) => { // Added onCancel prop
   const { user, getUserDisplayName } = useUser();
   const [searchParams] = useSearchParams(); 
   const classId = searchParams.get('classId'); 
@@ -412,7 +411,12 @@ const LecturerCreateExercise = () => {
 
           {/* 🎯 FORM BUTTONS */}
           <div className="form-actions">
-            <button type="button" className="ce-cancel-btn" disabled={isLoading}>
+            <button 
+              type="button" 
+              className="ce-cancel-btn" 
+              disabled={isLoading}
+              onClick={onCancel}
+            >
               Cancel
             </button>
             <button type="submit" className="ce-create-btn" disabled={isLoading}>

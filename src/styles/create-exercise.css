@@ -1,4 +1,8 @@
-/* 🎨 CREATE EXERCISE PAGE STYLES */
+/* 🎨 ORGANIZED CSS FILE - CREATE EXERCISE PAGE & MODAL STYLES */
+
+/* ================================
+   🌐 GLOBAL STYLES
+   ================================ */
 
 * {
   margin: 0;
@@ -12,12 +16,33 @@
   line-height: 1.5;
 }
 
+/* ================================
+   🏠 LAYOUT & CONTAINER STYLES
+   ================================ */
+
 .create-exercise-container {
   min-height: 100vh;
   background-color: #f8f9fa;
 }
 
+.ce-main-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 0; /* Only top and bottom padding */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
 
+.page-title {
+  font-size: 2rem; /* INCREASED from default - matches dashboard title size */
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 2rem;
+  text-align: left; /* Match dashboard alignment */
+}
+
+/* ================================
+   🎯 LOGO & NAVIGATION STYLES
+   ================================ */
 
 .logo {
   display: flex;
@@ -103,22 +128,10 @@
   font-weight: 600;
 }
 
-.ce-main-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 32px 0; /* Only top and bottom padding */
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-}
+/* ================================
+   📝 FORM STYLES
+   ================================ */
 
-.page-title {
-  font-size: 2rem; /* INCREASED from default - matches dashboard title size */
-  font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 2rem;
-  text-align: left; /* Match dashboard alignment */
-}
-
-/* 📝 FORM STYLES */
 .exercise-form {
   background: white;
   border-radius: 12px;
@@ -188,7 +201,10 @@
   margin-top: 0.25rem;
 }
 
-/* 📁 FORM SECTIONS */
+/* ================================
+   📁 FORM SECTIONS
+   ================================ */
+
 .ce-form-section {
   margin: 2rem 0;
   border: 2px solid #f3f4f6;
@@ -214,7 +230,6 @@
   color: #374151;
 }
 
-/* 📁 UPLOAD SECTIONS CONTAINER */
 .upload-sections-container {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -229,7 +244,10 @@
   background: #fafbfc;
 }
 
-/* 💡 TIPS ROW */
+/* ================================
+   💡 TIPS SECTIONS
+   ================================ */
+
 .tips-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -237,7 +255,66 @@
   margin-top: 1.5rem;
 }
 
-/* 📤 UPLOAD AREAS */
+.tips-section {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.rubric-tips {
+  background: linear-gradient(135deg, #ddd6fe, #c4b5fd);
+}
+
+.tips-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.bulb-icon,
+.tips-icon {
+  font-size: 1rem;
+}
+
+.tips-title {
+  font-weight: 600;
+  color: #92400e;
+}
+
+.rubric-tips .tips-title {
+  color: #5b21b6;
+}
+
+.tips-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tips-list li {
+  padding: 0.25rem 0;
+  padding-left: 1.5rem;
+  position: relative;
+  color: #92400e;
+  font-size: 0.9rem; /* INCREASED from 0.85rem */
+}
+
+.rubric-tips .tips-list li {
+  color: #5b21b6;
+}
+
+.tips-list li::before {
+  content: '•';
+  position: absolute;
+  left: 0.5rem;
+  font-weight: bold;
+}
+
+/* ================================
+   📤 UPLOAD AREAS
+   ================================ */
+
 .upload-area {
   border: 2px dashed #d1d5db;
   border-radius: 8px;
@@ -314,64 +391,10 @@
   margin-top: 0.5rem;
 }
 
-/* 💡 TIPS SECTIONS */
-.tips-section {
-  background: linear-gradient(135deg, #fef3c7, #fde68a);
-  border-radius: 8px;
-  padding: 1rem;
-}
+/* ================================
+   🎯 FORM ACTIONS
+   ================================ */
 
-.rubric-tips {
-  background: linear-gradient(135deg, #ddd6fe, #c4b5fd);
-}
-
-.tips-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-}
-
-.bulb-icon,
-.tips-icon {
-  font-size: 1rem;
-}
-
-.tips-title {
-  font-weight: 600;
-  color: #92400e;
-}
-
-.rubric-tips .tips-title {
-  color: #5b21b6;
-}
-
-.tips-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.tips-list li {
-  padding: 0.25rem 0;
-  padding-left: 1.5rem;
-  position: relative;
-  color: #92400e;
-  font-size: 0.9rem; /* INCREASED from 0.85rem */
-}
-
-.rubric-tips .tips-list li {
-  color: #5b21b6;
-}
-
-.tips-list li::before {
-  content: '•';
-  position: absolute;
-  left: 0.5rem;
-  font-weight: bold;
-}
-
-/* 🎯 FORM ACTIONS */
 .form-actions {
   display: flex;
   gap: 1rem;
@@ -417,7 +440,202 @@
   box-shadow: 0 6px 12px rgba(173, 22, 249, 0.3);
 }
 
-/* 📱 RESPONSIVE DESIGN */
+/* ================================
+   🎯 MODAL STYLES - Responsive for all screen sizes
+   ================================ */
+
+/* Modal Overlay - Full screen backdrop */
+.ce-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(2px);
+}
+
+/* Modal Container */
+.ce-modal {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  animation: ce-modal-slide-up 0.3s ease-out;
+}
+
+/* Modal Header */
+.ce-modal-header {
+  padding: 24px 24px 16px 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.ce-modal-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+  line-height: 1.3;
+}
+
+/* Modal Body */
+.ce-modal-body {
+  padding: 20px 24px;
+}
+
+.ce-modal-body p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #4b5563;
+}
+
+/* Modal Actions */
+.ce-modal-actions {
+  padding: 16px 24px 24px 24px;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+/* Modal Buttons - Base Style */
+.ce-modal-btn {
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(94, 23, 165, 0.2);
+  /* ADDED: Fixed width to prevent shrinking */
+  min-width: 120px;
+  /* ADDED: Prevent button from growing/shrinking */
+  flex-shrink: 0;
+}
+
+.ce-modal-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.ce-modal-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.ce-modal-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Primary Button (Save as Draft) */
+.ce-modal-btn-primary {
+  background: linear-gradient(135deg, #7b10a5, #5e17a5);
+  color: #ffffff;
+  
+}
+
+.ce-modal-btn-primary:hover {
+  background: linear-gradient(135deg, #7b10a5, #5e17a5);
+}
+
+.ce-modal-btn-primary:active {
+  background: linear-gradient(135deg, #7b10a5, #5e17a5);
+}
+
+/* Secondary Button (Discard Changes, Keep Editing) */
+.ce-modal-btn-secondary {
+  background: #f3f4f6;
+  color: #666666;
+  border: 1px solid #d1d5db;
+  font-weight: 300;
+  font-size: 16px;
+}
+
+
+
+.ce-modal-btn-secondary:hover {
+   background: #f3f4f6;
+  color: #666666;
+}
+
+.ce-modal-btn-secondary:active {
+  background: #d1d5db;
+}
+
+/* Danger Button (Discard Changes - destructive action) */
+.ce-modal-btn-danger {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.ce-modal-btn-danger:hover {
+  background: #dc2626;
+}
+
+.ce-modal-btn-danger:active {
+  background: #b91c1c;
+}
+
+/* 🎯 FOCUS STYLES for Accessibility */
+.ce-modal-btn:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.ce-modal-btn:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.ce-modal-btn:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* ================================
+   🎬 ANIMATIONS
+   ================================ */
+
+@keyframes ce-modal-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ce-modal-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+
+/* ================================
+   📱 RESPONSIVE DESIGN
+   ================================ */
+
+/* Mobile styles (up to 768px) */
 @media (max-width: 768px) {
   .header {
     padding: 0 1rem;
@@ -476,8 +694,51 @@
     word-wrap: break-word;
     margin: 0.5rem 0;
   }
+
+  /* Modal mobile styles */
+  .ce-modal-overlay {
+    padding: 16px;
+    align-items: flex-end;
+  }
+
+  .ce-modal {
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    margin-bottom: 0;
+    animation: ce-modal-slide-up-mobile 0.3s ease-out;
+  }
+
+  .ce-modal-header {
+    padding: 20px 20px 14px 20px;
+  }
+
+  .ce-modal-title {
+    font-size: 18px;
+  }
+
+  .ce-modal-body {
+    padding: 16px 20px;
+  }
+
+  .ce-modal-body p {
+    font-size: 15px;
+  }
+
+  .ce-modal-actions {
+    padding: 14px 20px 20px 20px;
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+
+  .ce-modal-btn {
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 15px;
+    min-width: auto;
+  }
 }
 
+/* Small mobile styles (up to 480px) */
 @media (max-width: 480px) {
   .page-title {
     font-size: 1.5rem;
@@ -489,5 +750,80 @@
 
   .tips-section {
     padding: 0.75rem;
+  }
+
+  /* Modal small mobile styles */
+  .ce-modal-overlay {
+    padding: 12px;
+  }
+
+  .ce-modal-header {
+    padding: 18px 18px 12px 18px;
+  }
+
+  .ce-modal-title {
+    font-size: 17px;
+  }
+
+  .ce-modal-body {
+    padding: 14px 18px;
+  }
+
+  .ce-modal-body p {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .ce-modal-actions {
+    padding: 12px 18px 18px 18px;
+    gap: 8px;
+  }
+
+  .ce-modal-btn {
+    padding: 11px 18px;
+    font-size: 14px;
+  }
+}
+
+/* Tablet styles (769px to 1024px) */
+@media (max-width: 768px) {
+  .ce-modal-overlay {
+    padding: 20px;
+    align-items: center !important;
+  }
+
+  .ce-modal {
+    width: 100%;
+    max-width: none !important;
+    border-radius: 12px !important;
+    margin-bottom: 0;
+    animation: ce-modal-slide-up 0.3s ease-out !important;
+  }
+
+  .ce-modal-header {
+    padding: 32px 24px 20px 24px;
+  }
+
+  .ce-modal-title {
+    font-size: 20px;
+  }
+
+  .ce-modal-body {
+    padding: 20px 24px;
+  }
+
+  .ce-modal-body p {
+    font-size: 17px;
+  }
+
+  .ce-modal-actions {
+    padding: 24px;
+    flex-direction: column-reverse;
+    gap: 12px;
+  }
+
+  .ce-modal-btn {
+    width: 100%;
+    min-width: auto;
   }
 }

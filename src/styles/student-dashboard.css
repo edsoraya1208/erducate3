@@ -218,6 +218,49 @@ CLASSES GRID & CARDS
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   border: 1px solid #e5e7eb;
   transition: all 0.2s ease;
+  border-left: 9px solid #a51076; /* ADD THIS LINE */
+}
+
+
+/* Add these color classes */
+.stud-class-card.color-pink-light {
+  border-left-color: #d646c6;
+}
+
+.stud-class-card.color-blue {
+  border-left-color: #4278ec;
+}
+
+.stud-class-card.color-green {
+  border-left-color: #39cd70;
+}
+
+.stud-class-card.color-orange {
+  border-left-color: #df6b2d;
+}
+
+.stud-class-card.color-red {
+  border-left-color: #d33232;
+}
+
+.stud-class-card.color-indigo {
+  border-left-color: #645edb;
+}
+
+.stud-class-card.color-pink {
+  border-left-color: #db2777;
+}
+
+.stud-class-card.color-teal {
+  border-left-color: #29baae;
+}
+
+.stud-class-card.color-cyan {
+  border-left-color: #239ebd;
+}
+
+.stud-class-card.color-yellow {
+  border-left-color: #b6a746;
 }
 
 .stud-class-card:hover {

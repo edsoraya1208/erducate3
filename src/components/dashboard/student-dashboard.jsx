@@ -107,6 +107,25 @@ const StudentDashboard = ({
     </div>
   );
 
+  const getRandomColorClass = (index) => {
+    const colors = [
+      'color-pink-light',
+      'color-blue', 
+      'color-green',
+      'color-orange',
+      'color-red',
+      'color-indigo',
+      'color-pink',
+      'color-teal',
+      'color-cyan',
+      'color-yellow'
+    ];
+    
+    // Use index to ensure consistent colors for each class position
+    // This way the same class will always have the same color
+    return colors[index % colors.length];
+  };
+
   return (
     <div className="student-dashboard">
       {/* REMOVED: Navigation Header - Now using global dashboard header */}
@@ -166,10 +185,10 @@ const StudentDashboard = ({
                 </div>
               ) : (
                 /* Class Cards Grid */
-                joinedClasses.map((classItem) => (
+                joinedClasses.map((classItem, index) => (
                   <div 
                     key={classItem.id} 
-                    className="stud-class-card clickable-card"
+                    className={`stud-class-card clickable-card ${getRandomColorClass(index)}`}
                     onClick={() => onClassClick(classItem)}
                     style={{ cursor: 'pointer' }}
                   >

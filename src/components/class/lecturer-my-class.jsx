@@ -220,7 +220,7 @@ const LecturerMyClass = ({
                                 onPublishExercise(exercise.id);
                               }}
                             >
-                              Publish
+                              Publish Exercise
                             </button>
                             <button 
                               className="btn btn-delete"

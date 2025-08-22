@@ -1,0 +1,335 @@
+import React, { useState, useEffect } from 'react';
+import { collection, query, where, getDocs, orderBy, doc, getDoc } from 'firebase/firestore';
+import { db } from '../../config/firebase';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from '../../config/firebase';
+import '../../styles/my-class-stud.css';
+
+const StudentMyClass = ({ classId }) => {
+  const [user] = useAuthState(auth);
+  const [exercises, setExercises] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (user) {
+      fetchExercises();
+    }
+  }, [user, classId]);
+
+  const fetchExercises = async () => {
+    try {
+      setLoading(true);
+      setError(''); // Clear any previous errors
+      
+      if (classId) {
+        // Fetch exercises for specific class only
+        console.log('=== DEBUGGING STUDENT EXERCISES ===');
+        console.log('Current user UID:', user.uid);
+        console.log('Fetching exercises for classId:', classId);
+        
+        // First, verify student is enrolled in this specific class
+        const enrollmentQuery = query(
+          collection(db, 'studentClasses'),
+          where('studentId', '==', user.uid),
+          where('classId', '==', classId)
+        );
+        
+        const enrollmentSnapshot = await getDocs(enrollmentQuery);
+        console.log('Enrollment check result:', enrollmentSnapshot.size);
+        
+        if (enrollmentSnapshot.empty) {
+          console.log('Student not enrolled in this class');
+          setError('You are not enrolled in this class');
+          setExercises([]);
+          setLoading(false);
+          return;
+        }
+        
+        const allExercises = [];
+        
+        try {
+          // Get class info first
+          const classDoc = await getDoc(doc(db, 'classes', classId));
+          const classData = classDoc.exists() ? classDoc.data() : null;
+          console.log('Class data:', classData);
+          
+          // Get exercises for this class - simple query without orderBy
+          const exercisesQuery = query(
+            collection(db, 'classes', classId, 'exercises'),
+            where('status', '==', 'active')
+          );
+          
+          console.log('Fetching exercises with query...');
+          const exercisesSnapshot = await getDocs(exercisesQuery);
+          console.log('Found exercises:', exercisesSnapshot.size);
+          
+          for (const exerciseDoc of exercisesSnapshot.docs) {
+            const exerciseData = { 
+              id: exerciseDoc.id, 
+              classId: classId,
+              className: classData?.name || classData?.title || 'Unknown Class',
+              ...exerciseDoc.data() 
+            };
+            
+            console.log('Processing exercise:', exerciseData.title);
+            
+            // Check if student has progress on this exercise
+            const progressQuery = query(
+              collection(db, 'studentProgress'),
+              where('studentId', '==', user.uid),
+              where('classId', '==', classId),
+              where('exerciseId', '==', exerciseDoc.id)
+            );
+            
+            const progressSnapshot = await getDocs(progressQuery);
+            const progress = progressSnapshot.docs[0]?.data();
+            
+            exerciseData.progress = progress;
+            exerciseData.isSubmitted = !!progress;
+            exerciseData.isCompleted = progress?.status === 'completed' || progress?.isCompleted;
+            exerciseData.isPastDue = exerciseData.dueDate ? new Date() > exerciseData.dueDate.toDate() : false;
+            
+            allExercises.push(exerciseData);
+          }
+          
+          // Sort exercises by createdAt in JavaScript instead
+          allExercises.sort((a, b) => {
+            if (!a.createdAt && !b.createdAt) return 0;
+            if (!a.createdAt) return 1;
+            if (!b.createdAt) return -1;
+            return b.createdAt.toDate() - a.createdAt.toDate();
+          });
+          
+          console.log('Final exercises data:', allExercises);
+          setExercises(allExercises);
+          
+        } catch (classError) {
+          console.error(`Error fetching exercises for class ${classId}:`, classError);
+          setError('Error loading exercises for this class');
+        }
+        
+      } else {
+        // Fetch exercises for all enrolled classes (original logic)
+        const studentClassesQuery = query(
+          collection(db, 'studentClasses'),
+          where('studentId', '==', user.uid)
+        );
+        
+        const studentClassesSnapshot = await getDocs(studentClassesQuery);
+        const enrolledClassIds = studentClassesSnapshot.docs.map(doc => doc.data().classId);
+        
+        if (enrolledClassIds.length === 0) {
+          setExercises([]);
+          setLoading(false);
+          return;
+        }
+        
+        const allExercises = [];
+        
+        // For each enrolled class, fetch exercises
+        for (const classId of enrolledClassIds) {
+          try {
+            // Get class info first
+            const classDoc = await getDoc(doc(db, 'classes', classId));
+            const classData = classDoc.exists() ? classDoc.data() : null;
+            
+            // Get exercises for this class - only active exercises
+            const exercisesQuery = query(
+              collection(db, 'classes', classId, 'exercises'),
+              where('status', '==', 'active')
+            );
+            
+            const exercisesSnapshot = await getDocs(exercisesQuery);
+            
+            for (const exerciseDoc of exercisesSnapshot.docs) {
+              const exerciseData = { 
+                id: exerciseDoc.id, 
+                classId: classId,
+                className: classData?.name || classData?.title || 'Unknown Class',
+                ...exerciseDoc.data() 
+              };
+              
+              // Check if student has progress on this exercise
+              const progressQuery = query(
+                collection(db, 'studentProgress'),
+                where('studentId', '==', user.uid),
+                where('classId', '==', classId),
+                where('exerciseId', '==', exerciseDoc.id)
+              );
+              
+              const progressSnapshot = await getDocs(progressQuery);
+              const progress = progressSnapshot.docs[0]?.data();
+              
+              exerciseData.progress = progress;
+              exerciseData.isSubmitted = !!progress;
+              exerciseData.isCompleted = progress?.status === 'completed' || progress?.isCompleted;
+              exerciseData.isPastDue = exerciseData.dueDate ? new Date() > exerciseData.dueDate.toDate() : false;
+              
+              allExercises.push(exerciseData);
+            }
+          } catch (classError) {
+            console.warn(`Error fetching exercises for class ${classId}:`, classError);
+          }
+        }
+        
+        // Sort all exercises by due date (newest first)
+        allExercises.sort((a, b) => {
+          if (!a.dueDate && !b.dueDate) return 0;
+          if (!a.dueDate) return 1;
+          if (!b.dueDate) return -1;
+          return b.dueDate.toDate() - a.dueDate.toDate();
+        });
+        
+        setExercises(allExercises);
+      }
+    } catch (err) {
+      console.error('Error fetching exercises:', err);
+      setError('Failed to load exercises');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusBadge = (exercise) => {
+    if (exercise.isCompleted) {
+      return { text: 'COMPLETED', class: 'stud-mc-status-graded' };
+    } else if (exercise.isSubmitted) {
+      return { text: 'IN PROGRESS', class: 'stud-mc-status-review' };
+    } else {
+      return { text: 'NOT STARTED', class: 'stud-mc-status-not-submitted' };
+    }
+  };
+
+  const getActionButton = (exercise) => {
+    if (exercise.isCompleted && exercise.isPastDue) {
+      return {
+        text: 'View Results',
+        class: 'stud-mc-btn-feedback',
+        action: () => handleViewResults(exercise.classId, exercise.id)
+      };
+    } else if (exercise.isSubmitted && !exercise.isCompleted) {
+      return {
+        text: 'Continue Exercise',
+        class: 'stud-mc-btn-edit',
+        action: () => handleContinueExercise(exercise.classId, exercise.id)
+      };
+    } else {
+      return {
+        text: 'Start Exercise',
+        class: 'stud-mc-btn-start',
+        action: () => handleStartExercise(exercise.classId, exercise.id)
+      };
+    }
+  };
+
+  const handleStartExercise = (classId, exerciseId) => {
+    // Navigate to exercise attempt page
+    window.location.href = `/student/class/${classId}/exercise/${exerciseId}`;
+  };
+
+  const handleContinueExercise = (classId, exerciseId) => {
+    // Navigate to continue exercise page
+    window.location.href = `/student/class/${classId}/exercise/${exerciseId}`;
+  };
+
+  const handleViewResults = (classId, exerciseId) => {
+    // Navigate to results page
+    window.location.href = `/student/class/${classId}/exercise/${exerciseId}/results`;
+  };
+
+  const formatDate = (timestamp) => {
+    if (!timestamp) return 'No due date';
+    return timestamp.toDate().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const getScore = (exercise) => {
+    if (exercise.progress && exercise.progress.score !== undefined) {
+      return `${exercise.progress.score}/${exercise.totalMarks || 100}`;
+    }
+    return null;
+  };
+
+  if (loading) {
+    return (
+      <div className="stud-mc-container">
+        <div className="stud-mc-loading">Loading exercises...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="stud-mc-container">
+        <div className="stud-mc-error">{error}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="stud-mc-container">
+      <div className="stud-mc-header">
+        <h1 className="stud-mc-title">My Exercises</h1>
+        <p className="stud-mc-subtitle">View available exercises and submit your answers</p>
+      </div>
+
+      <div className="stud-mc-section">
+        <h2 className="stud-mc-section-title">Available Exercises</h2>
+        
+        {exercises.length === 0 ? (
+          <div className="stud-mc-empty-state">
+            <p>No exercises available{classId ? ' for this class' : '. Make sure you\'re enrolled in a class'}.</p>
+          </div>
+        ) : (
+          <div className="stud-mc-exercises-grid">
+            {exercises.map((exercise) => {
+              const status = getStatusBadge(exercise);
+              const actionButton = getActionButton(exercise);
+              const score = getScore(exercise);
+
+              return (
+                <div key={`${exercise.classId}-${exercise.id}`} className="stud-mc-exercise-card">
+                  <div className="stud-mc-card-header">
+                    <div>
+                      <h3 className="stud-mc-exercise-title">{exercise.title}</h3>
+                      {!classId && <p className="stud-mc-class-name">{exercise.className}</p>}
+                    </div>
+                    <span className={`stud-mc-status-badge ${status.class}`}>
+                      {status.text}
+                    </span>
+                  </div>
+                  
+                  <div className="stud-mc-card-content">
+                    <div className="stud-mc-exercise-info">
+                      <p className="stud-mc-due-date">
+                        Due: {formatDate(exercise.dueDate)} • {exercise.totalMarks || 100} marks
+                      </p>
+                      {score && (
+                        <p className="stud-mc-grade">Score: {score}</p>
+                      )}
+                    </div>
+                    
+                    <div className="stud-mc-card-actions">
+                      <button 
+                        className={`stud-mc-action-btn ${actionButton.class}`}
+                        onClick={actionButton.action}
+                      >
+                        {actionButton.text}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default StudentMyClass;

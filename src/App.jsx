@@ -14,7 +14,7 @@ const MyClassLectPage = lazy(() => import('./pages/lecturer/my-class-lect-page')
 
 // 🚀 FIX: Import the correct student dashboard PAGE (not component)
 const StudentDashboard = lazy(() => import('./pages/student/dashboard2'));  
-
+const MyClassStudPage = lazy(() => import('./pages/student/my-class-stud-page'));
 // Loading component with better styling
 const LoadingFallback = () => (   
   <div style={{     
@@ -43,7 +43,8 @@ function App() {
             <Route path="/lecturer/class/:classId" element={<MyClassLectPage />} />             
             
             {/* 🎯 FIX: Use the correct StudentDashboard PAGE component */}
-            <Route path="/student/dashboard" element={<StudentDashboard />} />                          
+            <Route path="/student/dashboard" element={<StudentDashboard />} />  
+            <Route path="/student/class/:classId" element={<MyClassStudPage />} />                     
             
             {/* 🎯 OPTIONAL: Add 404 page for unknown routes */}
             {/* <Route path="*" element={<NotFound />} /> */}           

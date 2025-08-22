@@ -1,0 +1,300 @@
+/* STUDENT MY CLASS STYLES */
+
+.stud-mc-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+  background-color: #f8f9fa;
+  min-height: calc(100vh - 80px);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+/* HEADER SECTION */
+.stud-mc-header {
+  margin-bottom: 32px;
+  text-align: left;
+}
+
+.stud-mc-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 8px 0;
+}
+
+.stud-mc-subtitle {
+  font-size: 1rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* SECTION STYLES */
+.stud-mc-section {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.stud-mc-section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 20px 0;
+}
+
+/* EXERCISES GRID */
+.stud-mc-exercises-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+/* EXERCISE CARDS */
+.stud-mc-exercise-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.stud-mc-exercise-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #7c3aed;
+}
+
+.stud-mc-card-header {
+  padding: 16px 16px 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.stud-mc-exercise-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 4px 0;
+  line-height: 1.3;
+}
+
+.stud-mc-class-name {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+  font-weight: 500;
+}
+
+.stud-mc-card-content {
+  padding: 0 16px 16px 16px;
+}
+
+.stud-mc-exercise-info {
+  margin-bottom: 16px;
+}
+
+.stud-mc-due-date {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0 0 4px 0;
+}
+
+.stud-mc-grade {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #059669;
+  margin: 0;
+}
+
+/* STATUS BADGES */
+.stud-mc-status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.stud-mc-status-graded {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.stud-mc-status-review {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.stud-mc-status-not-submitted {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+/* ACTION BUTTONS */
+.stud-mc-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.stud-mc-action-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.stud-mc-action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.stud-mc-action-btn:focus {
+  outline: 2px solid #7c3aed;
+  outline-offset: 2px;
+}
+
+.stud-mc-btn-start {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
+}
+
+.stud-mc-btn-start:hover {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+}
+
+.stud-mc-btn-edit {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+}
+
+.stud-mc-btn-edit:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.stud-mc-btn-feedback {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.stud-mc-btn-feedback:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+}
+
+/* LOADING AND ERROR STATES */
+.stud-mc-loading,
+.stud-mc-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  font-size: 1rem;
+  color: #6b7280;
+}
+
+.stud-mc-error {
+  color: #dc2626;
+  background-color: #fee2e2;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #fecaca;
+}
+
+.stud-mc-empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: #6b7280;
+}
+
+.stud-mc-empty-state p {
+  margin: 0;
+  font-size: 1rem;
+}
+
+/* RESPONSIVE DESIGN */
+@media (max-width: 768px) {
+  .stud-mc-container {
+    padding: 16px;
+  }
+
+  .stud-mc-title {
+    font-size: 1.5rem;
+  }
+
+  .stud-mc-exercises-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .stud-mc-section {
+    padding: 20px 16px;
+  }
+
+  .stud-mc-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .stud-mc-exercise-title {
+    font-size: 1rem;
+  }
+
+  .stud-mc-action-btn {
+    padding: 12px 16px;
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .stud-mc-container {
+    padding: 12px;
+  }
+
+  .stud-mc-header {
+    margin-bottom: 24px;
+  }
+
+  .stud-mc-title {
+    font-size: 1.25rem;
+  }
+
+  .stud-mc-subtitle {
+    font-size: 0.875rem;
+  }
+
+  .stud-mc-section {
+    padding: 16px 12px;
+  }
+
+  .stud-mc-card-header,
+  .stud-mc-card-content {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}
+
+/* DASHBOARD MAIN CONTAINER */
+.dashboard-container {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+.dashboard-main {
+  padding-top: 0;
+}

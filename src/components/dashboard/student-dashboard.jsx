@@ -198,7 +198,6 @@ const StudentDashboard = ({
                         <span className="info-label">Class Code:</span>
                         <span className="info-value class-code">{classItem.classCode}</span>
                       </div>
-                      <p className="stud-class-description">{classItem.description}</p>
                     </div>
                   </div>
                 ))

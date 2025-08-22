@@ -1,22 +1,19 @@
-import React, { useState, useEffect } from 'react'; // 🔄 UPDATED: Added useEffect
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom'; 
 import { useUser } from '../../contexts/UserContext';
 
 // 🔥 FIREBASE IMPORTS - Only for Firestore (exercise data)
-import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'firebase/firestore'; // 🔄 UPDATED: Added getDoc, updateDoc
+import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 
 // 🌤️ CLOUDINARY IMPORT - For file uploads
 import { uploadToCloudinary } from '../../config/cloudinary';
 
 // 🎯 MAIN COMPONENT: This handles the create exercise form logic and UI
-// 🔄 UPDATED: Added classId prop and enhanced cancel functionality + draft loading
 const LecturerCreateExercise = ({ onCancel, classId: propClassId }) => { 
   const { user, getUserDisplayName } = useUser();
   const [searchParams] = useSearchParams(); 
-  // 🔄 UPDATED: Use classId from props if available, fallback to searchParams
   const classId = propClassId || searchParams.get('classId');
-  // 🆕 NEW: Get draftId from URL to load existing draft
   const draftId = searchParams.get('draftId'); 
 
   // 📝 STATE MANAGEMENT: These store all form data
@@ -29,8 +26,7 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId }) => {
     rubricFile: null
   });
 
-  const [isLoading, setIsLoading] = useState(Boolean(draftId)); // 🔄 UPDATED: Start as true if loading draft
-  // 🆕 NEW: Track if we're editing a draft - initialize immediately
+  const [isLoading, setIsLoading] = useState(Boolean(draftId));
   const [isEditingDraft, setIsEditingDraft] = useState(Boolean(draftId));
 
   // 🆕 NEW: Load draft data when draftId exists
@@ -211,7 +207,16 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId }) => {
       };
 
       // Save to Firestore
-      const docRef = await addDoc(collection(db, 'classes', classId, 'exercises'), draftData);
+      let docRef;
+      if (draftId) {
+        // Update existing draft
+        const existingDraftRef = doc(db, 'classes', classId, 'exercises', draftId);
+        await updateDoc(existingDraftRef, draftData);
+        docRef = { id: draftId };
+      } else {
+        // Create new draft
+        docRef = await addDoc(collection(db, 'classes', classId, 'exercises'), draftData);
+      }
       console.log('✅ Draft saved with ID:', docRef.id);
       
       return true; // Success
@@ -225,7 +230,7 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId }) => {
     }
   };
 
-  // 🔄 UPDATED: Enhanced cancel handler with draft saving (but not when editing existing draft)
+  // Enhanced cancel handler with draft saving
   const handleCancel = async () => {
     const hasContent = formData.title.trim() || 
                       formData.description.trim() || 
@@ -233,7 +238,7 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId }) => {
                       formData.rubricFile ||
                       formData.dueDate;
 
-    // 🆕 NEW: Don't save as new draft if we're already editing a draft
+    // Don't save as new draft if we're already editing a draft
     if (hasContent && !isEditingDraft) {
       const shouldSave = window.confirm(
         'You have unsaved changes. Would you like to save this as a draft?\n\n' +
@@ -266,7 +271,6 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // ⚠️ ADD THIS VALIDATION (after e.preventDefault()):
     if (!classId) {
       alert('No class selected. Please access this page from a specific class.');
       return;
@@ -287,7 +291,7 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId }) => {
     setIsLoading(true);
 
     try {
-      // 🌤️ STEP 1: Upload files to Cloudinary (replaces Firebase Storage)
+      // 🌤️ STEP 1: Upload files to Cloudinary
       let answerSchemeData = null;
       let rubricData = null;
 
@@ -296,7 +300,7 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId }) => {
         try {
           answerSchemeData = await uploadToCloudinary(
             formData.answerSchemeFile, 
-            'answer-schemes' // Cloudinary folder
+            'answer-schemes'
           );
           console.log('✅ Answer scheme uploaded:', answerSchemeData.url);
         } catch (uploadError) {
@@ -309,7 +313,7 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId }) => {
         try {
           rubricData = await uploadToCloudinary(
             formData.rubricFile, 
-            'rubrics' // Cloudinary folder
+            'rubrics'
           );
           console.log('✅ Rubric uploaded:', rubricData.url);
         } catch (uploadError) {
@@ -326,12 +330,12 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId }) => {
         
         // 🌤️ CLOUDINARY DATA - More detailed for AI integration
         answerScheme: answerSchemeData ? {
-          url: answerSchemeData.url,           // Direct access URL
-          publicId: answerSchemeData.publicId, // For transformations/deletions
+          url: answerSchemeData.url,           
+          publicId: answerSchemeData.publicId, 
           originalName: answerSchemeData.originalName,
           fileType: answerSchemeData.fileType,
           fileSize: answerSchemeData.fileSize,
-          width: answerSchemeData.width,       // Useful for image analysis
+          width: answerSchemeData.width,       
           height: answerSchemeData.height,
           format: answerSchemeData.format,
           uploadedAt: answerSchemeData.createdAt
@@ -350,16 +354,25 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId }) => {
         // ✅ User and metadata
         createdBy: getUserDisplayName(),
         createdById: user.uid,
-        createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-        status: 'active' // 🔄 UPDATED: Keep as active for regular submit
+        status: 'active' // Keep as active for regular submit
       };
 
       console.log('Saving exercise to Firestore...');
       console.log('About to save to path:', `classes/${classId}/exercises`);
       console.log('ClassID value:', classId);
-      const docRef = await addDoc(collection(db, 'classes', classId, 'exercises'), exerciseData);
-
+      
+      let docRef;
+      if (draftId) {
+        // Update existing draft
+        const existingDraftRef = doc(db, 'classes', classId, 'exercises', draftId);
+        await updateDoc(existingDraftRef, exerciseData);
+        docRef = { id: draftId };
+      } else {
+        // Create new exercise
+        exerciseData.createdAt = serverTimestamp();
+        docRef = await addDoc(collection(db, 'classes', classId, 'exercises'), exerciseData);
+      }
       
       console.log('✅ Exercise created with ID:', docRef.id);
       alert('Exercise created successfully! Files uploaded to Cloudinary.');
@@ -413,11 +426,10 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId }) => {
   }
 
   // 🎨 RENDER: The form UI components
-return (
+  return (
     <div className="page-container">
       <main className="ce-main-content">
         <h1 className="page-title">
-          {/* 🔄 UPDATED: Use draftId directly to prevent flash */}
           {draftId ? 'Edit Draft Exercise' : 'Create Exercise'}
         </h1>
         

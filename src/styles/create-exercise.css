@@ -593,7 +593,7 @@
 
 /* 🎯 FOCUS STYLES for Accessibility */
 .ce-modal-btn:focus {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid #763bf6;
   outline-offset: 2px;
 }
 
@@ -602,7 +602,7 @@
 }
 
 .ce-modal-btn:focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid #763bf6;
   outline-offset: 2px;
 }
 

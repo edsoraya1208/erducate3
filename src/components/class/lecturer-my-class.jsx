@@ -2,6 +2,66 @@ import React, { useState } from 'react';
 import '../../styles/my-class-lect.css';
 import '../../styles/lecturer-shared-header.css';
 
+// 🆕 NEW: Confirmation Modal Component
+const ConfirmationModal = ({ 
+  isOpen, 
+  onClose, 
+  onConfirm, 
+  title, 
+  message, 
+  confirmText = "Confirm", 
+  cancelText = "Cancel",
+  type = "default" // default, danger, success
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3 className={`modal-title ${type}`}>{title}</h3>
+          <button className="modal-close" onClick={onClose}>&times;</button>
+        </div>
+        <div className="modal-body">
+          <p>{message}</p>
+        </div>
+        <div className="modal-actions">
+          <button className="modal-btn modal-btn-cancel" onClick={onClose}>
+            {cancelText}
+          </button>
+          <button className={`modal-btn modal-btn-confirm ${type}`} onClick={onConfirm}>
+            {confirmText}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// 🆕 NEW: Success Modal Component
+const SuccessModal = ({ isOpen, onClose, title, message }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content success-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <div className="success-icon">✓</div>
+          <h3 className="modal-title success">{title}</h3>
+        </div>
+        <div className="modal-body">
+          <p>{message}</p>
+        </div>
+        <div className="modal-actions">
+          <button className="modal-btn modal-btn-confirm success" onClick={onClose}>
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const LecturerMyClass = ({
   // State props
   classData,
@@ -25,13 +85,18 @@ const LecturerMyClass = ({
   onStatusFilterChange,
   onPublishExercise,
   onEditExercise,
-  onDeleteExercise, // 🆕 NEW: Added delete handler prop
-  onDraftExerciseClick, // 🆕 NEW: Added draft click handler prop
+  onDeleteExercise,
+  onDraftExerciseClick,
   onViewSubmissions,
   onNewExercise,
   onDashboardClick,
   onLogout
 }) => {
+
+  // 🆕 NEW: Modal states
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, exerciseId: null, exerciseTitle: '' });
+  const [publishModal, setPublishModal] = useState({ isOpen: false, exerciseId: null, exerciseTitle: '' });
+  const [successModal, setSuccessModal] = useState({ isOpen: false, title: '', message: '' });
 
   // Shared header component
   const Header = () => {
@@ -108,6 +173,56 @@ const LecturerMyClass = ({
         </div>
       </header>
     );
+  };
+
+  // 🆕 NEW: Handle delete confirmation
+  const handleDeleteConfirmation = (exerciseId, exerciseTitle) => {
+    setDeleteModal({ 
+      isOpen: true, 
+      exerciseId, 
+      exerciseTitle 
+    });
+  };
+
+  // 🆕 NEW: Handle publish confirmation
+  const handlePublishConfirmation = (exerciseId, exerciseTitle) => {
+    setPublishModal({ 
+      isOpen: true, 
+      exerciseId, 
+      exerciseTitle 
+    });
+  };
+
+  // 🆕 NEW: Confirm delete action
+  const confirmDelete = async () => {
+    try {
+      await onDeleteExercise(deleteModal.exerciseId);
+      setDeleteModal({ isOpen: false, exerciseId: null, exerciseTitle: '' });
+      setSuccessModal({
+        isOpen: true,
+        title: 'Exercise Deleted',
+        message: 'The exercise has been successfully deleted.'
+      });
+    } catch (error) {
+      console.error('Delete failed:', error);
+      // Handle error - maybe show an error modal
+    }
+  };
+
+  // 🆕 NEW: Confirm publish action
+  const confirmPublish = async () => {
+    try {
+      await onPublishExercise(publishModal.exerciseId);
+      setPublishModal({ isOpen: false, exerciseId: null, exerciseTitle: '' });
+      setSuccessModal({
+        isOpen: true,
+        title: 'Exercise Published',
+        message: 'The exercise has been successfully published and is now active for students.'
+      });
+    } catch (error) {
+      console.error('Publish failed:', error);
+      // Handle error - maybe show an error modal
+    }
   };
 
   if (!classData) {
@@ -187,12 +302,32 @@ const LecturerMyClass = ({
               <div className="exercise-grid">
                 {loading ? (
                   <div className="loading">Loading exercises...</div>
+                ) : exercises.length === 0 ? (
+                  <div className="no-exercises">
+                    <div className="no-exercises-content">
+                      <div className="no-exercises-icon">📝</div>
+                      <h3>No exercises found</h3>
+                      <p>
+                        {statusFilter === 'all' 
+                          ? "Start by creating your first exercise for this class."
+                          : `No ${statusFilter} exercises found. Try changing the filter or search term.`
+                        }
+                      </p>
+                      {statusFilter === 'all' && (
+                        <button 
+                          className="create-first-exercise-btn"
+                          onClick={onNewExercise}
+                        >
+                          Create Your First Exercise
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 ) : (
                   exercises.map((exercise) => (
                     <div 
                       key={exercise.id} 
                       className={`exercise-card ${exercise.status === 'draft' ? 'draft-clickable' : ''}`}
-                      // 🆕 NEW: Make draft exercises clickable for editing
                       onClick={exercise.status === 'draft' ? () => onDraftExerciseClick(exercise.id) : undefined}
                       style={exercise.status === 'draft' ? { cursor: 'pointer' } : {}}
                     >
@@ -204,20 +339,19 @@ const LecturerMyClass = ({
                       </div>
                       
                       <div className="exercise-meta">
-                        <p>Due: {exercise.dueDate}</p>
+                        <p>Due: {exercise.dueDate || 'No due date'}</p>
                         <p>{exercise.submissions || 0}/{exercise.maxSubmissions || 0} submissions</p>
-                        <p>{exercise.marks} marks</p>
+                        <p>{exercise.marks || 0} marks</p>
                       </div>
 
                       <div className="exercise-actions">
-                        {/* 🔄 UPDATED: Enhanced button logic for different statuses */}
                         {exercise.status === 'draft' ? (
                           <>
                             <button 
                               className="btn-class-lect btn-publish"
                               onClick={(e) => {
-                                e.stopPropagation(); // 🆕 NEW: Prevent card click when clicking button
-                                onPublishExercise(exercise.id);
+                                e.stopPropagation();
+                                handlePublishConfirmation(exercise.id, exercise.title);
                               }}
                             >
                               Publish Exercise
@@ -225,8 +359,8 @@ const LecturerMyClass = ({
                             <button 
                               className="btn btn-delete"
                               onClick={(e) => {
-                                e.stopPropagation(); // 🆕 NEW: Prevent card click when clicking button
-                                onDeleteExercise(exercise.id);
+                                e.stopPropagation();
+                                handleDeleteConfirmation(exercise.id, exercise.title);
                               }}
                             >
                               Delete
@@ -238,27 +372,26 @@ const LecturerMyClass = ({
                               className="btn btn-view"
                               onClick={() => onViewSubmissions(exercise.id)}
                             >
-                              View Submission
+                              View Submissions
                             </button>
                             <button 
                               className="btn btn-delete"
-                              onClick={() => onDeleteExercise(exercise.id)}
+                              onClick={() => handleDeleteConfirmation(exercise.id, exercise.title)}
                             >
                               Delete
                             </button>
                           </>
                         ) : (
-                          // 🆕 NEW: For completed exercises, show view submissions and delete
                           <>
                             <button 
                               className="btn btn-view"
                               onClick={() => onViewSubmissions(exercise.id)}
                             >
-                              View Submission
+                              View Submissions
                             </button>
                             <button 
                               className="btn btn-delete"
-                              onClick={() => onDeleteExercise(exercise.id)}
+                              onClick={() => handleDeleteConfirmation(exercise.id, exercise.title)}
                             >
                               Delete
                             </button>
@@ -295,7 +428,11 @@ const LecturerMyClass = ({
                   ))
                 ) : (
                   <div className="no-students" style={{textAlign: 'center', padding: '20px', color: '#666'}}>
-                    <p>No students enrolled in this class yet.</p>
+                    <div className="no-students-content">
+                      <div className="no-students-icon">👥</div>
+                      <h3>No students enrolled</h3>
+                      <p>Students haven't joined this class yet. Share the class code with your students to get started.</p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -303,6 +440,36 @@ const LecturerMyClass = ({
           )}
         </div>
       </main>
+
+      {/* 🆕 NEW: Modal Components */}
+      <ConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, exerciseId: null, exerciseTitle: '' })}
+        onConfirm={confirmDelete}
+        title="Delete Exercise"
+        message={`Are you sure you want to delete "${deleteModal.exerciseTitle}"? This action cannot be undone and all associated data will be permanently removed.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
+
+      <ConfirmationModal
+        isOpen={publishModal.isOpen}
+        onClose={() => setPublishModal({ isOpen: false, exerciseId: null, exerciseTitle: '' })}
+        onConfirm={confirmPublish}
+        title="Publish Exercise"
+        message={`Are you sure you want to publish "${publishModal.exerciseTitle}"? Once published, students will be able to see and submit this exercise.`}
+        confirmText="Publish"
+        cancelText="Cancel"
+        type="success"
+      />
+
+      <SuccessModal
+        isOpen={successModal.isOpen}
+        onClose={() => setSuccessModal({ isOpen: false, title: '', message: '' })}
+        title={successModal.title}
+        message={successModal.message}
+      />
     </div>
   );
 };

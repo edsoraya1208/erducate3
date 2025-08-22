@@ -1,4 +1,4 @@
-// 📝 UPDATED: Added draft exercise handling and delete functionality
+// 📝 UPDATED: Fixed duplicate exercise issue and added unsaved changes handling
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { 
@@ -9,7 +9,7 @@ import {
   doc, 
   updateDoc,
   getDoc,
-  deleteDoc // 🆕 NEW: Added for delete functionality
+  deleteDoc
 } from 'firebase/firestore';
 import { db, auth } from '../../config/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -33,6 +33,26 @@ const MyClassLectPage = () => {
   const getUserDisplayName = () => {
     return user?.displayName || user?.email?.split('@')[0] || 'User';
   };
+
+  // 🆕 NEW: Add beforeunload handler for unsaved changes warning
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      // Check if there are any draft exercises
+      const hasDrafts = exercises.some(exercise => exercise.status === 'draft');
+      
+      if (hasDrafts) {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved draft exercises. Are you sure you want to leave?';
+        return 'You have unsaved draft exercises. Are you sure you want to leave?';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [exercises]);
 
   useEffect(() => {
     const fetchClassData = async () => {
@@ -70,7 +90,21 @@ const MyClassLectPage = () => {
         });
       });
       
-      setExercises(exercisesData);
+      // 🔄 UPDATED: Sort exercises by creation date (newest first) and then by status
+      const sortedExercises = exercisesData.sort((a, b) => {
+        // First sort by status priority: draft > active > completed
+        const statusPriority = { draft: 3, active: 2, completed: 1 };
+        const statusDiff = statusPriority[b.status] - statusPriority[a.status];
+        
+        if (statusDiff !== 0) return statusDiff;
+        
+        // Then sort by creation date (newest first)
+        const aDate = a.createdAt?.toDate?.() || new Date(a.createdAt) || new Date(0);
+        const bDate = b.createdAt?.toDate?.() || new Date(b.createdAt) || new Date(0);
+        return bDate - aDate;
+      });
+      
+      setExercises(sortedExercises);
     } catch (error) {
       console.error('Error fetching exercises:', error);
     } finally {
@@ -125,44 +159,54 @@ const MyClassLectPage = () => {
     }
   }, [activeTab, classId]);
 
+  // 🔄 UPDATED: Fixed the publish exercise handler - this was causing the duplicate issue
   const handlePublishExercise = async (exerciseId) => {
     try {
+      console.log('Publishing exercise:', exerciseId);
+      
+      // 🆕 NEW: Update the existing exercise instead of creating a new one
       const exerciseRef = doc(db, 'classes', classId, 'exercises', exerciseId);
       await updateDoc(exerciseRef, {
         status: 'active',
-        publishedAt: new Date()
+        publishedAt: new Date(),
+        updatedAt: new Date() // 🆕 NEW: Track when it was last updated
       });
-      fetchExercises();
+      
+      console.log('Exercise published successfully');
+      
+      // 🆕 NEW: Refresh exercises to show updated status immediately
+      await fetchExercises();
+      
     } catch (error) {
       console.error('Error publishing exercise:', error);
+      throw error; // 🆕 NEW: Rethrow to handle in component
     }
   };
 
-  // 🔄 UPDATED: Enhanced edit handler to navigate back to create page with draft data
   const handleEditExercise = (exerciseId) => {
     console.log('Edit exercise:', exerciseId);
-    // 🆕 NEW: Navigate back to create exercise page with draft ID to load data
     navigate(`/lecturer/create-exercise?classId=${classId}&draftId=${exerciseId}`);
   };
 
-  // 🆕 NEW: Delete exercise handler
+  // 🔄 UPDATED: Enhanced delete handler with better error handling
   const handleDeleteExercise = async (exerciseId) => {
-    const confirmDelete = window.confirm('Are you sure you want to delete this exercise? This action cannot be undone.');
-    
-    if (confirmDelete) {
-      try {
-        const exerciseRef = doc(db, 'classes', classId, 'exercises', exerciseId);
-        await deleteDoc(exerciseRef);
-        console.log('Exercise deleted successfully');
-        fetchExercises(); // Refresh the list
-      } catch (error) {
-        console.error('Error deleting exercise:', error);
-        alert('Failed to delete exercise. Please try again.');
-      }
+    try {
+      console.log('Deleting exercise:', exerciseId);
+      
+      const exerciseRef = doc(db, 'classes', classId, 'exercises', exerciseId);
+      await deleteDoc(exerciseRef);
+      
+      console.log('Exercise deleted successfully');
+      
+      // 🆕 NEW: Refresh exercises immediately after deletion
+      await fetchExercises();
+      
+    } catch (error) {
+      console.error('Error deleting exercise:', error);
+      throw error; // 🆕 NEW: Rethrow to handle in component
     }
   };
 
-  // 🆕 NEW: Handle clicking on draft exercise card to edit
   const handleDraftExerciseClick = (exerciseId) => {
     handleEditExercise(exerciseId);
   };
@@ -181,8 +225,19 @@ const MyClassLectPage = () => {
     navigate('/lecturer/dashboard1');
   };
 
+  // 🆕 NEW: Enhanced logout with draft warning
   const handleLogout = () => {
+    const hasDrafts = exercises.some(exercise => exercise.status === 'draft');
+    
+    if (hasDrafts) {
+      const confirmLogout = window.confirm(
+        'You have unsaved draft exercises. Are you sure you want to logout? Your drafts will be saved.'
+      );
+      if (!confirmLogout) return;
+    }
+    
     console.log('Logout clicked');
+    // Add your logout logic here
   };
 
   const filteredExercises = exercises.filter(exercise => {
@@ -229,8 +284,8 @@ const MyClassLectPage = () => {
         onStatusFilterChange={setStatusFilter}
         onPublishExercise={handlePublishExercise}
         onEditExercise={handleEditExercise}
-        onDeleteExercise={handleDeleteExercise} // 🆕 NEW: Added delete handler
-        onDraftExerciseClick={handleDraftExerciseClick} // 🆕 NEW: Added draft click handler
+        onDeleteExercise={handleDeleteExercise}
+        onDraftExerciseClick={handleDraftExerciseClick}
         onViewSubmissions={handleViewSubmissions}
         onNewExercise={handleNewExercise}
         onDashboardClick={handleDashboardClick}

@@ -29,10 +29,9 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId }) => {
     rubricFile: null
   });
 
-  // ⏳ LOADING STATE: Show loading during submission
-  const [isLoading, setIsLoading] = useState(false);
-  // 🆕 NEW: Track if we're editing a draft
-  const [isEditingDraft, setIsEditingDraft] = useState(false);
+  const [isLoading, setIsLoading] = useState(Boolean(draftId)); // 🔄 UPDATED: Start as true if loading draft
+  // 🆕 NEW: Track if we're editing a draft - initialize immediately
+  const [isEditingDraft, setIsEditingDraft] = useState(Boolean(draftId));
 
   // 🆕 NEW: Load draft data when draftId exists
   useEffect(() => {
@@ -178,7 +177,7 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId }) => {
       // 📝 Create draft exercise data
       const draftData = {
         title: formData.title.trim() || 'Untitled Exercise',
-        description: formData.description.trim() || 'No description provided',
+        description: formData.description.trim() || '',
         dueDate: formData.dueDate || null,
         totalMarks: parseInt(formData.totalMarks) || 100,
         
@@ -400,13 +399,26 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId }) => {
     }
   };
 
+  if (isLoading && draftId) {
+    return (
+      <div className="page-container">
+        <main className="ce-main-content">
+          <div className="loading-container">
+            <div className="loading-spinner"></div>
+            <p>Loading draft exercise...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   // 🎨 RENDER: The form UI components
-  return (
+return (
     <div className="page-container">
       <main className="ce-main-content">
         <h1 className="page-title">
-          {/* 🆕 NEW: Dynamic title based on whether editing draft or creating new */}
-          {isEditingDraft ? 'Edit Draft Exercise' : 'Create Exercise'}
+          {/* 🔄 UPDATED: Use draftId directly to prevent flash */}
+          {draftId ? 'Edit Draft Exercise' : 'Create Exercise'}
         </h1>
         
         <form onSubmit={handleSubmit} className="exercise-form">
@@ -434,7 +446,7 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId }) => {
               name="description"
               value={formData.description}
               onChange={handleInputChange}
-              placeholder="Provide exercise instructions and requirements..."
+              placeholder="Provide some description for your exercise..."
               className="form-textarea"
               rows="6"
               required
@@ -595,14 +607,14 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId }) => {
               type="button" 
               className="ce-cancel-btn" 
               disabled={isLoading}
-              onClick={handleCancel} // 🔄 UPDATED: Now uses enhanced handleCancel
+              onClick={handleCancel}
             >
               Cancel
             </button>
             <button type="submit" className="ce-create-btn" disabled={isLoading}>
               {isLoading ? 
-                (isEditingDraft ? 'Updating Exercise...' : 'Creating Exercise...') : 
-                (isEditingDraft ? 'Update & Publish' : 'Create Exercise')
+                (draftId ? 'Updating Exercise...' : 'Creating Exercise...') : 
+                (draftId ? 'Update & Publish' : 'Create Exercise')
               }
             </button>
           </div>

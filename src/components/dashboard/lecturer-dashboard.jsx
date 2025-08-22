@@ -119,6 +119,26 @@ const LecturerDashboard = ({
     </div>
   );
 
+  //make class card colorful edge
+    const getRandomColorClass = (index) => {
+    const colors = [
+      'color-pink-light',
+      'color-blue', 
+      'color-green',
+      'color-orange',
+      'color-red',
+      'color-indigo',
+      'color-pink',
+      'color-teal',
+      'color-cyan',
+      'color-yellow'
+    ];
+    
+    // Use index to ensure consistent colors for each class position
+    // This way the same class will always have the same color
+    return colors[index % colors.length];
+  };
+
   return (
     <div className="lecturer-dashboard">
       {/* Navigation Header */}
@@ -230,10 +250,10 @@ const LecturerDashboard = ({
                 </div>
               ) : (
                 /* Class Cards Grid */
-                classes.map((classItem) => (
+                 classes.map((classItem, index) => (
                   <div 
                     key={classItem.id} 
-                    className="class-card clickable-card"
+                    className={`class-card clickable-card ${getRandomColorClass(index)}`} // ADD the color class here
                     onClick={() => onClassClick(classItem)}
                     style={{ cursor: 'pointer' }}
                   >

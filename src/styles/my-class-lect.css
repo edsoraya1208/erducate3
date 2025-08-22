@@ -745,6 +745,7 @@ background: linear-gradient(135deg, #00a085 0%, #00896b 100%);
   display: flex;
   gap: 12px;
   justify-content: flex-end;
+  flex-direction: row;
 }
 
 .mc-modal-btn {
@@ -1019,13 +1020,14 @@ transition: all 0.2s;  color: white;
   }
   
   .mc-modal-actions {
-    flex-direction: column-reverse;
+    flex-direction: row;
   }
   
   .mc-modal-btn {
     width: 100%;
     min-width: unset;
   }
+  
   
   .exercise-card {
     margin-bottom: 16px;

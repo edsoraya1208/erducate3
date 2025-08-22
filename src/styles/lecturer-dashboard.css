@@ -405,17 +405,18 @@ MODAL
 ==============================================
 */
 .modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding-top: 50px;
-  z-index: 1000;
+     position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(2px);
+
 }
 
 .modal-content {
@@ -436,6 +437,7 @@ MODAL
   font-weight: 600;
   margin-bottom: 20px;
   color: #333;
+
 }
 
 .modal-text {
@@ -550,6 +552,7 @@ RESPONSIVE DESIGN
  .create-class-button {
    align-self: flex-end;
    margin-top: 1rem;
+   white-space: nowrap;
  }
  
  .class-card {

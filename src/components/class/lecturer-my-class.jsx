@@ -16,20 +16,20 @@ const ConfirmationModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h3 className={`modal-title ${type}`}>{title}</h3>
+    <div className="mc-modal-overlay" onClick={onClose}>
+      <div className="mc-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="mc-modal-header">
+          <h3 className={`mc-modal-title ${type}`}>{title}</h3>
           <button className="modal-close" onClick={onClose}>&times;</button>
         </div>
-        <div className="modal-body">
+        <div className="mc-modal-body">
           <p>{message}</p>
         </div>
-        <div className="modal-actions">
-          <button className="modal-btn modal-btn-cancel" onClick={onClose}>
+        <div className="mc-modal-actions">
+          <button className="mc-modal-btn mc-modal-btn-cancel" onClick={onClose}>
             {cancelText}
           </button>
-          <button className={`modal-btn modal-btn-confirm ${type}`} onClick={onConfirm}>
+          <button className={`mc-modal-btn mc-modal-btn-confirm ${type}`} onClick={onConfirm}>
             {confirmText}
           </button>
         </div>
@@ -43,17 +43,17 @@ const SuccessModal = ({ isOpen, onClose, title, message }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content success-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
+    <div className="mc-modal-overlay" onClick={onClose}>
+      <div className="mc-modal-content success-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="mc-modal-header">
           <div className="success-icon">✓</div>
-          <h3 className="modal-title success">{title}</h3>
+          <h3 className="mc-modal-title success">{title}</h3>
         </div>
-        <div className="modal-body">
+        <div className="mc-modal-body">
           <p>{message}</p>
         </div>
-        <div className="modal-actions">
-          <button className="modal-btn modal-btn-confirm success" onClick={onClose}>
+        <div className="mc-modal-actions">
+          <button className="mc-modal-btn mc-modal-btn-confirm success" onClick={onClose}>
             OK
           </button>
         </div>

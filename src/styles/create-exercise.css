@@ -693,6 +693,7 @@
     text-align: flex-start; /* Center on mobile like dashboard */
     word-wrap: break-word;
     margin: 0.5rem 0;
+    margin-bottom: 2rem;
   }
 
   /* Modal mobile styles */
@@ -741,7 +742,10 @@
 /* Small mobile styles (up to 480px) */
 @media (max-width: 480px) {
   .page-title {
-    font-size: 1.5rem;
+   font-size: 1.7rem;
+    text-align: center;
+    white-space: nowrap;
+    margin-bottom: 2rem;
   }
 
   .upload-area {

@@ -687,7 +687,7 @@ RESPONSIVE DESIGN
 }
 
 @media (max-width: 600px) {
-    .dashboard-title {
+    .stud-dashboard-title {
         font-size: 1.7rem;
         text-align: left;
         white-space: nowrap;
@@ -696,7 +696,7 @@ RESPONSIVE DESIGN
 
 
 @media (max-width: 600px) {
-    .dashboard-title {
+    .stud-dashboard-title {
         font-size: 1.7rem;
         text-align: left;
         white-space: nowrap;

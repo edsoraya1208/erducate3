@@ -7,6 +7,7 @@
   background-color: #f8f9fa;
   min-height: calc(100vh - 80px);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  margin-top: 10px;
 }
 
 /* HEADER SECTION */
@@ -28,6 +29,9 @@
   margin: 0;
 }
 
+/* Remove the separate class details section since we're integrating it */
+/* .stud-mc-class-details styles removed - now integrated into main section */
+
 /* SECTION STYLES */
 .stud-mc-section {
   background: white;
@@ -36,11 +40,80 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
+/* 🆕 NEW: Section header with controls (matching lecturer layout) */
+.stud-mc-section-header {
+  margin-bottom: 24px;
+}
+
+.stud-mc-title-and-controls {
+  display: flex;
+  flex-direction: column;  /* Stack title above controls */
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.stud-mc-controls {
+  align-self: flex-start; /* Align controls to left */
+}
+
 .stud-mc-section-title {
   font-size: 1.25rem;
   font-weight: 600;
   color: #374151;
-  margin: 0 0 20px 0;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.stud-mc-class-meta-inline {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+  margin-bottom: 20px;
+}
+
+
+
+.stud-mc-search-filter {
+display: flex;
+  gap: 1rem;
+  flex-grow: 1;
+  max-width: 500px; /* Adjust max width as needed */
+}
+
+.stud-mc-search-input {
+flex-grow: 1;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: border-color 0.3s;
+}
+
+.stud-mc-search-input:focus {
+  outline: none;
+  border-color: #8b5fbf; /* Purple focus - modify color here */
+  box-shadow: 0 0 0 3px rgba(139, 95, 191, 0.1);
+
+}
+
+.stud-mc-search-input::placeholder {
+  color: #9ca3af;
+}
+
+.stud-mc-status-filter {
+padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  font-size: 0.9rem;
+  min-width: 120px;
+}
+
+.stud-mc-status-filter:focus {
+  outline: none;
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
 }
 
 /* EXERCISES GRID */
@@ -112,15 +185,12 @@
 
 /* STATUS BADGES */
 .stud-mc-status-badge {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.025em;
   white-space: nowrap;
-  flex-shrink: 0;
 }
 
 .stud-mc-status-graded {
@@ -167,13 +237,11 @@
 }
 
 .stud-mc-btn-start {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-  color: white;
+background: linear-gradient(135deg, #7b10a5, #5e17a5);  color: white;
 }
 
 .stud-mc-btn-start:hover {
-  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+background: linear-gradient(135deg, #7b10a5, #5e17a5);  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
 }
 
 .stud-mc-btn-edit {
@@ -215,18 +283,53 @@
   border: 1px solid #fecaca;
 }
 
+/* 🆕 IMPROVED: Empty state styling */
 .stud-mc-empty-state {
   text-align: center;
-  padding: 48px 24px;
+  padding: 64px 24px;
   color: #6b7280;
+}
+
+.stud-mc-empty-content {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.stud-mc-empty-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.stud-mc-empty-state h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 8px 0;
 }
 
 .stud-mc-empty-state p {
   margin: 0;
   font-size: 1rem;
+  line-height: 1.5;
 }
 
 /* RESPONSIVE DESIGN */
+@media (max-width: 1024px) {
+  .stud-mc-search-filter {
+    max-width: none;
+    flex-direction: column;
+  }
+  
+  .stud-mc-search-input {
+    min-width: unset;
+  }
+  
+  .stud-mc-status-filter {
+    min-width: unset;
+  }
+}
+
 @media (max-width: 768px) {
   .stud-mc-container {
     padding: 16px;
@@ -234,6 +337,21 @@
 
   .stud-mc-title {
     font-size: 1.5rem;
+  }
+
+  .stud-mc-title-and-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .stud-mc-controls {
+    width: 100%;
+  }
+
+  .stud-mc-search-filter {
+    max-width: none;
+    flex-direction: column;
   }
 
   .stud-mc-exercises-grid {
@@ -286,6 +404,18 @@
   .stud-mc-card-content {
     padding-left: 12px;
     padding-right: 12px;
+  }
+
+  .stud-mc-class-details {
+    padding: 16px 12px;
+  }
+
+  .stud-mc-empty-state {
+    padding: 48px 16px;
+  }
+
+  .stud-mc-empty-icon {
+    font-size: 2.5rem;
   }
 }
 

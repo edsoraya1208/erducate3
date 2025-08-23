@@ -10,6 +10,11 @@ const StudentMyClass = ({ classId }) => {
   const [exercises, setExercises] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  
+  // 🆕 NEW: Added state for search and filter
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [classData, setClassData] = useState(null);
 
   useEffect(() => {
     if (user) {
@@ -53,6 +58,9 @@ const StudentMyClass = ({ classId }) => {
           const classDoc = await getDoc(doc(db, 'classes', classId));
           const classData = classDoc.exists() ? classDoc.data() : null;
           console.log('Class data:', classData);
+          
+          // 🆕 NEW: Store class data in state
+          setClassData(classData);
           
           // Get exercises for this class - simple query without orderBy
           const exercisesQuery = query(
@@ -191,11 +199,25 @@ const StudentMyClass = ({ classId }) => {
     }
   };
 
+  // 🆕 NEW: Filter exercises based on search term and status (simplified to 2 states)
+  const filteredExercises = exercises.filter((exercise) => {
+    const matchesSearch = exercise.title.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    let matchesStatus = true;
+    if (statusFilter !== 'all') {
+      if (statusFilter === 'completed') {
+        matchesStatus = exercise.isCompleted;
+      } else if (statusFilter === 'not-started') {
+        matchesStatus = !exercise.isCompleted; // Simplified: either completed or not
+      }
+    }
+    
+    return matchesSearch && matchesStatus;
+  });
+
   const getStatusBadge = (exercise) => {
     if (exercise.isCompleted) {
       return { text: 'COMPLETED', class: 'stud-mc-status-graded' };
-    } else if (exercise.isSubmitted) {
-      return { text: 'IN PROGRESS', class: 'stud-mc-status-review' };
     } else {
       return { text: 'NOT STARTED', class: 'stud-mc-status-not-submitted' };
     }
@@ -277,16 +299,58 @@ const StudentMyClass = ({ classId }) => {
         <p className="stud-mc-subtitle">View available exercises and submit your answers</p>
       </div>
 
+  
       <div className="stud-mc-section">
-        <h2 className="stud-mc-section-title">Available Exercises</h2>
+        <div className="stud-mc-section-header">
+          <h2 className="stud-mc-section-title">
+            {!classId && !classData ? 'Available Exercises' : classData?.name || classData?.title || 'Available Exercises'}
+          </h2>
+          {classId && classData && (
+            <p className="stud-mc-class-meta-inline">
+              {filteredExercises.length} exercise{filteredExercises.length !== 1 ? 's' : ''} available
+            </p>
+          )}
+          <div className="stud-mc-controls">
+            <div className="stud-mc-search-filter">
+              <input 
+                type="text"
+                placeholder="Search exercises..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="stud-mc-search-input"
+              />
+              <select 
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="stud-mc-status-filter"
+              >
+                <option value="all">All Status</option>
+                <option value="not-started">Not Started</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+          </div>
+        </div>
         
-        {exercises.length === 0 ? (
+        {filteredExercises.length === 0 ? (
           <div className="stud-mc-empty-state">
-            <p>No exercises available{classId ? ' for this class' : '. Make sure you\'re enrolled in a class'}.</p>
+            {exercises.length === 0 ? (
+              <div className="stud-mc-empty-content">
+                <div className="stud-mc-empty-icon">📝</div>
+                <h3>No exercises available</h3>
+                <p>No exercises available{classId ? ' for this class' : '. Make sure you\'re enrolled in a class'}.</p>
+              </div>
+            ) : (
+              <div className="stud-mc-empty-content">
+                <div className="stud-mc-empty-icon">🔍</div>
+                <h3>No exercises found</h3>
+                <p>No exercises match your current search and filter criteria. Try adjusting your search term or filter.</p>
+              </div>
+            )}
           </div>
         ) : (
           <div className="stud-mc-exercises-grid">
-            {exercises.map((exercise) => {
+            {filteredExercises.map((exercise) => {
               const status = getStatusBadge(exercise);
               const actionButton = getActionButton(exercise);
               const score = getScore(exercise);

@@ -26,7 +26,7 @@ const MyClassLectPage = () => {
   const [students, setStudents] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // 🔄 CHANGED: Start with true
 
   const [user] = useAuthState(auth);
 
@@ -78,7 +78,6 @@ const MyClassLectPage = () => {
 
   const fetchExercises = async () => {
     try {
-      setLoading(true);
       const q = query(collection(db, 'classes', classId, 'exercises'));
       const querySnapshot = await getDocs(q);
       const exercisesData = [];
@@ -107,14 +106,11 @@ const MyClassLectPage = () => {
       setExercises(sortedExercises);
     } catch (error) {
       console.error('Error fetching exercises:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
   const fetchStudents = async () => {
     try {
-      setLoading(true);
       console.log('Fetching students for classId:', classId);
       
       const enrollmentsQuery = query(
@@ -146,18 +142,30 @@ const MyClassLectPage = () => {
     } catch (error) {
       console.error('Error fetching students:', error);
       setStudents([]);
-    } finally {
-      setLoading(false);
     }
   };
 
+  // 🆕 NEW: Fetch both students and exercises on initial load and tab change
   useEffect(() => {
-    if (activeTab === 'exercises') {
-      fetchExercises();
-    } else {
-      fetchStudents();
+    if (classId) {
+      const fetchInitialData = async () => {
+        setLoading(true);
+        try {
+          // Always fetch students for count display
+          await fetchStudents();
+          
+          // Fetch exercises if we're on exercises tab
+          if (activeTab === 'exercises') {
+            await fetchExercises();
+          }
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      fetchInitialData();
     }
-  }, [activeTab, classId]);
+  }, [classId, activeTab]);
 
   // 🔄 UPDATED: Fixed the publish exercise handler - this was causing the duplicate issue
   const handlePublishExercise = async (exerciseId) => {

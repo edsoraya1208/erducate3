@@ -36,16 +36,6 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
   // 🔙 NEW: Browser back button detection
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  // 🆕 NEW: Mobile menu state (like from dashboard)
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
-  const closeMobileMenu = () => {
-    setIsMobileMenuOpen(false);
-  };
 
   // 🆕 NEW: Load draft data when draftId exists
   useEffect(() => {

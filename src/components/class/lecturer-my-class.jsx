@@ -98,83 +98,7 @@ const LecturerMyClass = ({
   const [publishModal, setPublishModal] = useState({ isOpen: false, exerciseId: null, exerciseTitle: '' });
   const [successModal, setSuccessModal] = useState({ isOpen: false, title: '', message: '' });
 
-  // Shared header component
-  const Header = () => {
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-    const toggleMobileMenu = () => {
-      setIsMobileMenuOpen(!isMobileMenuOpen);
-    };
-
-    const closeMobileMenu = () => {
-      setIsMobileMenuOpen(false);
-    };
-
-    return (
-      <header className="dashboard-header">
-        <div className="header-left">
-          <div className="logo-container">
-            <div className="logo-icon">
-              <img 
-                src="/logo.svg" 
-                alt="ERDucate Logo" 
-                className="custom-logo"
-              />
-            </div>
-            <span className="brand-name">
-              ERDucate
-            </span>
-          </div>
-        </div>
-        
-        <div className="header-right">
-          <nav className="nav-items desktop-nav">
-            <span className="nav-item" onClick={onDashboardClick}>Dashboard</span>
-            <span className="nav-item">{getUserDisplayName()}</span>
-            <button className="logout-btn" onClick={onLogout}>
-              Logout
-            </button>
-          </nav>
-
-          <button 
-            className="hamburger-btn"
-            onClick={toggleMobileMenu}
-            aria-label="Toggle mobile menu"
-          >
-            <div className={`hamburger-line ${isMobileMenuOpen ? 'open' : ''}`}></div>
-            <div className={`hamburger-line ${isMobileMenuOpen ? 'open' : ''}`}></div>
-            <div className={`hamburger-line ${isMobileMenuOpen ? 'open' : ''}`}></div>
-          </button>
-
-          <div className={`mobile-nav ${isMobileMenuOpen ? 'open' : ''}`}>
-            <div className="mobile-nav-overlay" onClick={closeMobileMenu}></div>
-            <div className="mobile-nav-content">
-              <span 
-                className="nav-item" 
-                onClick={() => {
-                  onDashboardClick();
-                  closeMobileMenu();
-                }}
-              >
-                Dashboard
-              </span>
-              <span className="nav-item">{getUserDisplayName()}</span>
-              <button 
-                className="logout-btn" 
-                onClick={() => {
-                  onLogout();
-                  closeMobileMenu();
-                }}
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-    );
-  };
-
+  
   // 🆕 NEW: Handle delete confirmation
   const handleDeleteConfirmation = (exerciseId, exerciseTitle) => {
     setDeleteModal({ 
@@ -225,253 +149,249 @@ const LecturerMyClass = ({
     }
   };
 
-  if (!classData) {
-    return (
-      <div className="page-container">
-        <Header />
-        <main className="mc-main-content">
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p>Loading class data...</p>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
+if (!classData) {
   return (
     <div className="page-container">
-      <Header />
-
       <main className="mc-main-content">
-        <h1 className="mc-main-title">My Exercises</h1>
-        
-        <div className="lecturer-my-class">
-          <div className="class-details">
-            <h2>{classData.name || classData.title}</h2>
-            <p className="class-meta">
-              {students?.length || 0} students enrolled
-            </p>
-          </div>
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Loading class data...</p>
+        </div>
+      </main>
+    </div>
+  );
+}
 
-          <div className="tab-navigation">
-            <button 
-              className={`tab-btn ${activeTab === 'exercises' ? 'active' : ''}`}
-              onClick={() => onTabChange('exercises')}
-            >
-              Exercises
-            </button>
-            <button 
-              className={`tab-btn ${activeTab === 'students' ? 'active' : ''}`}
-              onClick={() => onTabChange('students')}
-            >
-              Students
-            </button>
-          </div>
+return (
+  <div className="page-container">
+    <main className="mc-main-content">
+      <h1 className="mc-main-title">My Exercises</h1>
+      
+      <div className="lecturer-my-class">
+        <div className="class-details">
+          <h2>{classData.name || classData.title}</h2>
+          <p className="class-meta">
+            {students?.length || 0} students enrolled
+          </p>
+        </div>
 
-          {activeTab === 'exercises' && (
-            <div className="exercises-content">
-              <div className="exercises-controls">
-                <div className="search-filter">
-                  <input 
-                    type="text"
-                    placeholder="Search exercises..."
-                    value={searchTerm}
-                    onChange={(e) => onSearchChange(e.target.value)}
-                    className="search-input"
-                  />
-                  <select 
-                    value={statusFilter}
-                    onChange={(e) => onStatusFilterChange(e.target.value)}
-                    className="status-filter"
-                  >
-                    <option value="all">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="draft">Draft</option>
-                    <option value="completed">Completed</option>
-                  </select>
-                </div>
-                <button 
-                  className="new-exercise-btn"
-                  onClick={onNewExercise}
+        <div className="tab-navigation">
+          <button 
+            className={`tab-btn ${activeTab === 'exercises' ? 'active' : ''}`}
+            onClick={() => onTabChange('exercises')}
+          >
+            Exercises
+          </button>
+          <button 
+            className={`tab-btn ${activeTab === 'students' ? 'active' : ''}`}
+            onClick={() => onTabChange('students')}
+          >
+            Students
+          </button>
+        </div>
+
+        {activeTab === 'exercises' && (
+          <div className="exercises-content">
+            <div className="exercises-controls">
+              <div className="search-filter">
+                <input 
+                  type="text"
+                  placeholder="Search exercises..."
+                  value={searchTerm}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                  className="search-input"
+                />
+                <select 
+                  value={statusFilter}
+                  onChange={(e) => onStatusFilterChange(e.target.value)}
+                  className="status-filter"
                 >
-                  + New Exercise
-                </button>
+                  <option value="all">All Status</option>
+                  <option value="active">Active</option>
+                  <option value="draft">Draft</option>
+                  <option value="completed">Completed</option>
+                </select>
               </div>
+              <button 
+                className="new-exercise-btn"
+                onClick={onNewExercise}
+              >
+                + New Exercise
+              </button>
+            </div>
 
-              <div className="exercise-grid">
-                {loading ? (
-                  <div className="loading">Loading exercises...</div>
-                ) : exercises.length === 0 ? (
-                  <div className="no-exercises">
-                    <div className="no-exercises-content">
-                      <div className="no-exercises-icon">📝</div>
-                      <h3>No exercises found</h3>
-                      <p>
-                        {statusFilter === 'all' 
-                          ? "Start by creating your first exercise for this class."
-                          : `No ${statusFilter} exercises found. Try changing the filter or search term.`
-                        }
-                      </p>
-                      {statusFilter === 'all' && (
-                        <button 
-                          className="create-first-exercise-btn"
-                          onClick={onNewExercise}
-                        >
-                          Create Your First Exercise
-                        </button>
+            <div className="exercise-grid">
+              {loading ? (
+                <div className="loading">Loading exercises...</div>
+              ) : exercises.length === 0 ? (
+                <div className="no-exercises">
+                  <div className="no-exercises-content">
+                    <div className="no-exercises-icon">📝</div>
+                    <h3>No exercises found</h3>
+                    <p>
+                      {statusFilter === 'all' 
+                        ? "Start by creating your first exercise for this class."
+                        : `No ${statusFilter} exercises found. Try changing the filter or search term.`
+                      }
+                    </p>
+                    {statusFilter === 'all' && (
+                      <button 
+                        className="create-first-exercise-btn"
+                        onClick={onNewExercise}
+                      >
+                        Create Your First Exercise
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                exercises.map((exercise) => (
+                  <div 
+                    key={exercise.id} 
+                    className={`exercise-card ${exercise.status === 'draft' ? 'draft-clickable' : ''}`}
+                    onClick={exercise.status === 'draft' ? () => onDraftExerciseClick(exercise.id) : undefined}
+                    style={exercise.status === 'draft' ? { cursor: 'pointer' } : {}}
+                  >
+                    <div className="exercise-header">
+                      <h3>{exercise.title}</h3>
+                      <span className={`status-badge ${getStatusBadge(exercise.status)}`}>
+                        {exercise.status?.toUpperCase()}
+                      </span>
+                    </div>
+                    
+                    <div className="exercise-meta">
+                      <p>Due: {exercise.dueDate || 'No due date'}</p>
+                      <p>{exercise.submissions || 0}/{exercise.maxSubmissions || 0} submissions</p>
+                      <p>{exercise.marks || 0} marks</p>
+                    </div>
+
+                    <div className="exercise-actions">
+                      {exercise.status === 'draft' ? (
+                        <>
+                          <button 
+                            className="btn-class-lect btn-publish"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePublishConfirmation(exercise.id, exercise.title);
+                            }}
+                          >
+                            Publish Exercise
+                          </button>
+                          <button 
+                            className="btn btn-delete"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteConfirmation(exercise.id, exercise.title);
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </>
+                      ) : exercise.status === 'active' ? (
+                        <>
+                          <button 
+                            className="btn btn-view"
+                            onClick={() => onViewSubmissions(exercise.id)}
+                          >
+                            View Submissions
+                          </button>
+                          <button 
+                            className="btn btn-delete"
+                            onClick={() => handleDeleteConfirmation(exercise.id, exercise.title)}
+                          >
+                            Delete
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button 
+                            className="btn btn-view"
+                            onClick={() => onViewSubmissions(exercise.id)}
+                          >
+                            View Submissions
+                          </button>
+                          <button 
+                            className="btn btn-delete"
+                            onClick={() => handleDeleteConfirmation(exercise.id, exercise.title)}
+                          >
+                            Delete
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
-                ) : (
-                  exercises.map((exercise) => (
-                    <div 
-                      key={exercise.id} 
-                      className={`exercise-card ${exercise.status === 'draft' ? 'draft-clickable' : ''}`}
-                      onClick={exercise.status === 'draft' ? () => onDraftExerciseClick(exercise.id) : undefined}
-                      style={exercise.status === 'draft' ? { cursor: 'pointer' } : {}}
-                    >
-                      <div className="exercise-header">
-                        <h3>{exercise.title}</h3>
-                        <span className={`status-badge ${getStatusBadge(exercise.status)}`}>
-                          {exercise.status?.toUpperCase()}
-                        </span>
-                      </div>
-                      
-                      <div className="exercise-meta">
-                        <p>Due: {exercise.dueDate || 'No due date'}</p>
-                        <p>{exercise.submissions || 0}/{exercise.maxSubmissions || 0} submissions</p>
-                        <p>{exercise.marks || 0} marks</p>
-                      </div>
-
-                      <div className="exercise-actions">
-                        {exercise.status === 'draft' ? (
-                          <>
-                            <button 
-                              className="btn-class-lect btn-publish"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handlePublishConfirmation(exercise.id, exercise.title);
-                              }}
-                            >
-                              Publish Exercise
-                            </button>
-                            <button 
-                              className="btn btn-delete"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteConfirmation(exercise.id, exercise.title);
-                              }}
-                            >
-                              Delete
-                            </button>
-                          </>
-                        ) : exercise.status === 'active' ? (
-                          <>
-                            <button 
-                              className="btn btn-view"
-                              onClick={() => onViewSubmissions(exercise.id)}
-                            >
-                              View Submissions
-                            </button>
-                            <button 
-                              className="btn btn-delete"
-                              onClick={() => handleDeleteConfirmation(exercise.id, exercise.title)}
-                            >
-                              Delete
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <button 
-                              className="btn btn-view"
-                              onClick={() => onViewSubmissions(exercise.id)}
-                            >
-                              View Submissions
-                            </button>
-                            <button 
-                              className="btn btn-delete"
-                              onClick={() => handleDeleteConfirmation(exercise.id, exercise.title)}
-                            >
-                              Delete
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
+                ))
+              )}
             </div>
-          )}
+          </div>
+        )}
 
-          {activeTab === 'students' && (
-            <div className="students-content">
-              <h3>Enrolled Students</h3>
-              <div className="students-list">
-                {loading ? (
-                  <div className="loading">Loading students...</div>
-                ) : students && students.length > 0 ? (
-                  students.map((student) => (
-                    <div key={student.id} className="student-item">
-                      <div className="student-avatar">
-                        {getInitials(student.name)}
-                      </div>
-                      <div className="student-info">
-                        <h4>{student.name}</h4>
-                        <p>{student.email}</p>
-                      </div>
-                      <div className="student-progress">
-                        {student.completedExercises || 0}/{exercises.length} exercises completed
-                      </div>
+        {activeTab === 'students' && (
+          <div className="students-content">
+            <h3>Enrolled Students</h3>
+            <div className="students-list">
+              {loading ? (
+                <div className="loading">Loading students...</div>
+              ) : students && students.length > 0 ? (
+                students.map((student) => (
+                  <div key={student.id} className="student-item">
+                    <div className="student-avatar">
+                      {getInitials(student.name)}
                     </div>
-                  ))
-                ) : (
-                  <div className="no-students" style={{textAlign: 'center', padding: '20px', color: '#666'}}>
-                    <div className="no-students-content">
-                      <div className="no-students-icon">👥</div>
-                      <h3>No students enrolled</h3>
-                      <p>Students haven't joined this class yet. Share the class code with your students to get started.</p>
+                    <div className="student-info">
+                      <h4>{student.name}</h4>
+                      <p>{student.email}</p>
+                    </div>
+                    <div className="student-progress">
+                      {student.completedExercises || 0}/{exercises.length} exercises completed
                     </div>
                   </div>
-                )}
-              </div>
+                ))
+              ) : (
+                <div className="no-students" style={{textAlign: 'center', padding: '20px', color: '#666'}}>
+                  <div className="no-students-content">
+                    <div className="no-students-icon">👥</div>
+                    <h3>No students enrolled</h3>
+                    <p>Students haven't joined this class yet. Share the class code with your students to get started.</p>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      </main>
+          </div>
+        )}
+      </div>
+    </main>
 
-      {/* 🆕 NEW: Modal Components */}
-      <ConfirmationModal
-        isOpen={deleteModal.isOpen}
-        onClose={() => setDeleteModal({ isOpen: false, exerciseId: null, exerciseTitle: '' })}
-        onConfirm={confirmDelete}
-        title="Delete Exercise"
-        message={`Are you sure you want to delete "${deleteModal.exerciseTitle}"? This action cannot be undone and all associated data will be permanently removed.`}
-        confirmText="Delete"
-        cancelText="Cancel"
-        type="danger"
-      />
+    <ConfirmationModal
+      isOpen={deleteModal.isOpen}
+      onClose={() => setDeleteModal({ isOpen: false, exerciseId: null, exerciseTitle: '' })}
+      onConfirm={confirmDelete}
+      title="Delete Exercise"
+      message={`Are you sure you want to delete "${deleteModal.exerciseTitle}"? This action cannot be undone and all associated data will be permanently removed.`}
+      confirmText="Delete"
+      cancelText="Cancel"
+      type="danger"
+    />
 
-      <ConfirmationModal
-        isOpen={publishModal.isOpen}
-        onClose={() => setPublishModal({ isOpen: false, exerciseId: null, exerciseTitle: '' })}
-        onConfirm={confirmPublish}
-        title="Publish Exercise"
-        message={`Are you sure you want to publish "${publishModal.exerciseTitle}"? Once published, students will be able to see and submit this exercise.`}
-        confirmText="Publish"
-        cancelText="Cancel"
-        type="success"
-      />
+    <ConfirmationModal
+      isOpen={publishModal.isOpen}
+      onClose={() => setPublishModal({ isOpen: false, exerciseId: null, exerciseTitle: '' })}
+      onConfirm={confirmPublish}
+      title="Publish Exercise"
+      message={`Are you sure you want to publish "${publishModal.exerciseTitle}"? Once published, students will be able to see and submit this exercise.`}
+      confirmText="Publish"
+      cancelText="Cancel"
+      type="success"
+    />
 
-      <SuccessModal
-        isOpen={successModal.isOpen}
-        onClose={() => setSuccessModal({ isOpen: false, title: '', message: '' })}
-        title={successModal.title}
-        message={successModal.message}
-      />
-    </div>
-  );
+    <SuccessModal
+      isOpen={successModal.isOpen}
+      onClose={() => setSuccessModal({ isOpen: false, title: '', message: '' })}
+      title={successModal.title}
+      message={successModal.message}
+    />
+  </div>
+);
 };
 
 export default LecturerMyClass;

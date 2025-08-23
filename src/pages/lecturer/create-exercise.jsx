@@ -1,5 +1,5 @@
 // 📝 UPDATED: Added draft saving functionality when canceling
-import React from 'react';
+import React, { useState } from 'react'; // ✅ FIXED: Import useState
 import { useUser } from '../../contexts/UserContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import LecturerCreateExercise from '../../components/class/lecturer-create-exercise.jsx';
@@ -12,6 +12,18 @@ const CreateExercisePage = () => {
   const [searchParams] = useSearchParams();
   
   const classId = searchParams.get('classId');
+
+  // ✅ FIXED: Add mobile menu state
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // ✅ FIXED: Add toggle functions
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
 
   const onDashboardClick = () => {
     navigate('/lecturer/dashboard1');
@@ -55,18 +67,50 @@ const CreateExercisePage = () => {
         </div>
         
         <div className="header-right">
-          <nav className="nav-items">
+          {/* Desktop Navigation */}
+          <nav className="nav-items desktop-nav">
             <span className="nav-item" onClick={onDashboardClick}>Dashboard</span>
             <span className="nav-item">{getUserDisplayName()}</span>
             <button className="logout-btn" onClick={handleLogout}>Logout</button>
+          </nav>
+
+          {/* Mobile Hamburger Button */}
+          <button 
+            className="hamburger-btn"
+            onClick={toggleMobileMenu}
+            aria-label="Toggle menu"
+          >
+            <span className={`hamburger-line ${isMobileMenuOpen ? 'open' : ''}`}></span>
+            <span className={`hamburger-line ${isMobileMenuOpen ? 'open' : ''}`}></span>
+            <span className={`hamburger-line ${isMobileMenuOpen ? 'open' : ''}`}></span>
+          </button>
+
+          {/* Mobile Navigation Menu */}
+          <nav className={`mobile-nav ${isMobileMenuOpen ? 'open' : ''}`}>
+            <div className="mobile-nav-overlay" onClick={closeMobileMenu}></div>
+            <div className="mobile-nav-content">
+              <span className="nav-item" onClick={() => { onDashboardClick(); closeMobileMenu(); }}>Dashboard</span>
+              <span className="nav-item" onClick={closeMobileMenu}>{getUserDisplayName()}</span>
+              <button 
+                className="logout-btn" 
+                onClick={() => {
+                  handleLogout();
+                  closeMobileMenu();
+                }}
+              >
+                Logout
+              </button>
+            </div>
           </nav>
         </div>
       </header>
 
       {/* 🎯 UPDATED: Pass classId to component for draft saving */}
       <LecturerCreateExercise 
-        onCancel={handleCancel} 
+        onCancel={handleCancel}
         classId={classId}
+        onLogout={handleLogout}
+        onDashboardClick={onDashboardClick} // ✅ FIXED: Pass this prop
       />
     </div>
   );

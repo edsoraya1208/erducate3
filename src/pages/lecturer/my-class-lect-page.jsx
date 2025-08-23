@@ -1,4 +1,4 @@
-// 📝 UPDATED: Fixed duplicate exercise issue and added unsaved changes handling
+// src/pages/lecturer/my-class-lect-page.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { 
@@ -14,6 +14,7 @@ import {
 import { db, auth } from '../../config/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import LecturerMyClass from '../../components/class/lecturer-my-class';
+import DashboardHeader from '../../components/dashboard/dashboard-header'; // Import the new component
 
 const MyClassLectPage = () => {
   const { classId } = useParams();
@@ -26,7 +27,7 @@ const MyClassLectPage = () => {
   const [students, setStudents] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [loading, setLoading] = useState(true); // 🔄 CHANGED: Start with true
+  const [loading, setLoading] = useState(true);
 
   const [user] = useAuthState(auth);
 
@@ -34,7 +35,7 @@ const MyClassLectPage = () => {
     return user?.displayName || user?.email?.split('@')[0] || 'User';
   };
 
-  // 🆕 NEW: Add beforeunload handler for unsaved changes warning
+  // Add beforeunload handler for unsaved changes warning
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       // Check if there are any draft exercises
@@ -89,7 +90,7 @@ const MyClassLectPage = () => {
         });
       });
       
-      // 🔄 UPDATED: Sort exercises by creation date (newest first) and then by status
+      // Sort exercises by creation date (newest first) and then by status
       const sortedExercises = exercisesData.sort((a, b) => {
         // First sort by status priority: draft > active > completed
         const statusPriority = { draft: 3, active: 2, completed: 1 };
@@ -145,7 +146,7 @@ const MyClassLectPage = () => {
     }
   };
 
-  // 🆕 NEW: Fetch both students and exercises on initial load and tab change
+  // Fetch both students and exercises on initial load and tab change
   useEffect(() => {
     if (classId) {
       const fetchInitialData = async () => {
@@ -167,27 +168,27 @@ const MyClassLectPage = () => {
     }
   }, [classId, activeTab]);
 
-  // 🔄 UPDATED: Fixed the publish exercise handler - this was causing the duplicate issue
+  // Fixed the publish exercise handler - this was causing the duplicate issue
   const handlePublishExercise = async (exerciseId) => {
     try {
       console.log('Publishing exercise:', exerciseId);
       
-      // 🆕 NEW: Update the existing exercise instead of creating a new one
+      // Update the existing exercise instead of creating a new one
       const exerciseRef = doc(db, 'classes', classId, 'exercises', exerciseId);
       await updateDoc(exerciseRef, {
         status: 'active',
         publishedAt: new Date(),
-        updatedAt: new Date() // 🆕 NEW: Track when it was last updated
+        updatedAt: new Date() // Track when it was last updated
       });
       
       console.log('Exercise published successfully');
       
-      // 🆕 NEW: Refresh exercises to show updated status immediately
+      // Refresh exercises to show updated status immediately
       await fetchExercises();
       
     } catch (error) {
       console.error('Error publishing exercise:', error);
-      throw error; // 🆕 NEW: Rethrow to handle in component
+      throw error; // Rethrow to handle in component
     }
   };
 
@@ -196,7 +197,7 @@ const MyClassLectPage = () => {
     navigate(`/lecturer/create-exercise?classId=${classId}&draftId=${exerciseId}`);
   };
 
-  // 🔄 UPDATED: Enhanced delete handler with better error handling
+  // Enhanced delete handler with better error handling
   const handleDeleteExercise = async (exerciseId) => {
     try {
       console.log('Deleting exercise:', exerciseId);
@@ -206,12 +207,12 @@ const MyClassLectPage = () => {
       
       console.log('Exercise deleted successfully');
       
-      // 🆕 NEW: Refresh exercises immediately after deletion
+      // Refresh exercises immediately after deletion
       await fetchExercises();
       
     } catch (error) {
       console.error('Error deleting exercise:', error);
-      throw error; // 🆕 NEW: Rethrow to handle in component
+      throw error; // Rethrow to handle in component
     }
   };
 
@@ -229,11 +230,7 @@ const MyClassLectPage = () => {
     navigate(`/lecturer/create-exercise?classId=${classId}`);
   };
 
-  const handleDashboardClick = () => {
-    navigate('/lecturer/dashboard1');
-  };
-
-  // 🆕 NEW: Enhanced logout with draft warning
+  // Enhanced logout with draft warning
   const handleLogout = () => {
     const hasDrafts = exercises.some(exercise => exercise.status === 'draft');
     
@@ -269,6 +266,13 @@ const MyClassLectPage = () => {
 
   return (
     <div className="my-class-page">
+      {/* REPLACED: Old header with shared component */}
+      <DashboardHeader 
+        userType="lecturer"
+        currentPage="class"
+        additionalNavItems={[]}
+      />
+      
       <LecturerMyClass 
         // State props
         classData={classData}
@@ -296,7 +300,6 @@ const MyClassLectPage = () => {
         onDraftExerciseClick={handleDraftExerciseClick}
         onViewSubmissions={handleViewSubmissions}
         onNewExercise={handleNewExercise}
-        onDashboardClick={handleDashboardClick}
         onLogout={handleLogout}
       />
     </div>

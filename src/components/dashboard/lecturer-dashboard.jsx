@@ -30,17 +30,6 @@ const LecturerDashboard = ({
   onClassClick
 }) => {
 
-  // State for mobile menu
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
-  const closeMobileMenu = () => {
-    setIsMobileMenuOpen(false);
-  };
-
   // Create Class Modal UI Component
   const CreateClassModal = () => (
     <div className="modal-overlay">
@@ -141,64 +130,8 @@ const LecturerDashboard = ({
 
   return (
     <div className="lecturer-dashboard">
-      {/* Navigation Header */}
-      <header className="dashboard-header">
-        <div className="header-left">
-          <div className="logo-container">
-            <div className="logo-icon">
-              <img 
-                src="/logo.svg" 
-                alt="ERDucate Logo" 
-                className="custom-logo"
-              />
-            </div>
-            <span className="brand-name">
-              ERDucate
-            </span>
-          </div>
-        </div>
-        
-        <div className="header-right">
-          {/* Desktop Navigation */}
-          <nav className="nav-items desktop-nav">
-            <span className="nav-item active">Dashboard</span>
-            <span className="nav-item">{getUserDisplayName()}</span>
-            <button className="logout-btn" onClick={onLogout}>
-              Logout
-            </button>
-          </nav>
-
-          {/* Mobile Hamburger Button */}
-          <button 
-            className="hamburger-btn"
-            onClick={toggleMobileMenu}
-            aria-label="Toggle menu"
-          >
-            <span className={`hamburger-line ${isMobileMenuOpen ? 'open' : ''}`}></span>
-            <span className={`hamburger-line ${isMobileMenuOpen ? 'open' : ''}`}></span>
-            <span className={`hamburger-line ${isMobileMenuOpen ? 'open' : ''}`}></span>
-          </button>
-
-          {/* Mobile Navigation Menu */}
-          <nav className={`mobile-nav ${isMobileMenuOpen ? 'open' : ''}`}>
-            <div className="mobile-nav-overlay" onClick={closeMobileMenu}></div>
-            <div className="mobile-nav-content">
-              <span className="nav-item active" onClick={closeMobileMenu}>Dashboard</span>
-              <span className="nav-item" onClick={closeMobileMenu}>{getUserDisplayName()}</span>
-              <button 
-                className="logout-btn" 
-                onClick={() => {
-                  onLogout();
-                  closeMobileMenu();
-                }}
-              >
-                Logout
-              </button>
-            </div>
-          </nav>
-        </div>
-      </header>
-
+      {/* REMOVED: Navigation Header - now using imported DashboardHeader */}
+      
       {/* Main Dashboard Content */}
       <main className="dashboard-main">
         <div className="dashboard-container">

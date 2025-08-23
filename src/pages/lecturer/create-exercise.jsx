@@ -5,6 +5,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import LecturerCreateExercise from '../../components/class/lecturer-create-exercise.jsx';
 import '../../styles/lecturer-shared-header.css';
 import '../../styles/create-exercise.css';
+import DashboardHeader from '../../components/dashboard/dashboard-header'; // ✅ FIXED: Correct import path
 
 const CreateExercisePage = () => {
   const { getUserDisplayName } = useUser();
@@ -13,17 +14,6 @@ const CreateExercisePage = () => {
   
   const classId = searchParams.get('classId');
 
-  // ✅ FIXED: Add mobile menu state
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  // ✅ FIXED: Add toggle functions
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
-  const closeMobileMenu = () => {
-    setIsMobileMenuOpen(false);
-  };
 
   const onDashboardClick = () => {
     navigate('/lecturer/dashboard1');
@@ -51,66 +41,20 @@ const CreateExercisePage = () => {
   };
 
   return (
-    <div className="ce-page create-exercise-container">
-      <header className="dashboard-header">
-        <div className="header-left">
-          <div className="logo-container">
-            <div className="logo-icon">
-              <img
-                src="/logo.svg"
-                alt="ERDucate Logo"
-                className="custom-logo"
-              />
-            </div>
-            <span className="brand-name">ERDucate</span>
-          </div>
-        </div>
-        
-        <div className="header-right">
-          {/* Desktop Navigation */}
-          <nav className="nav-items desktop-nav">
-            <span className="nav-item" onClick={onDashboardClick}>Dashboard</span>
-            <span className="nav-item">{getUserDisplayName()}</span>
-            <button className="logout-btn" onClick={handleLogout}>Logout</button>
-          </nav>
+    <div className="ce-page create-exercise-container"> {/* ✅ KEPT: Your existing container class */}
+      {/* ✅ REPLACED: Old header with reusable DashboardHeader */}
+      <DashboardHeader 
+        userType="lecturer"
+        currentPage="create-exercise"
+        additionalNavItems={[]} // Add any extra nav items here if needed
+      />
 
-          {/* Mobile Hamburger Button */}
-          <button 
-            className="hamburger-btn"
-            onClick={toggleMobileMenu}
-            aria-label="Toggle menu"
-          >
-            <span className={`hamburger-line ${isMobileMenuOpen ? 'open' : ''}`}></span>
-            <span className={`hamburger-line ${isMobileMenuOpen ? 'open' : ''}`}></span>
-            <span className={`hamburger-line ${isMobileMenuOpen ? 'open' : ''}`}></span>
-          </button>
-
-          {/* Mobile Navigation Menu */}
-          <nav className={`mobile-nav ${isMobileMenuOpen ? 'open' : ''}`}>
-            <div className="mobile-nav-overlay" onClick={closeMobileMenu}></div>
-            <div className="mobile-nav-content">
-              <span className="nav-item" onClick={() => { onDashboardClick(); closeMobileMenu(); }}>Dashboard</span>
-              <span className="nav-item" onClick={closeMobileMenu}>{getUserDisplayName()}</span>
-              <button 
-                className="logout-btn" 
-                onClick={() => {
-                  handleLogout();
-                  closeMobileMenu();
-                }}
-              >
-                Logout
-              </button>
-            </div>
-          </nav>
-        </div>
-      </header>
-
-      {/* 🎯 UPDATED: Pass classId to component for draft saving */}
+      {/* ✅ UNCHANGED: Your existing component */}
       <LecturerCreateExercise 
         onCancel={handleCancel}
         classId={classId}
         onLogout={handleLogout}
-        onDashboardClick={onDashboardClick} // ✅ FIXED: Pass this prop
+        onDashboardClick={onDashboardClick}
       />
     </div>
   );

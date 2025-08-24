@@ -96,17 +96,18 @@ const StudentMyClass = ({ classId }) => {
             exerciseData.progress = progress;
             exerciseData.isSubmitted = !!progress;
             exerciseData.isCompleted = progress?.status === 'completed' || progress?.isCompleted;
-            exerciseData.isPastDue = exerciseData.dueDate ? new Date() > exerciseData.dueDate.toDate() : false;
-            
+            exerciseData.isPastDue = exerciseData.dueDate && exerciseData.dueDate.toDate 
+              ? new Date() > exerciseData.dueDate.toDate() 
+              : false;            
             allExercises.push(exerciseData);
           }
           
           // Sort exercises by createdAt in JavaScript instead
           allExercises.sort((a, b) => {
-            if (!a.createdAt && !b.createdAt) return 0;
-            if (!a.createdAt) return 1;
-            if (!b.createdAt) return -1;
-            return b.createdAt.toDate() - a.createdAt.toDate();
+            if (!a.dueDate && !b.dueDate) return 0;
+            if (!a.dueDate || !a.dueDate.toDate) return 1;
+            if (!b.dueDate || !b.dueDate.toDate) return -1;
+            return b.dueDate.toDate() - a.dueDate.toDate();
           });
           
           console.log('Final exercises data:', allExercises);
@@ -247,7 +248,7 @@ const StudentMyClass = ({ classId }) => {
 
   const handleStartExercise = (classId, exerciseId) => {
     // Navigate to exercise attempt page
-    window.location.href = `/student/class/${classId}/exercise/${exerciseId}`;
+    window.location.href = `/student/class/${classId}/submit-exercise/${exerciseId}`;
   };
 
   const handleContinueExercise = (classId, exerciseId) => {
@@ -262,11 +263,28 @@ const StudentMyClass = ({ classId }) => {
 
   const formatDate = (timestamp) => {
     if (!timestamp) return 'No due date';
-    return timestamp.toDate().toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    
+    // Handle both Firestore Timestamp and regular Date objects
+    if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+      return timestamp.toDate().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } else if (timestamp instanceof Date) {
+      return timestamp.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } else {
+      // If it's a string, try to parse it
+      return new Date(timestamp).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    }
   };
 
   const getScore = (exercise) => {

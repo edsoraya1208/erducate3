@@ -1,0 +1,443 @@
+/* src/styles/submit-exercise.css */
+
+/* Main container - follows same pattern as your existing styles (UNCHANGED) */
+.se-container {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+.se-main {
+  padding-top: 80px; /* Account for fixed header */
+  min-height: calc(100vh - 80px);
+}
+
+.se-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Loading state (UNCHANGED) */
+.se-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 400px;
+  font-size: 18px;
+  color: #666;
+}
+
+/* Page header (UNCHANGED) */
+.se-header {
+  margin-bottom: 30px;
+}
+
+.se-header-content {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 10px;
+}
+
+.se-back-btn {
+  background: none;
+  border: none;
+  color: #6c5ce7;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.se-back-btn:hover {
+  background-color: #f0f0f0;
+}
+
+.se-page-title {
+  font-size: 32px;
+  font-weight: 600;
+  color: #2d3436;
+  margin: 0;
+}
+
+.se-page-subtitle {
+  color: #636e72;
+  margin: 5px 0 0 0;
+  font-size: 16px;
+}
+
+/* Exercise card - main content area (UNCHANGED) */
+.se-exercise-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.se-exercise-header {
+  background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+  color: white;
+  padding: 30px;
+  text-align: center;
+}
+
+.se-exercise-title {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.se-exercise-subtitle {
+  font-size: 16px;
+  opacity: 0.9;
+  margin: 0;
+}
+
+/* Two-panel layout (UNCHANGED) */
+.se-exercise-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 600px;
+}
+
+/* Left panel - Instructions (UNCHANGED) */
+.se-instructions-panel {
+  padding: 30px;
+  border-right: 1px solid #e9ecef;
+  background-color: #f8f9fa;
+}
+
+.se-panel-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #2d3436;
+  margin: 0 0 20px 0;
+}
+
+.se-instructions-content {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #636e72;
+}
+
+.se-requirements,
+.se-due-info,
+.se-guidelines {
+  margin: 20px 0;
+  padding: 15px;
+  background: white;
+  border-radius: 8px;
+  border-left: 4px solid #6c5ce7;
+}
+
+.se-requirements h4,
+.se-guidelines h4 {
+  margin: 0 0 10px 0;
+  color: #2d3436;
+  font-size: 16px;
+}
+
+.se-requirements ul,
+.se-guidelines ul {
+  margin: 10px 0;
+  padding-left: 20px;
+}
+
+.se-requirements li,
+.se-guidelines li {
+  margin: 8px 0;
+}
+
+/* Right panel - Submission (ENHANCED) */
+.se-submission-panel {
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.se-section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2d3436;
+  margin: 0 0 15px 0;
+}
+
+/* File upload area (ENHANCED with better styling) */
+.se-upload-section {
+  flex: 1;
+}
+
+.se-upload-area {
+  border: 2px dashed #ddd;
+  border-radius: 12px;
+  padding: 40px;
+  text-align: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.se-upload-area:hover,
+.se-drag-over {
+  border-color: #6c5ce7;
+  background-color: #f8f7ff;
+}
+
+.se-upload-icon {
+  font-size: 48px;
+  margin-bottom: 15px;
+}
+
+.se-upload-area h4 {
+  font-size: 18px;
+  color: #2d3436;
+  margin: 0 0 8px 0;
+}
+
+.se-upload-area p {
+  color: #636e72;
+  margin: 0 0 20px 0;
+}
+
+/* ✅ NEW: Upload hint styling */
+.upload-hint {
+  font-size: 12px !important;
+  color: #999 !important;
+  margin: 5px 0 20px 0 !important;
+  font-style: italic;
+}
+
+.se-file-input {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.se-browse-btn {
+  background: #6c5ce7;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.se-browse-btn:hover {
+  background: #5b4cdb;
+}
+
+/* File preview (ENHANCED with better file info display) */
+.se-file-preview {
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.se-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.se-file-name {
+  font-weight: 500;
+  color: #2d3436;
+  word-break: break-all;
+  flex: 1;
+  margin-right: 10px;
+}
+
+/* ✅ NEW: File info container */
+.se-file-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ✅ NEW: File size display */
+.se-file-size {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.se-remove-file-btn {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+  flex-shrink: 0;
+}
+
+.se-remove-file-btn:hover {
+  background: #c0392b;
+}
+
+.se-image-preview {
+  padding: 15px;
+  text-align: center;
+}
+
+.se-preview-image {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Comments section (UNCHANGED) */
+.se-comments-section {
+  margin-top: 20px;
+}
+
+.se-comments-textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  resize: vertical;
+  transition: border-color 0.2s;
+}
+
+.se-comments-textarea:focus {
+  outline: none;
+  border-color: #6c5ce7;
+  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+}
+
+.se-comments-textarea::placeholder {
+  color: #999;
+}
+
+/* Submit section (ENHANCED with status messages) */
+.se-submit-section {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.se-submit-btn {
+  background: #00b894;
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  min-width: 200px;
+  transition: all 0.2s;
+}
+
+.se-submit-btn:hover:not(:disabled) {
+  background: #00a085;
+  transform: translateY(-2px);
+}
+
+.se-submit-btn:disabled {
+  background: #bbb;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ✅ NEW: Upload status message */
+.se-upload-status {
+  margin-top: 10px;
+  color: #6c5ce7;
+  font-size: 14px;
+  font-weight: 500;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* ✅ NEW: Pulse animation for upload status */
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+/* Responsive design (UNCHANGED) */
+@media (max-width: 968px) {
+  .se-exercise-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .se-instructions-panel {
+    border-right: none;
+    border-bottom: 1px solid #e9ecef;
+  }
+  
+  .se-content {
+    padding: 15px;
+  }
+  
+  .se-page-title {
+    font-size: 24px;
+  }
+  
+  .se-upload-area {
+    padding: 30px 20px;
+    min-height: 150px;
+  }
+}
+
+@media (max-width: 640px) {
+  .se-header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .se-instructions-panel,
+  .se-submission-panel {
+    padding: 20px;
+  }
+  
+  .se-exercise-header {
+    padding: 20px;
+  }
+  
+  .se-upload-area {
+    padding: 20px;
+  }
+  
+  /* ✅ NEW: Mobile responsiveness for file info */
+  .se-preview-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .se-file-info {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

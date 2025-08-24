@@ -11,6 +11,7 @@ const Welcome = lazy(() => import('./pages/Welcome'));
 const AuthPage = lazy(() => import('./pages/AuthPage')); 
 const Dashboard1 = lazy(() => import('./pages/lecturer/dashboard1')); 
 const MyClassLectPage = lazy(() => import('./pages/lecturer/my-class-lect-page')); 
+const SubmitExercise = lazy(() => import('./pages/student/submit-exercise'));
 
 // 🚀 FIX: Import the correct student dashboard PAGE (not component)
 const StudentDashboard = lazy(() => import('./pages/student/dashboard2'));  
@@ -41,11 +42,9 @@ function App() {
             <Route path="/lecturer/dashboard1" element={<Dashboard1 />} />             
             <Route path="/lecturer/create-exercise" element={<CreateExercisePage />} />             
             <Route path="/lecturer/class/:classId" element={<MyClassLectPage />} />             
-            
-            {/* 🎯 FIX: Use the correct StudentDashboard PAGE component */}
             <Route path="/student/dashboard" element={<StudentDashboard />} />  
             <Route path="/student/class/:classId" element={<MyClassStudPage />} />                     
-            
+            <Route path="/student/class/:classId/submit-exercise/:exerciseId" element={<SubmitExercise />} />
             {/* 🎯 OPTIONAL: Add 404 page for unknown routes */}
             {/* <Route path="*" element={<NotFound />} /> */}           
           </Routes>         

@@ -231,19 +231,6 @@ const MyClassLectPage = () => {
   };
 
   // Enhanced logout with draft warning
-  const handleLogout = () => {
-    const hasDrafts = exercises.some(exercise => exercise.status === 'draft');
-    
-    if (hasDrafts) {
-      const confirmLogout = window.confirm(
-        'You have unsaved draft exercises. Are you sure you want to logout? Your drafts will be saved.'
-      );
-      if (!confirmLogout) return;
-    }
-    
-    console.log('Logout clicked');
-    // Add your logout logic here
-  };
 
   const filteredExercises = exercises.filter(exercise => {
     const matchesSearch = exercise.title?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -300,7 +287,6 @@ const MyClassLectPage = () => {
         onDraftExerciseClick={handleDraftExerciseClick}
         onViewSubmissions={handleViewSubmissions}
         onNewExercise={handleNewExercise}
-        onLogout={handleLogout}
       />
     </div>
   );

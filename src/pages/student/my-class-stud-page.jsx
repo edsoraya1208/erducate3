@@ -6,7 +6,7 @@ import { useUser } from '../../contexts/UserContext';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../config/firebase';
 import StudentMyClass from '../../components/class/student-my-class';
-import DashboardHeader from '../../components/dashboard/dashboard-header'; // NEW: Import shared header
+import DashboardHeader from '../../components/dashboard/dashboard-header'; 
 import '../../styles/lecturer-shared-header.css';
 
 const MyClassStudPage = () => {
@@ -14,16 +14,6 @@ const MyClassStudPage = () => {
   const { classId } = useParams();
   const [user] = useAuthState(auth);
   const { getUserDisplayName } = useUser();
-
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      navigate('/login');
-    } catch (error) {
-      console.error('Error logging out:', error);
-    }
-  };
 
   return (
     <div className="dashboard-container">

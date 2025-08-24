@@ -36,9 +36,7 @@ const CreateExercisePage = () => {
     }
   };
 
-  const handleLogout = () => {
-    console.log('Logout clicked');
-  };
+
 
   return (
     <div className="ce-page create-exercise-container"> {/* ✅ KEPT: Your existing container class */}
@@ -53,7 +51,6 @@ const CreateExercisePage = () => {
       <LecturerCreateExercise 
         onCancel={handleCancel}
         classId={classId}
-        onLogout={handleLogout}
         onDashboardClick={onDashboardClick}
       />
     </div>

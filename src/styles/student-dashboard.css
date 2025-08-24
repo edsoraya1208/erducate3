@@ -276,8 +276,8 @@ CLASSES GRID & CARDS
   gap: 16px;
 }
 
-.class-title {
-  font-size: 1.5rem;
+.stud-class-title {
+  font-size: 1.2rem;
   font-weight: 600;
   color: #1f2937;
   line-height: 1.4;
@@ -624,7 +624,7 @@ RESPONSIVE DESIGN
   }
   
   .stud-class-header-dashboard {
-    flex-direction: row; /* Keep in one row */
+  flex-direction: row; /* Keep in one row */
    align-items: center;
    gap: 12px;
   }
@@ -634,9 +634,9 @@ RESPONSIVE DESIGN
   }
   
   .info-item {
-    flex-direction: column;
+    flex-direction: row;
     align-items: stretch;
-    gap: 8px;
+    gap: 6px;
   }
 
   .info-value.stud-class-code {

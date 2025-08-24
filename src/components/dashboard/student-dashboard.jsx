@@ -194,7 +194,7 @@ const StudentDashboard = ({
                   >
                     {/* Class Header with Title and Leave Button */}
                     <div className="stud-class-header-dashboard">
-                      <h3 className="class-title">{classItem.title}</h3>
+                      <h3 className="stud-class-title">{classItem.title}</h3>
                       <button 
                         className="leave-btn"
                         onClick={(e) => {

@@ -441,3 +441,181 @@
     justify-content: space-between;
   }
 }
+
+/* 🚨 VALIDATION MESSAGES - Green/Red feedback */
+.se-validation-message {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  animation: slideInDown 0.3s ease-out;
+}
+
+.se-validation-message.success {
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+}
+
+.se-validation-message.error {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+}
+
+/* 🎉 SUCCESS BANNER - After submission */
+.se-success-banner {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  color: white;
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
+}
+
+.se-success-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.se-success-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.se-success-text h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.se-success-text p {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 14px;
+}
+
+/* 🔄 UPLOAD PROGRESS BAR */
+.se-upload-progress {
+  margin-bottom: 16px;
+}
+
+.se-progress-bar {
+  width: 100%;
+  height: 8px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.se-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #007bff, #0056b3);
+  border-radius: 4px;
+  animation: progressMove 1.5s ease-in-out infinite;
+}
+
+.se-upload-status {
+  text-align: center;
+  color: #007bff;
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* 📤 SUBMIT BUTTON STATES */
+.se-submit-btn {
+  width: 100%;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+}
+
+.se-submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 123, 255, 0.3);
+}
+
+.se-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.se-submit-btn.submitted {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  cursor: default;
+}
+
+.se-submit-btn.submitted:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* 📝 SUBMITTED NOTE */
+.se-submitted-note {
+  text-align: center;
+  color: #28a745;
+  font-size: 14px;
+  margin: 12px 0 0 0;
+  font-weight: 500;
+}
+
+/* 🚫 DISABLED FILE INPUT */
+.se-browse-btn.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.se-file-input:disabled {
+  cursor: not-allowed;
+}
+
+/* 📱 ANIMATIONS */
+@keyframes slideInDown {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes progressMove {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* 📱 RESPONSIVE DESIGN */
+@media (max-width: 768px) {
+  .se-success-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+  }
+  
+  .se-success-icon {
+    font-size: 28px;
+  }
+}

@@ -79,6 +79,35 @@ const SubmitExercise = () => {
   };
 
   /**
+   * 🛡️ Validate file and set it if valid - WITH VISUAL FEEDBACK
+   */
+  const validateAndSetFile = (file) => {
+    console.log('📁 File selected:', file.name, file.type, file.size);
+
+    // Clear any previous validation messages
+    setValidationMessage(null);
+
+    // ✅ File type validation
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      showValidationMessage('❌ Invalid file type. Please select PNG, JPEG, GIF, or WebP files only.', 'error');
+      return;
+    }
+
+    // ✅ File size validation (10MB = 10 * 1024 * 1024 bytes)
+    const maxSize = 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      showValidationMessage('❌ File too large. Maximum size is 10MB.', 'error');
+      return;
+    }
+
+    // ✅ Success - file is valid
+    setSelectedFile(file);
+    showValidationMessage('✅ File selected successfully!', 'success', 2000);
+    console.log('✅ File validation passed');
+  };
+
+  /**
    * 📁 Handle file selection
    */
   const handleFileSelect = (e) => {
@@ -86,37 +115,6 @@ const SubmitExercise = () => {
     if (file) {
       validateAndSetFile(file);
     }
-  };
-
-  /**
-   * 🛡️ Validate file and set it if valid - WITH VISUAL FEEDBACK
-   */
-  const validateAndSetFile = (file) => {
-    // Clear any previous validation messages
-    setValidationMessage(null);
-
-    // ✅ Check file type
-    if (!file.type.startsWith('image/')) {
-      showValidationMessage('❌ Please select an image file (PNG, JPEG, GIF, WebP)', 'error');
-      return;
-    }
-
-    // ✅ Check file size (10MB limit)
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    if (file.size > maxSize) {
-      showValidationMessage('❌ File too large. Maximum size is 10MB', 'error');
-      return;
-    }
-
-    // 🔒 Basic filename validation
-    const sanitizedName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
-    if (sanitizedName !== file.name) {
-      console.warn('Filename was sanitized for security');
-    }
-
-    console.log('✅ File selected and validated:', file.name);
-    setSelectedFile(file);
-    showValidationMessage(`✅ File "${file.name}" selected successfully`, 'success', 2000);
   };
 
   /**

@@ -8,13 +8,23 @@ import '../../styles/my-class-stud.css';
 const StudentMyClass = ({ classId }) => {
   const [user] = useAuthState(auth);
   const [exercises, setExercises] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [exercisesLoading, setExercisesLoading] = useState(false);
   const [error, setError] = useState('');
   
-  // 🆕 NEW: Added state for search and filter
+  // Search and filter state
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [classData, setClassData] = useState(null);
+  
+  // FIXED: Initialize with proper class data immediately
+  const [classData, setClassData] = useState(() => {
+    if (classId) {
+      return { 
+        name: 'My Exercises', // Default name immediately, no "Loading..."
+        id: classId
+      };
+    }
+    return null;
+  });
 
   useEffect(() => {
     if (user) {
@@ -24,150 +34,163 @@ const StudentMyClass = ({ classId }) => {
 
   const fetchExercises = async () => {
     try {
-      setLoading(true);
-      setError(''); // Clear any previous errors
+      setExercisesLoading(true);
+      setError('');
       
       if (classId) {
-        // Fetch exercises for specific class only
-        console.log('=== DEBUGGING STUDENT EXERCISES ===');
-        console.log('Current user UID:', user.uid);
-        console.log('Fetching exercises for classId:', classId);
+        console.log('=== FETCHING EXERCISES FOR CLASS ===');
+        console.log('User:', user.uid, 'Class:', classId);
         
-        // First, verify student is enrolled in this specific class
-        const enrollmentQuery = query(
-          collection(db, 'studentClasses'),
-          where('studentId', '==', user.uid),
-          where('classId', '==', classId)
-        );
-        
-        const enrollmentSnapshot = await getDocs(enrollmentQuery);
-        console.log('Enrollment check result:', enrollmentSnapshot.size);
+        // Run enrollment check and class data fetch in parallel
+        const [enrollmentSnapshot, classDoc] = await Promise.all([
+          getDocs(query(
+            collection(db, 'studentClasses'),
+            where('studentId', '==', user.uid),
+            where('classId', '==', classId)
+          )),
+          getDoc(doc(db, 'classes', classId))
+        ]);
         
         if (enrollmentSnapshot.empty) {
-          console.log('Student not enrolled in this class');
           setError('You are not enrolled in this class');
           setExercises([]);
-          setLoading(false);
+          setExercisesLoading(false);
           return;
         }
         
-        const allExercises = [];
-        
-        try {
-          // Get class info first
-          const classDoc = await getDoc(doc(db, 'classes', classId));
-          const classData = classDoc.exists() ? classDoc.data() : null;
-          console.log('Class data:', classData);
-          
-          // Store class data in state
-          setClassData(classData);
-          
-          // Get exercises for this class - simple query without orderBy
-          const exercisesQuery = query(
-            collection(db, 'classes', classId, 'exercises'),
-            where('status', '==', 'active')
-          );
-          
-          console.log('Fetching exercises with query...');
-          const exercisesSnapshot = await getDocs(exercisesQuery);
-          console.log('Found exercises:', exercisesSnapshot.size);
-          
-          for (const exerciseDoc of exercisesSnapshot.docs) {
-            const exerciseData = { 
-              id: exerciseDoc.id, 
-              classId: classId,
-              className: classData?.name || classData?.title || 'Unknown Class',
-              ...exerciseDoc.data() 
-            };
-            
-            console.log('Processing exercise:', exerciseData.title);
-            
-            // Check if student has progress on this exercise
-            const progressQuery = query(
-              collection(db, 'studentProgress'),
-              where('studentId', '==', user.uid),
-              where('classId', '==', classId),
-              where('exerciseId', '==', exerciseDoc.id)
-            );
-            
-            const progressSnapshot = await getDocs(progressQuery);
-            const progress = progressSnapshot.docs[0]?.data();
-            
-            exerciseData.progress = progress;
-            exerciseData.isSubmitted = !!progress;
-            exerciseData.isCompleted = progress?.status === 'completed' || progress?.isCompleted;
-            exerciseData.isPastDue = exerciseData.dueDate && exerciseData.dueDate.toDate 
-              ? new Date() > exerciseData.dueDate.toDate() 
-              : false;            
-            allExercises.push(exerciseData);
-          }
-          
-          // UPDATED SORTING: Urgent due dates first, then by creation order
-          allExercises.sort((a, b) => {
-            // Get due dates if they exist
-            const dueDateA = a.dueDate?.toDate ? a.dueDate.toDate() : null;
-            const dueDateB = b.dueDate?.toDate ? b.dueDate.toDate() : null;
-            
-            // Both have due dates - most urgent first
-            if (dueDateA && dueDateB) {
-              return dueDateA - dueDateB;
-            }
-            
-            // Only A has due date - A goes first (urgent)
-            if (dueDateA && !dueDateB) return -1;
-            
-            // Only B has due date - B goes first (urgent)  
-            if (!dueDateA && dueDateB) return 1;
-            
-            // Neither has due date - sort by creation date (oldest first for learning sequence)
-            const createdA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
-            const createdB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
-            
-            return createdA - createdB;
+        // FIXED: Only update class data if we got real data from DB
+        const classDataFromDb = classDoc.exists() ? classDoc.data() : null;
+        if (classDataFromDb) {
+          setClassData({
+            ...classDataFromDb,
+            id: classId
           });
-          
-          console.log('Final exercises data:', allExercises);
-          setExercises(allExercises);
-          
-        } catch (classError) {
-          console.error(`Error fetching exercises for class ${classId}:`, classError);
-          setError('Error loading exercises for this class');
         }
         
+        // Get exercises and all progress in parallel
+        const [exercisesSnapshot, allProgressSnapshot] = await Promise.all([
+          getDocs(query(
+            collection(db, 'classes', classId, 'exercises'),
+            where('status', '==', 'active')
+          )),
+          // Get ALL progress for this student+class at once
+          getDocs(query(
+            collection(db, 'studentProgress'),
+            where('studentId', '==', user.uid),
+            where('classId', '==', classId)
+          ))
+        ]);
+        
+        console.log('Progress documents found:', allProgressSnapshot.docs.length);
+        
+        // Create a map of progress for quick lookup
+        const progressMap = {};
+        allProgressSnapshot.docs.forEach(doc => {
+          const progressData = doc.data();
+          console.log('Progress data:', progressData);
+          progressMap[progressData.exerciseId] = progressData;
+        });
+        
+        const allExercises = [];
+        
+        exercisesSnapshot.docs.forEach(exerciseDoc => {
+          const exerciseData = { 
+            id: exerciseDoc.id, 
+            classId: classId,
+            className: classDataFromDb?.name || classDataFromDb?.title || 'Unknown Class',
+            ...exerciseDoc.data() 
+          };
+          
+          // Use progress map instead of individual queries
+          const progress = progressMap[exerciseDoc.id];
+          console.log(`Exercise ${exerciseDoc.id} progress:`, progress);
+          
+          exerciseData.progress = progress;
+          exerciseData.isSubmitted = !!progress;
+          
+          // FIXED: More comprehensive completion detection
+          exerciseData.isCompleted = !!(progress && (
+            progress.status === 'completed' || 
+            progress.isCompleted === true ||
+            progress.submitted === true ||
+            progress.fileUrl ||
+            progress.submittedAt ||
+            (progress.score !== undefined && progress.score !== null)
+          ));
+          
+          console.log(`Exercise ${exerciseDoc.id} - isSubmitted: ${exerciseData.isSubmitted}, isCompleted: ${exerciseData.isCompleted}`);
+          
+          exerciseData.isPastDue = exerciseData.dueDate && exerciseData.dueDate.toDate 
+            ? new Date() > exerciseData.dueDate.toDate() 
+            : false;            
+          allExercises.push(exerciseData);
+        });
+        
+        // Sort exercises
+        allExercises.sort((a, b) => {
+          const dueDateA = a.dueDate?.toDate ? a.dueDate.toDate() : null;
+          const dueDateB = b.dueDate?.toDate ? b.dueDate.toDate() : null;
+          
+          if (dueDateA && dueDateB) {
+            return dueDateA - dueDateB;
+          }
+          
+          if (dueDateA && !dueDateB) return -1;
+          if (!dueDateA && dueDateB) return 1;
+          
+          const createdA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
+          const createdB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
+          
+          return createdA - createdB;
+        });
+        
+        console.log('✅ Exercises loaded:', allExercises.length);
+        setExercises(allExercises);
+        
       } else {
-        // Fetch exercises for all enrolled classes (original logic)
-        const studentClassesQuery = query(
+        // For all classes view
+        const studentClassesSnapshot = await getDocs(query(
           collection(db, 'studentClasses'),
           where('studentId', '==', user.uid)
-        );
+        ));
         
-        const studentClassesSnapshot = await getDocs(studentClassesQuery);
         const enrolledClassIds = studentClassesSnapshot.docs.map(doc => doc.data().classId);
         
         if (enrolledClassIds.length === 0) {
           setExercises([]);
-          setLoading(false);
+          setExercisesLoading(false);
           return;
         }
         
+        // Get all progress for all classes at once
+        const allProgressSnapshot = await getDocs(query(
+          collection(db, 'studentProgress'),
+          where('studentId', '==', user.uid)
+        ));
+        
+        const progressMap = {};
+        allProgressSnapshot.docs.forEach(doc => {
+          const progressData = doc.data();
+          const key = `${progressData.classId}_${progressData.exerciseId}`;
+          progressMap[key] = progressData;
+        });
+        
         const allExercises = [];
         
-        // For each enrolled class, fetch exercises
-        for (const classId of enrolledClassIds) {
+        // Process each class in parallel
+        const classPromises = enrolledClassIds.map(async (classId) => {
           try {
-            // Get class info first
-            const classDoc = await getDoc(doc(db, 'classes', classId));
+            const [classDoc, exercisesSnapshot] = await Promise.all([
+              getDoc(doc(db, 'classes', classId)),
+              getDocs(query(
+                collection(db, 'classes', classId, 'exercises'),
+                where('status', '==', 'active')
+              ))
+            ]);
+            
             const classData = classDoc.exists() ? classDoc.data() : null;
             
-            // Get exercises for this class - only active exercises
-            const exercisesQuery = query(
-              collection(db, 'classes', classId, 'exercises'),
-              where('status', '==', 'active')
-            );
-            
-            const exercisesSnapshot = await getDocs(exercisesQuery);
-            
-            for (const exerciseDoc of exercisesSnapshot.docs) {
+            return exercisesSnapshot.docs.map(exerciseDoc => {
               const exerciseData = { 
                 id: exerciseDoc.id, 
                 classId: classId,
@@ -175,64 +198,63 @@ const StudentMyClass = ({ classId }) => {
                 ...exerciseDoc.data() 
               };
               
-              // Check if student has progress on this exercise
-              const progressQuery = query(
-                collection(db, 'studentProgress'),
-                where('studentId', '==', user.uid),
-                where('classId', '==', classId),
-                where('exerciseId', '==', exerciseDoc.id)
-              );
-              
-              const progressSnapshot = await getDocs(progressQuery);
-              const progress = progressSnapshot.docs[0]?.data();
+              const progress = progressMap[`${classId}_${exerciseDoc.id}`];
               
               exerciseData.progress = progress;
               exerciseData.isSubmitted = !!progress;
-              exerciseData.isCompleted = progress?.status === 'completed' || progress?.isCompleted;
+              
+              // Same comprehensive completion detection
+              exerciseData.isCompleted = !!(progress && (
+                progress.status === 'completed' || 
+                progress.isCompleted === true ||
+                progress.submitted === true ||
+                progress.fileUrl ||
+                progress.submittedAt ||
+                (progress.score !== undefined && progress.score !== null)
+              ));
+              
               exerciseData.isPastDue = exerciseData.dueDate ? new Date() > exerciseData.dueDate.toDate() : false;
               
-              allExercises.push(exerciseData);
-            }
+              return exerciseData;
+            });
           } catch (classError) {
             console.warn(`Error fetching exercises for class ${classId}:`, classError);
+            return [];
           }
-        }
+        });
         
-        // UPDATED SORTING for all classes view too
-        allExercises.sort((a, b) => {
-          // Get due dates if they exist
+        const classResults = await Promise.all(classPromises);
+        const flatExercises = classResults.flat();
+        
+        // Sort all exercises
+        flatExercises.sort((a, b) => {
           const dueDateA = a.dueDate?.toDate ? a.dueDate.toDate() : null;
           const dueDateB = b.dueDate?.toDate ? b.dueDate.toDate() : null;
           
-          // Both have due dates - most urgent first
           if (dueDateA && dueDateB) {
             return dueDateA - dueDateB;
           }
           
-          // Only A has due date - A goes first (urgent)
           if (dueDateA && !dueDateB) return -1;
-          
-          // Only B has due date - B goes first (urgent)  
           if (!dueDateA && dueDateB) return 1;
           
-          // Neither has due date - sort by creation date (oldest first for learning sequence)
-          const createdA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
+          const createdA = a.createdAt?.toDate ? a.createdA.toDate() : new Date(0);
           const createdB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
           
           return createdA - createdB;
         });
         
-        setExercises(allExercises);
+        setExercises(flatExercises);
       }
     } catch (err) {
       console.error('Error fetching exercises:', err);
       setError('Failed to load exercises');
     } finally {
-      setLoading(false);
+      setExercisesLoading(false);
     }
   };
 
-  // 🆕 NEW: Filter exercises based on search term and status (simplified to 2 states)
+  // Filter exercises based on search term and status
   const filteredExercises = exercises.filter((exercise) => {
     const matchesSearch = exercise.title.toLowerCase().includes(searchTerm.toLowerCase());
     
@@ -241,7 +263,7 @@ const StudentMyClass = ({ classId }) => {
       if (statusFilter === 'completed') {
         matchesStatus = exercise.isCompleted;
       } else if (statusFilter === 'not-started') {
-        matchesStatus = !exercise.isCompleted; // Simplified: either completed or not
+        matchesStatus = !exercise.isCompleted;
       }
     }
     
@@ -249,7 +271,8 @@ const StudentMyClass = ({ classId }) => {
   });
 
   const getStatusBadge = (exercise) => {
-    if (exercise.isCompleted) {
+    // FIXED: Better status detection
+    if (exercise.isCompleted || exercise.isSubmitted) {
       return { text: 'COMPLETED', class: 'stud-mc-status-graded' };
     } else {
       return { text: 'NOT STARTED', class: 'stud-mc-status-not-submitted' };
@@ -257,17 +280,12 @@ const StudentMyClass = ({ classId }) => {
   };
 
   const getActionButton = (exercise) => {
-    if (exercise.isCompleted && exercise.isPastDue) {
+    // FIXED: Better button state logic
+    if (exercise.isCompleted || exercise.isSubmitted) {
       return {
         text: 'View Results',
         class: 'stud-mc-btn-feedback',
         action: () => handleViewResults(exercise.classId, exercise.id)
-      };
-    } else if (exercise.isSubmitted && !exercise.isCompleted) {
-      return {
-        text: 'Continue Exercise',
-        class: 'stud-mc-btn-edit',
-        action: () => handleContinueExercise(exercise.classId, exercise.id)
       };
     } else {
       return {
@@ -279,24 +297,20 @@ const StudentMyClass = ({ classId }) => {
   };
 
   const handleStartExercise = (classId, exerciseId) => {
-    // Navigate to exercise attempt page
     window.location.href = `/student/class/${classId}/submit-exercise/${exerciseId}`;
   };
 
   const handleContinueExercise = (classId, exerciseId) => {
-    // Navigate to continue exercise page
     window.location.href = `/student/class/${classId}/exercise/${exerciseId}`;
   };
 
   const handleViewResults = (classId, exerciseId) => {
-    // Navigate to results page
     window.location.href = `/student/class/${classId}/exercise/${exerciseId}/results`;
   };
 
   const formatDate = (timestamp) => {
     if (!timestamp) return 'No due date';
     
-    // Handle both Firestore Timestamp and regular Date objects
     if (timestamp.toDate && typeof timestamp.toDate === 'function') {
       return timestamp.toDate().toLocaleDateString('en-US', {
         year: 'numeric',
@@ -310,7 +324,6 @@ const StudentMyClass = ({ classId }) => {
         day: 'numeric'
       });
     } else {
-      // If it's a string, try to parse it
       return new Date(timestamp).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
@@ -326,17 +339,23 @@ const StudentMyClass = ({ classId }) => {
     return null;
   };
 
-  if (loading) {
-    return (
-      <div className="stud-mc-container">
-        <div className="stud-mc-loading">Loading exercises...</div>
-      </div>
-    );
-  }
+  // FIXED: No more "Loading..." flicker
+  const getSectionTitle = () => {
+    if (!classId) {
+      return 'Available Exercises';
+    }
+    
+    // Use the real class name if available, otherwise use the default
+    return classData?.name || classData?.title || 'My Exercises';
+  };
 
   if (error) {
     return (
       <div className="stud-mc-container">
+        <div className="stud-mc-header">
+          <h1 className="stud-mc-title">My Exercises</h1>
+          <p className="stud-mc-subtitle">View available exercises and submit your answers</p>
+        </div>
         <div className="stud-mc-error">{error}</div>
       </div>
     );
@@ -348,18 +367,16 @@ const StudentMyClass = ({ classId }) => {
         <h1 className="stud-mc-title">My Exercises</h1>
         <p className="stud-mc-subtitle">View available exercises and submit your answers</p>
       </div>
-
   
       <div className="stud-mc-section">
         <div className="stud-mc-section-header">
           <h2 className="stud-mc-section-title">
-            {!classId && !classData ? 'Available Exercises' : classData?.name || classData?.title || 'Available Exercises'}
+            {getSectionTitle()}
           </h2>
-          {classId && classData && (
-            <p className="stud-mc-class-meta-inline">
-              {filteredExercises.length} exercise{filteredExercises.length !== 1 ? 's' : ''} available
-            </p>
-          )}
+          {/* FIXED: Always show the exercise count, starts with 0 then updates */}
+          <p className="stud-mc-class-meta-inline">
+            {filteredExercises.length} exercise{filteredExercises.length !== 1 ? 's' : ''} available
+          </p>
           <div className="stud-mc-controls">
             <div className="stud-mc-search-filter">
               <input 
@@ -382,7 +399,20 @@ const StudentMyClass = ({ classId }) => {
           </div>
         </div>
         
-        {filteredExercises.length === 0 ? (
+        {exercisesLoading ? (
+          <div className="stud-mc-exercises-grid">
+            <div className="stud-mc-loading" style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              minHeight: '200px',
+              fontSize: '16px',
+              color: '#666'
+            }}>
+              Loading exercises...
+            </div>
+          </div>
+        ) : filteredExercises.length === 0 ? (
           <div className="stud-mc-empty-state">
             {exercises.length === 0 ? (
               <div className="stud-mc-empty-content">

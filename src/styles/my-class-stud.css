@@ -167,21 +167,20 @@
 }
 
 /* EXERCISE TITLE - WITH TRUNCATION LIKE LECTURER PAGE */
+/* Replace your existing .stud-mc-exercise-title styles with this: */
 .stud-mc-exercise-title {
   font-size: 1.1rem;
   font-weight: 600;
   color: #1f2937;
   margin: 0 0 4px 0;
   line-height: 1.4;
-  flex: 1;
-  /* TRUNCATION: Limit to 2 lines with ellipsis like lecturer page */
+  
+  /* Simple truncation that works everywhere */
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 2;             /* Show only 2 lines */
   -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  word-wrap: break-word;
-  min-height: 2.8rem; /* Consistent height for 2 lines */
+  text-overflow: ellipsis;           /* Add ... at the end */
 }
 
 .stud-mc-class-name {

@@ -59,7 +59,7 @@ const StudentMyClass = ({ classId }) => {
           const classData = classDoc.exists() ? classDoc.data() : null;
           console.log('Class data:', classData);
           
-          // 🆕 NEW: Store class data in state
+          // Store class data in state
           setClassData(classData);
           
           // Get exercises for this class - simple query without orderBy
@@ -102,12 +102,28 @@ const StudentMyClass = ({ classId }) => {
             allExercises.push(exerciseData);
           }
           
-          // Sort exercises by createdAt in JavaScript instead
+          // UPDATED SORTING: Urgent due dates first, then by creation order
           allExercises.sort((a, b) => {
-            if (!a.dueDate && !b.dueDate) return 0;
-            if (!a.dueDate || !a.dueDate.toDate) return 1;
-            if (!b.dueDate || !b.dueDate.toDate) return -1;
-            return b.dueDate.toDate() - a.dueDate.toDate();
+            // Get due dates if they exist
+            const dueDateA = a.dueDate?.toDate ? a.dueDate.toDate() : null;
+            const dueDateB = b.dueDate?.toDate ? b.dueDate.toDate() : null;
+            
+            // Both have due dates - most urgent first
+            if (dueDateA && dueDateB) {
+              return dueDateA - dueDateB;
+            }
+            
+            // Only A has due date - A goes first (urgent)
+            if (dueDateA && !dueDateB) return -1;
+            
+            // Only B has due date - B goes first (urgent)  
+            if (!dueDateA && dueDateB) return 1;
+            
+            // Neither has due date - sort by creation date (oldest first for learning sequence)
+            const createdA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
+            const createdB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
+            
+            return createdA - createdB;
           });
           
           console.log('Final exercises data:', allExercises);
@@ -182,12 +198,28 @@ const StudentMyClass = ({ classId }) => {
           }
         }
         
-        // Sort all exercises by due date (newest first)
+        // UPDATED SORTING for all classes view too
         allExercises.sort((a, b) => {
-          if (!a.dueDate && !b.dueDate) return 0;
-          if (!a.dueDate) return 1;
-          if (!b.dueDate) return -1;
-          return b.dueDate.toDate() - a.dueDate.toDate();
+          // Get due dates if they exist
+          const dueDateA = a.dueDate?.toDate ? a.dueDate.toDate() : null;
+          const dueDateB = b.dueDate?.toDate ? b.dueDate.toDate() : null;
+          
+          // Both have due dates - most urgent first
+          if (dueDateA && dueDateB) {
+            return dueDateA - dueDateB;
+          }
+          
+          // Only A has due date - A goes first (urgent)
+          if (dueDateA && !dueDateB) return -1;
+          
+          // Only B has due date - B goes first (urgent)  
+          if (!dueDateA && dueDateB) return 1;
+          
+          // Neither has due date - sort by creation date (oldest first for learning sequence)
+          const createdA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
+          const createdB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
+          
+          return createdA - createdB;
         });
         
         setExercises(allExercises);

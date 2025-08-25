@@ -261,8 +261,14 @@ return (
                     
                     <div className="exercise-meta">
                       <p>Due: {exercise.dueDate || 'No due date'}</p>
-                      <p>{exercise.submissions || 0}/{exercise.maxSubmissions || 0} submissions</p>
-                      <p>{exercise.marks || 0} marks</p>
+                      {/* Show submissions count only if available */}
+                      {exercise.submissionCount !== undefined && (
+                        <p>{exercise.submissionCount} submission{exercise.submissionCount !== 1 ? 's' : ''}</p>
+                      )}
+                      {/* Show marks only if available */}
+                      {exercise.totalMarks !== undefined && exercise.totalMarks > 0 && (
+                        <p>{exercise.totalMarks} marks</p>
+                      )}
                     </div>
 
                     <div className="exercise-actions">

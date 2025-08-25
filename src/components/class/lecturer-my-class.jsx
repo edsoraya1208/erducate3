@@ -248,9 +248,9 @@ return (
                 exercises.map((exercise) => (
                   <div 
                     key={exercise.id} 
-                    className={`exercise-card ${exercise.status === 'draft' ? 'draft-clickable' : ''}`}
-                    onClick={exercise.status === 'draft' ? () => onDraftExerciseClick(exercise.id) : undefined}
-                    style={exercise.status === 'draft' ? { cursor: 'pointer' } : {}}
+                   className="exercise-card clickable"
+                    onClick={() => onEditExercise(exercise.id)}
+                    style={{ cursor: 'pointer' }}
                   >
                     <div className="exercise-header">
                       <h3>{exercise.title}</h3>
@@ -291,13 +291,19 @@ return (
                         <>
                           <button 
                             className="btn btn-view"
-                            onClick={() => onViewSubmissions(exercise.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onViewSubmissions(exercise.id);
+                            }}
                           >
                             View Submissions
                           </button>
                           <button 
                             className="btn btn-delete"
-                            onClick={() => handleDeleteConfirmation(exercise.id, exercise.title)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteConfirmation(exercise.id, exercise.title);
+                            }}
                           >
                             Delete
                           </button>
@@ -306,13 +312,19 @@ return (
                         <>
                           <button 
                             className="btn btn-view"
-                            onClick={() => onViewSubmissions(exercise.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onViewSubmissions(exercise.id);
+                            }}
                           >
                             View Submissions
                           </button>
                           <button 
                             className="btn btn-delete"
-                            onClick={() => handleDeleteConfirmation(exercise.id, exercise.title)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteConfirmation(exercise.id, exercise.title);
+                            }}
                           >
                             Delete
                           </button>

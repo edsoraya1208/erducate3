@@ -201,6 +201,23 @@
   margin-top: 0.25rem;
 }
 
+.published-exercise-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #e3f2fd;
+  border: 1px solid #2196f3;
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 20px;
+  color: #1565c0;
+  font-size: 14px;
+}
+
+.info-icon {
+  font-size: 16px;
+}
+
 /* ================================
    📁 FORM SECTIONS
    ================================ */

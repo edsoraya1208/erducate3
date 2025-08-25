@@ -28,6 +28,7 @@ const MyClassLectPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [loading, setLoading] = useState(true);
+  const [isPublishedExercise, setIsPublishedExercise] = useState(false);
 
   const [user] = useAuthState(auth);
 
@@ -193,9 +194,9 @@ const MyClassLectPage = () => {
   };
 
   const handleEditExercise = (exerciseId) => {
-    console.log('Edit exercise:', exerciseId);
-    navigate(`/lecturer/create-exercise?classId=${classId}&draftId=${exerciseId}`);
-  };
+  console.log('Edit exercise:', exerciseId);
+  navigate(`/lecturer/create-exercise?classId=${classId}&draftId=${exerciseId}`);
+};
 
   // Enhanced delete handler with better error handling
   const handleDeleteExercise = async (exerciseId) => {

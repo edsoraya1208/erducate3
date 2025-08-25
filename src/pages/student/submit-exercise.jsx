@@ -1,6 +1,6 @@
 // src/pages/student/submit-exercise.jsx
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { 
   collection, 
   addDoc, 
@@ -12,35 +12,29 @@ import {
   getDocs 
 } from 'firebase/firestore';
 
-
-// ✅ UPDATED: Only need Firestore and auth now
 import { db, auth } from '../../config/firebase';
-
-// 🌤️ NEW: Import Cloudinary upload function (same as lecturer page)
 import { uploadToCloudinary } from '../../config/cloudinary';
-
 import { useAuthState } from 'react-firebase-hooks/auth';
 import StudentSubmitClass from '../../components/class/student-submit-exercise';
 import DashboardHeader from '../../components/dashboard/dashboard-header';
 
 const SubmitExercise = () => {
-  // URL parameters and navigation (same as before)
   const { classId, exerciseId } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
-  
-  // Auth state (same as before)
   const [user] = useAuthState(auth);
   
-  // Component state (same as before)
+  // Component state
   const [exercise, setExercise] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedFile, setSelectedFile] = useState(null);
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [additionalComments, setAdditionalComments] = useState('');
+  
+  // 🆕 NEW: Submission and validation states
+  const [submitted, setSubmitted] = useState(false);
+  const [validationMessage, setValidationMessage] = useState(null);
 
-  // Load exercise data when component mounts (UNCHANGED - this stays the same)
   useEffect(() => {
     if (classId && exerciseId) {
       loadExerciseData();
@@ -48,46 +42,44 @@ const SubmitExercise = () => {
   }, [classId, exerciseId]);
 
   /**
-   * 📚 Load exercise data from Firebase (UNCHANGED)
-   * Gets exercise details from the classes collection
+   * 📚 Load exercise data from Firebase
    */
   const loadExerciseData = async () => {
-  try {
-    console.log('📚 Loading exercise data for:', { classId, exerciseId });
-    
-    // ADD THIS DEBUG CODE:
-    const exerciseRef = doc(db, 'classes', classId, 'exercises', exerciseId);
-    console.log('🔍 Exercise document path:', exerciseRef.path);
-    
-    const exerciseDoc = await getDoc(exerciseRef);
-    console.log('📄 Exercise doc exists:', exerciseDoc.exists());
-    console.log('📄 Exercise doc data:', exerciseDoc.data());
-    
-    if (!exerciseDoc.exists()) {
-      console.log('❌ Exercise not found');
-      // ADD: List all exercises in this class
-      const allExercisesQuery = query(collection(db, 'classes', classId, 'exercises'));
-      const allExercisesSnapshot = await getDocs(allExercisesQuery);
-      console.log('📋 All exercises in class:', allExercisesSnapshot.docs.map(doc => ({
-        id: doc.id,
-        title: doc.data().title
-      })));
-      setLoading(false);
-      return;
-    }
+    try {
+      console.log('📚 Loading exercise data for:', { classId, exerciseId });
+      
+      const exerciseRef = doc(db, 'classes', classId, 'exercises', exerciseId);
+      const exerciseDoc = await getDoc(exerciseRef);
+      
+      if (!exerciseDoc.exists()) {
+        console.log('❌ Exercise not found');
+        setLoading(false);
+        return;
+      }
 
-    // If exercise exists, set it
-    const exerciseData = { id: exerciseDoc.id, ...exerciseDoc.data() };
-    setExercise(exerciseData);
-    console.log('✅ Exercise loaded:', exerciseData.title);
-  } catch (error) {
-    console.error('❌ Error loading exercise:', error);
-  } finally {
-    setLoading(false);
-  }
-};
+      const exerciseData = { id: exerciseDoc.id, ...exerciseDoc.data() };
+      setExercise(exerciseData);
+      console.log('✅ Exercise loaded:', exerciseData.title);
+      
+    } catch (error) {
+      console.error('❌ Error loading exercise:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   /**
-   * 📁 Handle file selection from input (ENHANCED with better validation)
+   * 🚨 Show validation message (green/red)
+   */
+  const showValidationMessage = (text, type = 'error', duration = 4000) => {
+    setValidationMessage({ text, type });
+    setTimeout(() => {
+      setValidationMessage(null);
+    }, duration);
+  };
+
+  /**
+   * 📁 Handle file selection
    */
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
@@ -97,23 +89,26 @@ const SubmitExercise = () => {
   };
 
   /**
-   * 🛡️ Validate file and set it if valid (ENHANCED validation)
+   * 🛡️ Validate file and set it if valid - WITH VISUAL FEEDBACK
    */
   const validateAndSetFile = (file) => {
-    // ✅ Check file type - must be an image
+    // Clear any previous validation messages
+    setValidationMessage(null);
+
+    // ✅ Check file type
     if (!file.type.startsWith('image/')) {
-      alert('Please select an image file (PNG, JPEG, GIF, WebP)');
+      showValidationMessage('❌ Please select an image file (PNG, JPEG, GIF, WebP)', 'error');
       return;
     }
 
-    // ✅ Check file size (10MB limit - Cloudinary free tier is generous!)
+    // ✅ Check file size (10MB limit)
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-      alert('File size must be less than 10MB');
+      showValidationMessage('❌ File too large. Maximum size is 10MB', 'error');
       return;
     }
 
-    // 🔒 Basic filename validation for security
+    // 🔒 Basic filename validation
     const sanitizedName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
     if (sanitizedName !== file.name) {
       console.warn('Filename was sanitized for security');
@@ -121,27 +116,22 @@ const SubmitExercise = () => {
 
     console.log('✅ File selected and validated:', file.name);
     setSelectedFile(file);
+    showValidationMessage(`✅ File "${file.name}" selected successfully`, 'success', 2000);
   };
 
   /**
-   * 🖱️ Handle drag over event (UNCHANGED)
+   * 🖱️ Drag and drop handlers
    */
   const handleDragOver = (e) => {
     e.preventDefault();
     setDragOver(true);
   };
 
-  /**
-   * 🖱️ Handle drag leave event (UNCHANGED)
-   */
   const handleDragLeave = (e) => {
     e.preventDefault();
     setDragOver(false);
   };
 
-  /**
-   * 🖱️ Handle file drop (UNCHANGED)
-   */
   const handleDrop = (e) => {
     e.preventDefault();
     setDragOver(false);
@@ -153,26 +143,29 @@ const SubmitExercise = () => {
   };
 
   /**
-   * 🗑️ Remove selected file (UNCHANGED)
+   * 🗑️ Remove selected file
    */
   const handleRemoveFile = () => {
     setSelectedFile(null);
+    setValidationMessage(null);
     console.log('📁 File removed');
   };
 
   /**
-   * 🚀 Handle submission of exercise (MAJOR CHANGES HERE!)
-   * This is where we switch from Firebase Storage to Cloudinary
+   * 🚀 Handle submission - WITH BETTER UX
    */
   const handleSubmitExercise = async () => {
-    // ⚠️ Validation checks (same as before)
+    // Clear validation messages
+    setValidationMessage(null);
+
+    // ⚠️ Validation checks - WITH VISUAL FEEDBACK
     if (!selectedFile) {
-      alert('Please select a file to submit');
+      showValidationMessage('❌ Please select a file to submit', 'error');
       return;
     }
 
     if (!user) {
-      alert('You must be logged in to submit');
+      showValidationMessage('❌ You must be logged in to submit', 'error');
       return;
     }
 
@@ -180,19 +173,15 @@ const SubmitExercise = () => {
       setUploading(true);
       console.log('📤 Starting exercise submission...');
 
-      // 🌤️ STEP 1: Upload file to Cloudinary (NEW!)
+      // 🌤️ STEP 1: Upload to Cloudinary
       console.log('☁️ Uploading file to Cloudinary...');
-      
-      // This uses the same uploadToCloudinary function from the lecturer page
-      // It returns an object with url, publicId, originalName, etc.
       const cloudinaryData = await uploadToCloudinary(
         selectedFile, 
-        'student-submissions' // folder name in Cloudinary
+        'student-submissions'
       );
-      
       console.log('✅ File uploaded to Cloudinary:', cloudinaryData.url);
 
-      // 🔍 STEP 2: Check if submission already exists (same as before)
+      // 🔍 STEP 2: Check for existing submission
       const submissionsRef = collection(db, 'submissions');
       const existingQuery = query(
         submissionsRef,
@@ -202,83 +191,77 @@ const SubmitExercise = () => {
       );
       const existingDocs = await getDocs(existingQuery);
 
-      // 📝 STEP 3: Create submission data (UPDATED with Cloudinary data)
+      // 📝 STEP 3: Create submission data
       const submissionData = {
-        // Student info (same as before)
         studentId: user.uid,
         studentName: user.displayName || user.email || 'Unknown Student',
         studentEmail: user.email || '',
-        
-        // Exercise info (same as before)
         classId: classId,
         exerciseId: exerciseId,
         exerciseTitle: exercise.title,
-        
-        // 🌤️ FILE DATA: Now using Cloudinary instead of Firebase Storage!
-        fileURL: cloudinaryData.url,              // Main URL to view the image
-        fileName: cloudinaryData.originalName,    // Original filename
-        cloudinaryPublicId: cloudinaryData.publicId, // For future operations (delete, transform, etc.)
-        fileType: cloudinaryData.fileType,        // MIME type
-        fileSize: cloudinaryData.fileSize,        // File size in bytes
-        
-        // 🖼️ IMAGE-SPECIFIC DATA: Cloudinary gives us extra image info!
-        imageWidth: cloudinaryData.width,         // Image width in pixels
-        imageHeight: cloudinaryData.height,       // Image height in pixels
-        imageFormat: cloudinaryData.format,       // Image format (jpg, png, etc.)
-        
-        // Other submission data (same as before)
+        fileURL: cloudinaryData.url,
+        fileName: cloudinaryData.originalName,
+        cloudinaryPublicId: cloudinaryData.publicId,
+        fileType: cloudinaryData.fileType,
+        fileSize: cloudinaryData.fileSize,
+        imageWidth: cloudinaryData.width,
+        imageHeight: cloudinaryData.height,
+        imageFormat: cloudinaryData.format,
         comments: additionalComments.trim(),
         submittedAt: new Date(),
-        uploadedAt: cloudinaryData.createdAt,     // When it was uploaded to Cloudinary
+        uploadedAt: cloudinaryData.createdAt,
         status: 'submitted',
         grade: null,
         feedback: null
       };
 
-      // 💾 STEP 4: Save to Firestore (same logic as before)
+      // 💾 STEP 4: Save to Firestore
       if (existingDocs.empty) {
-        // Create new submission
         await addDoc(submissionsRef, submissionData);
-        console.log('✅ New submission created');
-        alert('Exercise submitted successfully!');
+        console.log('✅ New submission created successfully');
       } else {
-        // Update existing submission
         const existingDoc = existingDocs.docs[0];
         await updateDoc(doc(db, 'submissions', existingDoc.id), {
           ...submissionData,
           resubmittedAt: new Date()
         });
-        console.log('✅ Submission updated');
-        alert('Exercise resubmitted successfully!');
+        console.log('✅ Submission updated successfully (resubmission)');
       }
 
-      // Navigate back to class page
-      navigate(`/student/class/${classId}`);
+      // 🎉 SUCCESS STATE - Better UX
+      setSubmitted(true);
+      setUploading(false);
+      
+      // Show success message
+      showValidationMessage('🎉 Exercise submitted successfully!', 'success', 3000);
+
+      // Auto-navigate back after 3 seconds
+      setTimeout(() => {
+        navigate(`/student/class/${classId}`);
+      }, 3000);
       
     } catch (error) {
       console.error('❌ Error submitting exercise:', error);
-      
-      // 🚨 Better error handling
-      if (error.message.includes('Upload failed')) {
-        alert(`File upload error: ${error.message}`);
-      } else if (error.message.includes('Firestore')) {
-        alert('Database error. File uploaded but submission not saved. Please contact support.');
-      } else {
-        alert('Error submitting exercise. Please try again.');
-      }
-    } finally {
       setUploading(false);
+      
+      // 🚨 Better error handling with visual feedback
+      if (error.message.includes('Upload failed')) {
+        showValidationMessage('❌ File upload failed. Please try again.', 'error');
+      } else if (error.message.includes('Firestore')) {
+        showValidationMessage('❌ Database error. Please contact support.', 'error');
+      } else {
+        showValidationMessage('❌ Submission failed. Please try again.', 'error');
+      }
     }
   };
 
   /**
-   * 🔙 Handle going back to class page (UNCHANGED)
+   * 🔙 Handle going back
    */
   const handleGoBack = () => {
     navigate(`/student/class/${classId}`);
   };
 
-  // 🎨 RENDER: Same JSX structure as before
   return (
     <div className="dashboard-page">
       <DashboardHeader 
@@ -299,6 +282,10 @@ const SubmitExercise = () => {
         
         // Form data
         additionalComments={additionalComments}
+        
+        // 🆕 NEW: Submission states
+        submitted={submitted}
+        validationMessage={validationMessage}
         
         // Event handlers
         onFileSelect={handleFileSelect}

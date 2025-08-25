@@ -15,6 +15,11 @@ const StudentSubmitClass = ({
   // Form data props (unchanged)
   additionalComments,
   
+  // 🆕 NEW: Submission states
+  submissionStatus,
+  submitted,
+  validationMessage,
+  
   // Event handlers (unchanged)
   onFileSelect,
   onDragOver,
@@ -26,10 +31,17 @@ const StudentSubmitClass = ({
   onGoBack
 }) => {
 
-  // 📁 File Upload Component (MINOR UPDATES for better messaging)
+  // 📁 File Upload Component 
   const FileUploadArea = () => (
     <div className="se-upload-section">
       <h3 className="se-section-title">Submit Your ERD</h3>
+      
+      {/* 🚨 NEW: Validation Message Display */}
+      {validationMessage && (
+        <div className={`se-validation-message ${validationMessage.type}`}>
+          {validationMessage.text}
+        </div>
+      )}
       
       {!selectedFile ? (
         // Upload area when no file selected
@@ -43,7 +55,6 @@ const StudentSubmitClass = ({
           <h4>Upload Your ERD Diagram</h4>
           <p>Drag and drop your image here or click to browse</p>
           
-          {/* 💡 UPDATED: Better file type messaging */}
           <p className="upload-hint">
             Supports: PNG, JPEG, GIF, WebP (Max 10MB)
           </p>
@@ -54,28 +65,33 @@ const StudentSubmitClass = ({
             onChange={onFileSelect}
             className="se-file-input"
             id="erd-file-input"
+            disabled={submitted}
           />
-          <label htmlFor="erd-file-input" className="se-browse-btn">
+          <label 
+            htmlFor="erd-file-input" 
+            className={`se-browse-btn ${submitted ? 'disabled' : ''}`}
+          >
             Choose File
           </label>
         </div>
       ) : (
-        // Preview area when file is selected (ENHANCED with file info)
+        // Preview area when file is selected
         <div className="se-file-preview">
           <div className="se-preview-header">
             <span className="se-file-name">{selectedFile.name}</span>
             <div className="se-file-info">
-              {/* ✅ Show file size in a readable format */}
               <span className="se-file-size">
                 {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
               </span>
-              <button 
-                onClick={onRemoveFile}
-                className="se-remove-file-btn"
-                title="Remove file"
-              >
-                ×
-              </button>
+              {!submitted && (
+                <button 
+                  onClick={onRemoveFile}
+                  className="se-remove-file-btn"
+                  title="Remove file"
+                >
+                  ×
+                </button>
+              )}
             </div>
           </div>
           <div className="se-image-preview">
@@ -90,7 +106,7 @@ const StudentSubmitClass = ({
     </div>
   );
 
-  // 💬 Comments Section Component (UNCHANGED)
+  // 💬 Comments Section Component
   const CommentsSection = () => (
     <div className="se-comments-section">
       <h3 className="se-section-title">Additional Comments (Optional)</h3>
@@ -100,9 +116,29 @@ const StudentSubmitClass = ({
         placeholder="Any notes about your submission..."
         className="se-comments-textarea"
         rows="4"
+        disabled={submitted}
       />
     </div>
   );
+
+  // 🎯 FORMAT DUE DATE: Helper function
+  const formatDueDate = (dueDate) => {
+    if (!dueDate) return 'No due date set';
+    
+    try {
+      const date = dueDate.toDate ? dueDate.toDate() : new Date(dueDate);
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      console.warn('Date formatting error:', error);
+      return 'Invalid date format';
+    }
+  };
 
   return (
     <div className="se-container">
@@ -110,14 +146,14 @@ const StudentSubmitClass = ({
       <main className="se-main">
         <div className="se-content">
           
-          {/* Loading state (unchanged) */}
+          {/* Loading state */}
           {loading ? (
             <div className="se-loading">
               <p>Loading exercise...</p>
             </div>
           ) : (
             <>
-              {/* Page header with exercise title (unchanged) */}
+              {/* Page header */}
               <div className="se-header">
                 <div className="se-header-content">
                   <button onClick={onGoBack} className="se-back-btn">
@@ -128,49 +164,59 @@ const StudentSubmitClass = ({
                 </div>
               </div>
 
-              {/* Exercise details section */}
+              {/* 🎉 SUCCESS MESSAGE - Shows after submission */}
+              {submitted && (
+                <div className="se-success-banner">
+                  <div className="se-success-content">
+                    <div className="se-success-icon">✅</div>
+                    <div className="se-success-text">
+                      <h3>Exercise Submitted Successfully!</h3>
+                      <p>Your ERD has been uploaded and submitted for grading.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Exercise details section - NO ANSWER SCHEME LINKS */}
               <div className="se-exercise-card">
                 <div className="se-exercise-header">
                   <h2 className="se-exercise-title">
-                    {exercise?.title || 'Exercise Title'}
+                    {exercise?.title || 'Loading exercise...'}
                   </h2>
                   <p className="se-exercise-subtitle">
-                    {exercise?.description || 'Create your ERD diagram for submission'}
+                    {exercise?.description || 'Loading description...'}
                   </p>
                 </div>
 
                 <div className="se-exercise-content">
-                  {/* Left side - Instructions (unchanged) */}
+                  {/* Left side - Instructions */}
                   <div className="se-instructions-panel">
                     <h3 className="se-panel-title">Exercise Instructions</h3>
                     <div className="se-instructions-content">
-                      <p><strong>Objective:</strong> Design an ERD for a university database system.</p>
                       
-                      <div className="se-requirements">
-                        <h4>Requirements:</h4>
-                        <ul>
-                          <li>Include entities: Student, Course, Department, Professor</li>
-                          <li>Show appropriate relationships between entities</li>
-                          <li>Include primary and foreign keys</li>
-                          <li>Add relevant attributes to each entity</li>
-                        </ul>
+                      {/* 📝 REAL DESCRIPTION FROM FIREBASE */}
+                      <div className="se-exercise-description">
+                        <h4>Description:</h4>
+                        <p>{exercise?.description || 'No description available'}</p>
                       </div>
 
+                      {/* 📅 REAL DUE DATE AND MARKS */}
                       <div className="se-due-info">
-                        <p><strong>Due Date:</strong> {exercise?.dueDate || 'March 15, 2024 at 11:59 PM'}</p>
-                        <p><strong>Total Marks:</strong> {exercise?.totalMarks || '20'}</p>
+                        <p><strong>Due Date:</strong> {formatDueDate(exercise?.dueDate)}</p>
+                        <p><strong>Total Marks:</strong> {exercise?.totalMarks || 'Not specified'}</p>
                       </div>
 
-                      {/* 💡 UPDATED: Submission Guidelines with Cloudinary benefits */}
+                      {/* ✅ REMOVED: Answer scheme and rubric links (no cheating!) */}
+
+                      {/* 💡 SUBMISSION GUIDELINES */}
                       <div className="se-guidelines">
                         <h4>Submission Guidelines:</h4>
                         <ul>
                           <li>Submit PNG, JPEG, GIF, or WebP files</li>
-                          <li>Maximum file size: 10MB (generous limit!)</li>
+                          <li>Maximum file size: 10MB</li>
                           <li>Keep diagram clear and well-organized</li>
                           <li>Ensure all text is readable</li>
                           <li>High resolution images are preferred</li>
-                          <li>Files are optimized automatically for best viewing</li>
                         </ul>
                       </div>
                     </div>
@@ -181,20 +227,35 @@ const StudentSubmitClass = ({
                     <FileUploadArea />
                     <CommentsSection />
                     
-                    {/* Submit button with updated messaging */}
+                    {/* Submit button section */}
                     <div className="se-submit-section">
+                      {/* 🔄 UPLOAD STATUS */}
+                      {uploading && (
+                        <div className="se-upload-progress">
+                          <div className="se-progress-bar">
+                            <div className="se-progress-fill"></div>
+                          </div>
+                          <p className="se-upload-status">
+                            📤 Uploading to cloud storage...
+                          </p>
+                        </div>
+                      )}
+
+                      {/* 📤 SUBMIT BUTTON */}
                       <button
                         onClick={onSubmitExercise}
-                        disabled={!selectedFile || uploading}
-                        className="se-submit-btn"
+                        disabled={!selectedFile || uploading || submitted}
+                        className={`se-submit-btn ${submitted ? 'submitted' : ''}`}
                       >
-                        {uploading ? 'Uploading to Cloud...' : 'Submit Exercise'}
+                        {submitted ? '✅ Submitted' : 
+                         uploading ? 'Uploading...' : 
+                         'Submit Exercise'}
                       </button>
-                      
-                      {/* ✅ NEW: Helper text about upload process */}
-                      {uploading && (
-                        <p className="se-upload-status">
-                          📤 Your file is being uploaded to our secure cloud storage...
+
+                      {/* 🎉 SUBMISSION CONFIRMATION */}
+                      {submitted && (
+                        <p className="se-submitted-note">
+                          Your exercise has been successfully submitted and is ready for grading.
                         </p>
                       )}
                     </div>

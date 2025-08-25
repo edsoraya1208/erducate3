@@ -28,6 +28,9 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
 
   const [isLoading, setIsLoading] = useState(Boolean(draftId));
   const [isEditingDraft, setIsEditingDraft] = useState(Boolean(draftId));
+  
+  // 🚨 VALIDATION ERRORS STATE
+  const [validationErrors, setValidationErrors] = useState({});
 
   // 🆕 NEW: Modal state management
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -134,6 +137,14 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
       ...prev,
       [name]: value
     }));
+    
+    // Clear validation error when user starts typing
+    if (validationErrors[name]) {
+      setValidationErrors(prev => ({
+        ...prev,
+        [name]: null
+      }));
+    }
   };
 
   // 📁 HANDLE FILE UPLOADS: Enhanced validation for answer scheme and rubric files
@@ -180,12 +191,44 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
         ...prev,
         [fileType]: file
       }));
+      
+      // Clear validation error when file is selected
+      if (validationErrors[fileType]) {
+        setValidationErrors(prev => ({
+          ...prev,
+          [fileType]: null
+        }));
+      }
 
     } catch (error) {
       console.error('File validation error:', error);
       alert('Error validating file. Please try again.');
       e.target.value = '';
     }
+  };
+
+  // 🆕 NEW: Custom validation function
+  const validateForm = () => {
+    const errors = {};
+
+    if (!formData.title.trim()) {
+      errors.title = 'Please fill out this field.';
+    }
+    if (!formData.description.trim()) {
+      errors.description = 'Please fill out this field.';
+    }
+    if (!formData.totalMarks || formData.totalMarks <= 0) {
+      errors.totalMarks = 'Please fill out this field.';
+    }
+    if (!formData.answerSchemeFile) {
+      errors.answerSchemeFile = 'Please fill out this field.';
+    }
+    if (!formData.rubricFile) {
+      errors.rubricFile = 'Please fill out this field.';
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   // 🆕 NEW: Save as draft function
@@ -334,9 +377,8 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
       return;
     }
     
-    // ⚠️ VALIDATION: Check if required fields are filled
-    if (!formData.title || !formData.description) {
-      alert('Please fill in all required fields (Title and Description)');
+    // ⚠️ VALIDATION: Use custom validation instead of HTML5 validation
+    if (!validateForm()) {
       return;
     }
 
@@ -497,10 +539,10 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
             {draftId ? 'Edit Draft Exercise' : 'Create Exercise'}
           </h1>
           
-          <form onSubmit={handleSubmit} className="exercise-form">
+          <form onSubmit={handleSubmit} className="exercise-form" noValidate>
             {/* 📝 EXERCISE TITLE */}
             <div className="form-group">
-              <label htmlFor="title" className="ce-form-label">Exercise Title</label>
+              <label htmlFor="title" className="ce-form-label">Exercise Title *</label>
               <input
                 type="text"
                 id="title"
@@ -508,26 +550,36 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
                 value={formData.title}
                 onChange={handleInputChange}
                 placeholder="e.g., Exercise 3A - University Database"
-                className="form-input"
-                required
+                className={`form-input ${validationErrors.title ? 'error' : ''}`}
                 disabled={isLoading}
               />
+              {validationErrors.title && (
+                <div className="validation-error">
+                  <span className="error-icon">⚠️</span>
+                  <span className="error-message">{validationErrors.title}</span>
+                </div>
+              )}
             </div>
 
             {/* 📄 DESCRIPTION */}
             <div className="form-group">
-              <label htmlFor="description" className="ce-form-label">Description</label>
+              <label htmlFor="description" className="ce-form-label">Description *</label>
               <textarea
                 id="description"
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
                 placeholder="Provide some description for your exercise..."
-                className="form-textarea"
+                className={`form-textarea ${validationErrors.description ? 'error' : ''}`}
                 rows="6"
-                required
                 disabled={isLoading}
               />
+              {validationErrors.description && (
+                <div className="validation-error">
+                  <span className="error-icon">⚠️</span>
+                  <span className="error-message">{validationErrors.description}</span>
+                </div>
+              )}
             </div>
 
             {/* 📅 DUE DATE & MARKS ROW */}
@@ -545,17 +597,23 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
                 />
               </div>
               <div className="form-group half-width">
-                <label htmlFor="totalMarks" className="ce-form-label">Total Marks</label>
+                <label htmlFor="totalMarks" className="ce-form-label">Total Marks *</label>
                 <input
                   type="number"
                   id="totalMarks"
                   name="totalMarks"
                   value={formData.totalMarks}
                   onChange={handleInputChange}
-                  className="form-input"
+                  className={`form-input ${validationErrors.totalMarks ? 'error' : ''}`}
                   min="1"
                   disabled={isLoading}
                 />
+                {validationErrors.totalMarks && (
+                  <div className="validation-error">
+                    <span className="error-icon">⚠️</span>
+                    <span className="error-message">{validationErrors.totalMarks}</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -565,7 +623,7 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
               <div className="upload-section">
                 <div className="section-header">
                   <span className="folder-icon">📁</span>
-                  <h3 className="section-title">Answer Scheme</h3>
+                  <h3 className="section-title">Answer Scheme *</h3>
                 </div>
                 
                 <div className="upload-area">
@@ -590,13 +648,19 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
                       Browse Files
                     </button>
                     <small className="file-info">
-                      Supported formats: PNG, JPG, GIF, WebP (Max 2MB)
+                      Supported formats: PNG, JPG, GIF, WebP (Max 10MB)
                     </small>
                     {formData.answerSchemeFile && (
                       <p className="file-selected">
                         ✅ Selected: {formData.answerSchemeFile.name} 
                         ({(formData.answerSchemeFile.size / 1024 / 1024).toFixed(2)} MB)
                       </p>
+                    )}
+                    {validationErrors.answerSchemeFile && (
+                      <div className="validation-error">
+                        <span className="error-icon">⚠️</span>
+                        <span className="error-message">{validationErrors.answerSchemeFile}</span>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -606,7 +670,7 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
               <div className="upload-section">
                 <div className="section-header">
                   <span className="folder-icon">📋</span>
-                  <h3 className="section-title">Rubric</h3>
+                  <h3 className="section-title">Rubric *</h3>
                 </div>
                 
                 <div className="upload-area">
@@ -631,13 +695,19 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
                       Browse Files
                     </button>
                     <small className="file-info">
-                      Supported format: PDF (Max 2MB)
+                      Supported format: PDF (Max 10MB)
                     </small>
                     {formData.rubricFile && (
                       <p className="file-selected">
                         ✅ Selected: {formData.rubricFile.name}
                         ({(formData.rubricFile.size / 1024 / 1024).toFixed(2)} MB)
                       </p>
+                    )}
+                    {validationErrors.rubricFile && (
+                      <div className="validation-error">
+                        <span className="error-icon">⚠️</span>
+                        <span className="error-message">{validationErrors.rubricFile}</span>
+                      </div>
                     )}
                   </div>
                 </div>

@@ -631,6 +631,26 @@
 }
 
 
+/* Validation Error Styles */
+.validation-error {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  color: #d73027;
+  font-size: 12px;
+}
+
+.error-icon {
+  font-size: 14px;
+}
+
+.error-message {
+  font-weight: 500;
+}
+
+
+
 /* ================================
    📱 RESPONSIVE DESIGN
    ================================ */

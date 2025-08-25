@@ -142,7 +142,7 @@
   padding: 16px;
   background: white;
   border-radius: 6px;
-  border-left: 4px solid #8b5fbf;
+  border-left: 4px solid #c46cbb;
 }
 
 .se-exercise-description h4 {
@@ -306,20 +306,22 @@
 }
 
 .se-browse-btn {
-  background: linear-gradient(135deg, #8b5fbf, #7c3aed);
+   background: linear-gradient(135deg, #7b10a5, #5e17a5);
   color: white;
-  padding: 10px 20px;
   border: none;
-  border-radius: 6px;
+  color: white;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-weight: 600;
   cursor: pointer;
-  font-weight: 500;
-  font-size: 0.875rem;
+  font-size: 1rem; /* INCREASED from 0.9rem */
   transition: all 0.2s;
+  margin: 0.5rem 0;
 }
 
 .se-browse-btn:hover:not(.disabled) {
-  background: linear-gradient(135deg, #7c3aed, #6d28d9);
-  transform: translateY(-1px);
+ransform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
 }
 
 .se-browse-btn.disabled {

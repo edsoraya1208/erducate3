@@ -293,90 +293,89 @@
 /* ============================================
    IMPROVED BUTTON STYLES
    ============================================ */
+/* ============================================
+  IMPROVED BUTTON STYLES
+  ============================================ */
 .btn-class-lect {
-  padding: 0.75rem 1rem;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-  flex: 1; /* Make buttons take equal full width */
-  text-align: center;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+ padding: 0.75rem 1rem;
+ border: none;
+ border-radius: 6px;
+ font-size: 0.9rem;
+ font-weight: 600;
+ cursor: pointer;
+ transition: all 0.3s;
+ flex: 1;
+ text-align: center;
+ min-height: 44px;
+ display: flex;
+ align-items: center;
+ justify-content: center;
 }
 
 .btn-view,
 .btn-delete,
-.btn-edit {
-  min-width: unset; /* allow shrinking with parent */
-  flex: 1;          /* let them resize equally inside flex container */
-}
-
-
+.btn-edit,
 .btn-publish {
-  background: linear-gradient(135deg, #7b10a5, #5e17a5);
-  color: white;
-  box-shadow: 0 2px 4px rgba(94, 23, 165, 0.2);
+ color: white;
+ border: none;
+ padding: 8px 16px;
+ border-radius: 6px;
+ font-size: 14px;
+ font-weight: 500;
+ cursor: pointer;
+ transition: all 0.3s ease;
+ white-space: nowrap;
+ box-shadow: 0 2px 4px rgba(94, 23, 165, 0.2);
+ flex: 1;
+ min-height: 35px;
+ display: flex;
+ align-items: center;
+ justify-content: center;
 }
 
-.btn-publish:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(123, 16, 165, 0.4);
-}
-
-.btn-edit {
-  background-color: #6b7280;
-  color: white;
-}
-
-.btn-edit:hover {
-  background-color: #4b5563;
-  transform: translateY(-1px);
-}
-
-.btn-view {
-  background: linear-gradient(135deg, #00a085 0%, #00896b 100%);
-   color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  white-space: nowrap;
-  box-shadow: 0 2px 4px rgba(94, 23, 165, 0.2);
-  flex-shrink: 0;
-}
-
-.btn-view:hover {
-  background: linear-gradient(135deg, #00a085 0%, #00896b 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 184, 148, 0.3);
+.btn-view,
+.btn-publish {
+  flex: 2;
 }
 
 .btn-delete {
-  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  white-space: nowrap;
-  box-shadow: 0 2px 4px rgba(94, 23, 165, 0.2);
-  flex-shrink: 0;
+  flex: 1;
+}
+.btn-publish {
+ background: linear-gradient(135deg, #7b10a5, #5e17a5);
+}
+
+.btn-publish:hover {
+ transform: translateY(-1px);
+ box-shadow: 0 6px 20px rgba(123, 16, 165, 0.4);
+}
+
+.btn-edit {
+ background-color: #6b7280;
+}
+
+.btn-edit:hover {
+ background-color: #4b5563;
+ transform: translateY(-1px);
+}
+
+.btn-view {
+ background: linear-gradient(135deg, #00a085 0%, #00896b 100%);
+}
+
+.btn-view:hover {
+ background: linear-gradient(135deg, #00a085 0%, #00896b 100%);
+ transform: translateY(-1px);
+ box-shadow: 0 4px 8px rgba(0, 184, 148, 0.3);
+}
+
+.btn-delete {
+ background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
 }
 
 .btn-delete:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 7px 15px -3px rgba(220, 38, 38, 0.4);
+ transform: translateY(-1px);
+ box-shadow: 0 7px 15px -3px rgba(220, 38, 38, 0.4);
 }
 
 /* ============================================

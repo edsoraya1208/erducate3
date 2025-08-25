@@ -743,7 +743,8 @@
 @media (max-width: 480px) {
   .page-title {
    font-size: 1.7rem;
-    text-align: center;
+    text-align: left;
+    margin-left: 5px;
     white-space: nowrap;
     margin-bottom: 2rem;
   }

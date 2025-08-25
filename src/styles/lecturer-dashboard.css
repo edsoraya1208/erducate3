@@ -512,6 +512,7 @@ RESPONSIVE DESIGN
    font-size: 2.2rem; /* CHANGED: Made bigger from 2.0rem */
    text-align: left; /* CHANGED: Added left alignment */
    white-space: normal;
+   margin-left: -10px;
  }
 }
 
@@ -520,6 +521,7 @@ RESPONSIVE DESIGN
  .dashboard-title {
    font-size: 2.0rem; /* CHANGED: Made bigger from 1.8rem */
    text-align: left; /* CHANGED: Added left alignment */
+   margin-left: -20px;
    white-space: nowrap; /* No line breaks */
  }
  
@@ -630,7 +632,7 @@ RESPONSIVE DESIGN
 @media (max-width: 480px) {
  .dashboard-title {
    font-size: 1.7rem; /* CHANGED: Made bigger from 1.4rem */
-   text-align: center; /* CHANGED: Added left alignment */
+   text-align: left; /* CHANGED: Added left alignment */
    white-space: nowrap;
  }
  

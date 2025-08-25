@@ -9,6 +9,9 @@ import { db } from '../../config/firebase';
 // 🌤️ CLOUDINARY IMPORT - For file uploads
 import { uploadToCloudinary } from '../../config/cloudinary';
 
+// 🆕 MODAL COMPONENT IMPORT
+import UnsavedChangesModal from '../../components/modals/UnsavedChangesModal';
+
 // 🎯 MAIN COMPONENT: This handles the create exercise form logic and UI
 const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDashboardClick }) => { 
   const { user, getUserDisplayName } = useUser();
@@ -21,7 +24,7 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
     title: '',
     description: '',
     dueDate: '',
-    totalMarks: '100',
+    totalMarks: '',
     answerSchemeFile: null,
     rubricFile: null
   });
@@ -87,7 +90,7 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
             title: draftData.title || '',
             description: draftData.description || '',
             dueDate: draftData.dueDate || '',
-            totalMarks: draftData.totalMarks?.toString() || '100',
+            totalMarks: draftData.totalMarks?.toString() || '',
             answerSchemeFile: null,
             rubricFile: null,
           });
@@ -317,7 +320,7 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
         title: formData.title.trim() || 'Untitled Exercise',
         description: formData.description.trim() || '',
         dueDate: formData.dueDate || null,
-        totalMarks: parseInt(formData.totalMarks) || 100,
+        totalMarks: formData.totalMarks ? parseInt(formData.totalMarks) : null,
         
         answerScheme: answerSchemeData ? {
           url: answerSchemeData.url,
@@ -480,7 +483,7 @@ if (!validateForm()) {
         title: formData.title.trim(),
         description: formData.description.trim(),
         dueDate: formData.dueDate || null,
-        totalMarks: parseInt(formData.totalMarks) || 100,
+        totalMarks: formData.totalMarks ? parseInt(formData.totalMarks) : null,
         
         // 🌤️ CLOUDINARY DATA - More detailed for AI integration
         answerScheme: answerSchemeData ? {
@@ -536,7 +539,7 @@ if (!validateForm()) {
         title: '',
         description: '',
         dueDate: '',
-        totalMarks: '100',
+        totalMarks: '',
         answerSchemeFile: null,
         rubricFile: null
       });
@@ -656,7 +659,7 @@ if (!validateForm()) {
                 />
               </div>
               <div className="form-group half-width">
-                <label htmlFor="totalMarks" className="ce-form-label">Total Marks *</label>
+                <label htmlFor="totalMarks" className="ce-form-label">Total Marks</label>
                 <input
                   type="number"
                   id="totalMarks"
@@ -665,6 +668,7 @@ if (!validateForm()) {
                   onChange={handleInputChange}
                   className={`form-input ${validationErrors.totalMarks ? 'error' : ''}`}
                   min="1"
+                  placeholder="e.g., 100"
                   disabled={isLoading}
                 />
                 {validationErrors.totalMarks && (
@@ -843,60 +847,15 @@ if (!validateForm()) {
             </div>
           </form>
 
-          {/* 🆕 NEW: Custom Modal Overlay */}
-          {showCancelModal && (
-            <div className="ce-modal-overlay">
-              <div className="ce-modal">
-                <div className="ce-modal-header">
-                  <h3 className="ce-modal-title">
-                    {modalType === 'save-draft' ? 'Save Draft?' : 'Discard Changes?'}
-                  </h3>
-                </div>
-                
-                <div className="ce-modal-body">
-                  {modalType === 'save-draft' ? (
-                    <p>You have unsaved changes. Would you like to save this as a draft?</p>
-                  ) : (
-                    <p>You have unsaved changes to this draft. Are you sure you want to discard them?</p>
-                  )}
-                </div>
-                
-                <div className="ce-modal-actions">
-                  {modalType === 'save-draft' ? (
-                    <>
-                      <button 
-                        className="ce-modal-btn ce-modal-btn-secondary" 
-                        onClick={handleModalDiscardChanges}
-                      >
-                        Discard Changes
-                      </button>
-                      <button 
-                        className="ce-modal-btn ce-modal-btn-primary" 
-                        onClick={handleModalSaveDraft}
-                      >
-                        Save as Draft
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button 
-                        className="ce-modal-btn ce-modal-btn-secondary" 
-                        onClick={handleModalCancel}
-                      >
-                        Keep Editing
-                      </button>
-                      <button 
-                        className="ce-modal-btn ce-modal-btn-danger" 
-                        onClick={handleModalDiscardChanges}
-                      >
-                        Discard Changes
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+          {/* 🆕 NEW: Use extracted modal component */}
+          <UnsavedChangesModal
+            isVisible={showCancelModal}
+            modalType={modalType}
+            onSaveDraft={handleModalSaveDraft}
+            onDiscardChanges={handleModalDiscardChanges}
+            onCancel={handleModalCancel}
+            isLoading={isLoading}
+          />
         </main>
       </div>
     </div>

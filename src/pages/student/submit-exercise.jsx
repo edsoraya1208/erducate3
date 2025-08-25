@@ -17,6 +17,7 @@ import { uploadToCloudinary } from '../../config/cloudinary';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import StudentSubmitClass from '../../components/class/student-submit-exercise';
 import DashboardHeader from '../../components/dashboard/dashboard-header';
+import { setDoc } from 'firebase/firestore';
 
 const SubmitExercise = () => {
   const { classId, exerciseId } = useParams();
@@ -95,9 +96,9 @@ const SubmitExercise = () => {
     }
 
     // ✅ File size validation (10MB = 10 * 1024 * 1024 bytes)
-    const maxSize = 10 * 1024 * 1024;
+    const maxSize = 2 * 1024 * 1024;
     if (file.size > maxSize) {
-      showValidationMessage('❌ File too large. Maximum size is 10MB.', 'error');
+      showValidationMessage('❌ File too large. Maximum size is 2MB.', 'error');
       return;
     }
 
@@ -226,6 +227,23 @@ const SubmitExercise = () => {
         console.log('✅ Submission updated successfully (resubmission)');
       }
 
+      // 🆕 STEP 5: CRITICAL - Save to studentProgress collection
+      const progressData = {
+        studentId: user.uid,
+        classId: classId,
+        exerciseId: exerciseId,
+        submitted: true,
+        isCompleted: true,
+        status: 'completed',
+        fileUrl: cloudinaryData.url,
+        submittedAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      const progressDocId = `${user.uid}_${classId}_${exerciseId}`;
+      await setDoc(doc(db, 'studentProgress', progressDocId), progressData);
+      console.log('✅ Progress saved to studentProgress:', progressData);
+
       // 🎉 SUCCESS STATE - Better UX
       setSubmitted(true);
       setUploading(false);
@@ -233,10 +251,13 @@ const SubmitExercise = () => {
       // Show success message
       showValidationMessage('🎉 Exercise submitted successfully!', 'success', 3000);
 
-      // Auto-navigate back after 3 seconds
-      setTimeout(() => {
-        navigate(`/student/class/${classId}`);
-      }, 3000);
+      // 🆕 CHANGED: Scroll to top on success
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // ❌ REMOVED: Auto navigate after few seconds
+      // setTimeout(() => {
+      //   navigate(`/student/class/${classId}`);
+      // }, 30000);
       
     } catch (error) {
       console.error('❌ Error submitting exercise:', error);

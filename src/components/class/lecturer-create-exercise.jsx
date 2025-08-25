@@ -26,12 +26,18 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
     rubricFile: null
   });
 
-  const [isLoading, setIsLoading] = useState(Boolean(draftId));
+  const [isLoading, setIsLoading] = useState(false);
   const [isEditingDraft, setIsEditingDraft] = useState(Boolean(draftId));
   
   // 🚨 VALIDATION ERRORS STATE
   const [validationErrors, setValidationErrors] = useState({});
 
+  const [isPublishedExercise, setIsPublishedExercise] = useState(false);
+  const [originalFileNames, setOriginalFileNames] = useState({
+    answerScheme: null,
+    rubric: null
+  });
+  
   // 🆕 NEW: Modal state management
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [modalType, setModalType] = useState(''); // 'save-draft' or 'discard-changes'
@@ -39,6 +45,27 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
   // 🔙 NEW: Browser back button detection
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
+  // Handle drag and drop
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.currentTarget.classList.add('drag-over');
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+  };
+
+  const handleDrop = (e, fileType) => {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+    
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      const fakeEvent = { target: { files: [file] } };
+      handleFileUpload(fakeEvent, fileType);
+    }
+  };
 
   // 🆕 NEW: Load draft data when draftId exists
   useEffect(() => {
@@ -56,18 +83,25 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
           const draftData = draftSnap.data();
           console.log('Draft data loaded:', draftData);
           
-          // Pre-fill form with draft data
           setFormData({
             title: draftData.title || '',
             description: draftData.description || '',
             dueDate: draftData.dueDate || '',
             totalMarks: draftData.totalMarks?.toString() || '100',
-            answerSchemeFile: null, // Files can't be pre-loaded, user needs to re-upload
-            rubricFile: null
+            answerSchemeFile: null,
+            rubricFile: null,
+          });
+          
+          setOriginalFileNames({
+            answerScheme: draftData.answerScheme?.originalName || null,
+            rubric: draftData.rubric?.originalName || null
           });
           
           setIsEditingDraft(true);
           console.log('✅ Draft loaded successfully');
+
+          setIsPublishedExercise(draftData.status === 'active');
+          
         } else {
           console.warn('Draft not found');
           alert('Draft exercise not found. Starting with empty form.');
@@ -129,6 +163,16 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
       window.removeEventListener('popstate', handlePopState);
     };
   }, [hasUnsavedChanges, isEditingDraft]);
+
+  useEffect(() => {
+  if (Object.keys(validationErrors).length > 0) {
+    const timer = setTimeout(() => {
+      scrollToFirstError();
+    }, 100); // Small delay to ensure DOM is updated
+    
+    return () => clearTimeout(timer);
+  }
+}, [validationErrors]);
 
   // 🎯 HANDLE INPUT CHANGES: Updates state when user types
   const handleInputChange = (e) => {
@@ -220,10 +264,10 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
     if (!formData.totalMarks || formData.totalMarks <= 0) {
       errors.totalMarks = 'Please fill out this field.';
     }
-    if (!formData.answerSchemeFile) {
+    if (!formData.answerSchemeFile && !isPublishedExercise) {
       errors.answerSchemeFile = 'Please fill out this field.';
     }
-    if (!formData.rubricFile) {
+    if (!formData.rubricFile && !isPublishedExercise) {
       errors.rubricFile = 'Please fill out this field.';
     }
 
@@ -367,20 +411,30 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
   const handleModalCancel = () => {
     setShowCancelModal(false);
   };
+
+  const scrollToFirstError = () => {
+    const firstError = document.querySelector('.validation-error');
+    if (firstError) {
+      firstError.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'center'
+      });
+    }
+  };
   
   // 🚀 SUBMIT FORM: This uploads to Cloudinary and saves to Firestore
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!classId) {
-      alert('No class selected. Please access this page from a specific class.');
-      return;
-    }
-    
-    // ⚠️ VALIDATION: Use custom validation instead of HTML5 validation
-    if (!validateForm()) {
-      return;
-    }
+  if (!classId) {
+  alert('No class selected. Please access this page from a specific class.');
+  return;
+}
+
+// ⚠️ VALIDATION: Use custom validation instead of HTML5 validation
+if (!validateForm()) {
+  return; // The useEffect will handle scrolling when validationErrors is set
+}
 
     // ✅ VALIDATION: Ensure user is authenticated
     if (!user || !user.uid) {
@@ -527,17 +581,22 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
     );
   }
 
-  // 🎨 RENDER: The form UI components with hamburger menu
+  // 🎨 RENDER: The form UI components
   return (
     <div className="lecturer-dashboard">
-      {/* 🆕 NEW: Navigation Header with Hamburger Menu (from dashboard) */}
-    
-
       <div className="page-container">
         <main className="ce-main-content">
           <h1 className="page-title">
-            {draftId ? 'Edit Draft Exercise' : 'Create Exercise'}
+            {isPublishedExercise ? 'Edit Exercise' : 
+            draftId ? 'Edit Draft Exercise' : 'Create Exercise'}
           </h1>
+          
+          {isPublishedExercise && (
+            <div className="published-exercise-notice">
+              <span className="info-icon">ℹ️</span>
+              <span>Editing published exercise. Answer scheme and rubric cannot be modified.</span>
+            </div>
+          )}
           
           <form onSubmit={handleSubmit} className="exercise-form" noValidate>
             {/* 📝 EXERCISE TITLE */}
@@ -617,7 +676,7 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
               </div>
             </div>
 
-            {/* 📁 UPLOAD SECTIONS - 2 COLUMN LAYOUT */}
+            {/* 📁 UPLOAD SECTIONS - 2 COLUMN LAYOUT (CLEANED UP) */}
             <div className="upload-sections-container">
               {/* ANSWER SCHEME SECTION */}
               <div className="upload-section">
@@ -626,7 +685,12 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
                   <h3 className="section-title">Answer Scheme *</h3>
                 </div>
                 
-                <div className="upload-area">
+                <div 
+                  className="upload-area"
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, 'answerSchemeFile')}
+                >
                   <div className="upload-content">
                     <div className="upload-icon">📁</div>
                     <h4 className="upload-title">Upload Answer Scheme</h4>
@@ -637,25 +701,29 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
                       accept="image/*"
                       onChange={(e) => handleFileUpload(e, 'answerSchemeFile')}
                       className="file-input"
-                      disabled={isLoading}
+                      disabled={isLoading || isPublishedExercise}
                     />
                     <button 
                       type="button" 
                       className="browse-btn"
                       onClick={() => document.getElementById('answerScheme').click()}
-                      disabled={isLoading}
+                      disabled={isLoading || isPublishedExercise}
                     >
                       Browse Files
                     </button>
                     <small className="file-info">
                       Supported formats: PNG, JPG, GIF, WebP (Max 10MB)
                     </small>
-                    {formData.answerSchemeFile && (
+                    
+                    {(formData.answerSchemeFile || (isPublishedExercise && originalFileNames.answerScheme)) && (
                       <p className="file-selected">
-                        ✅ Selected: {formData.answerSchemeFile.name} 
-                        ({(formData.answerSchemeFile.size / 1024 / 1024).toFixed(2)} MB)
+                        {formData.answerSchemeFile ? 
+                          `✅ Selected: ${formData.answerSchemeFile.name} (${(formData.answerSchemeFile.size / 1024 / 1024).toFixed(2)} MB)` :
+                          `📁 Current file: ${originalFileNames.answerScheme}`
+                        }
                       </p>
                     )}
+
                     {validationErrors.answerSchemeFile && (
                       <div className="validation-error">
                         <span className="error-icon">⚠️</span>
@@ -673,7 +741,12 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
                   <h3 className="section-title">Rubric *</h3>
                 </div>
                 
-                <div className="upload-area">
+                <div 
+                  className="upload-area"
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, 'rubricFile')}
+                >
                   <div className="upload-content">
                     <div className="upload-icon">📋</div>
                     <h4 className="upload-title">Upload Rubric</h4>
@@ -684,25 +757,29 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
                       accept=".pdf"
                       onChange={(e) => handleFileUpload(e, 'rubricFile')}
                       className="file-input"
-                      disabled={isLoading}
+                      disabled={isLoading || isPublishedExercise}
                     />
                     <button 
                       type="button" 
                       className="browse-btn"
                       onClick={() => document.getElementById('rubric').click()}
-                      disabled={isLoading}
+                      disabled={isLoading || isPublishedExercise}
                     >
                       Browse Files
                     </button>
                     <small className="file-info">
                       Supported format: PDF (Max 10MB)
                     </small>
-                    {formData.rubricFile && (
+                    
+                    {(formData.rubricFile || (isPublishedExercise && originalFileNames.rubric)) && (
                       <p className="file-selected">
-                        ✅ Selected: {formData.rubricFile.name}
-                        ({(formData.rubricFile.size / 1024 / 1024).toFixed(2)} MB)
+                        {formData.rubricFile ? 
+                          `✅ Selected: ${formData.rubricFile.name} (${(formData.rubricFile.size / 1024 / 1024).toFixed(2)} MB)` :
+                          `📁 Current file: ${originalFileNames.rubric}`
+                        }
                       </p>
                     )}
+                    
                     {validationErrors.rubricFile && (
                       <div className="validation-error">
                         <span className="error-icon">⚠️</span>

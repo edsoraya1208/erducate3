@@ -88,17 +88,48 @@ service cloud.firestore {
     
     // FIXED: Student progress tracking with proper rules
     match /studentProgress/{progressId} {
-      // Students can create/read/update their own progress
-      allow create, read, update: if isAuthenticated() && 
-                                     isStudent() && 
-                                     (request.resource.data.studentId == request.auth.uid ||
-                                      resource.data.studentId == request.auth.uid);
+      // Students can create their own progress
+      allow create: if isAuthenticated() && 
+                      isStudent() && 
+                      request.resource.data.studentId == request.auth.uid;
       
-      // Lecturers can read student progress for their classes
+      // Students can read/update their own progress
+      allow read, update: if isAuthenticated() && 
+                            isStudent() && 
+                            resource.data.studentId == request.auth.uid;
+      
+      // Lecturers can read student progress for their classes  
       allow read: if isAuthenticated() && 
-                     isLecturer() && 
-                     exists(/databases/$(database)/documents/classes/$(resource.data.classId)) &&
-                     get(/databases/$(database)/documents/classes/$(resource.data.classId)).data.instructorId == request.auth.uid;
+                    isLecturer() && 
+                    exists(/databases/$(database)/documents/classes/$(resource.data.classId)) &&
+                    get(/databases/$(database)/documents/classes/$(resource.data.classId)).data.instructorId == request.auth.uid;
+      
+      allow delete: if false;
+    }
+    
+    // 🆕 ADD THIS: Submissions collection rules
+    match /submissions/{submissionId} {
+      // Students can create/update their own submissions
+      allow create, update: if isAuthenticated() && 
+                              isStudent() && 
+                              request.resource.data.studentId == request.auth.uid;
+      
+      // Students can read their own submissions
+      allow read: if isAuthenticated() && 
+                    isStudent() && 
+                    resource.data.studentId == request.auth.uid;
+      
+      // Lecturers can read submissions for their classes
+      allow read: if isAuthenticated() && 
+                    isLecturer() && 
+                    exists(/databases/$(database)/documents/classes/$(resource.data.classId)) &&
+                    get(/databases/$(database)/documents/classes/$(resource.data.classId)).data.instructorId == request.auth.uid;
+      
+      // Lecturers can update submissions for grading
+      allow update: if isAuthenticated() && 
+                      isLecturer() && 
+                      exists(/databases/$(database)/documents/classes/$(resource.data.classId)) &&
+                      get(/databases/$(database)/documents/classes/$(resource.data.classId)).data.instructorId == request.auth.uid;
       
       allow delete: if false;
     }

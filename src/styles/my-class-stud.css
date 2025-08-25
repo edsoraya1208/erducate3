@@ -147,7 +147,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
-  min-height: 200px; /* FIXED: Increased from 180px to prevent cramped layout */
+  min-height: 180px; /* FIXED: Increased from 180px to prevent cramped layout */
 }
 
 .stud-mc-exercise-card:hover {

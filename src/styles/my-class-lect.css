@@ -191,7 +191,8 @@
   transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
-  min-height: 280px; /* Set minimum height for consistency */
+  min-height: 180px; /* Set minimum height for consistency */
+  min-width: 100px;
   position: relative;
 }
 
@@ -276,31 +277,39 @@
 
 /* IMPROVED: Actions always at bottom */
 .exercise-actions {
-  padding: 0 1.5rem 1.5rem 1.5rem;
+  padding: 0 1rem 1.5rem 1rem; /* Reduced side padding for more button width */
   display: flex;
-  gap: 0.75rem;
-  margin-top: auto; /* Push to bottom */
-  flex-shrink: 0; /* Prevent shrinking */
+  gap: 0.5rem; /* Smaller gap between buttons */
+  margin-top: auto;
+  flex-shrink: 0;
 }
 
 /* ============================================
    IMPROVED BUTTON STYLES
    ============================================ */
 .btn-class-lect {
-  padding: 0.5rem 1rem;
+  padding: 0.75rem 1rem;
   border: none;
   border-radius: 6px;
   font-size: 0.9rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
-  flex: 1;
+  flex: 1; /* Make buttons take equal full width */
   text-align: center;
-  min-height: 36px; /* Consistent button height */
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
+
+.btn-view,
+.btn-delete,
+.btn-edit {
+  min-width: unset; /* allow shrinking with parent */
+  flex: 1;          /* let them resize equally inside flex container */
+}
+
 
 .btn-publish {
   background: linear-gradient(135deg, #7b10a5, #5e17a5);
@@ -335,7 +344,6 @@
   transition: all 0.3s ease;
   white-space: nowrap;
   box-shadow: 0 2px 4px rgba(94, 23, 165, 0.2);
-  min-width: 120px;
   flex-shrink: 0;
 }
 
@@ -357,7 +365,6 @@
   transition: all 0.3s ease;
   white-space: nowrap;
   box-shadow: 0 2px 4px rgba(94, 23, 165, 0.2);
-  min-width: 120px;
   flex-shrink: 0;
 }
 

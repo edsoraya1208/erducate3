@@ -84,7 +84,7 @@ const StudentSubmitClass = ({
           <p>Drag and drop your image here or click to browse</p>
           
           <p className="upload-hint">
-            Supports: PNG, JPEG, GIF, WebP (Max 10MB)
+            Supports: PNG, JPEG, JPG (Max 2MB)
           </p>
           
           <input
@@ -230,8 +230,8 @@ const StudentSubmitClass = ({
               <div className="se-guidelines">
                 <h4>Submission Guidelines:</h4>
                 <ul>
-                  <li>Submit PNG, JPEG, GIF, or WebP files</li>
-                  <li>Maximum file size: 10MB</li>
+                  <li>Submit PNG, JPEG, or JPG files</li>
+                  <li>Maximum file size: 2MB</li>
                   <li>Keep diagram clear and well-organized</li>
                   <li>Ensure all text is readable</li>
                   <li>High resolution images are preferred</li>

@@ -334,14 +334,14 @@ CLASSES GRID & CARDS
 STATE DISPLAYS
 ==============================================
 */
-.loading-container {
+.stud-loading-container {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 200px;
 }
 
-.loading-container p {
+.stud-loading-container p {
   font-size: 18px;
   color: #666;
   font-weight: 500;

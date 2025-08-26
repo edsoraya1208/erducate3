@@ -157,7 +157,7 @@ const StudentDashboard = ({
                     
           {/* Loading State Display */}
           {loading ? (
-            <div className="loading-container">
+            <div className="stud-loading-container">
               <p>Loading classes...</p>
             </div>
           ) : (

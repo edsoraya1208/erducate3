@@ -153,8 +153,8 @@ if (!classData) {
   return (
     <div className="page-container">
       <main className="mc-main-content">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
+        <div className="mc-loading-container">
+          <div className="mc-loading-spinner"></div>
           <p>Loading class data...</p>
         </div>
       </main>

@@ -1,9 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { collection, query, where, getDocs, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '../../config/firebase';
 import '../../styles/my-class-stud.css';
+
+// SMART CACHING - Respects browser refresh naturally
+const CACHE_DURATION = 2 * 60 * 1000; // 2 minutes (shorter for fresh data)
+const SESSION_KEY = `cache_session_${Date.now()}`; // Resets on page refresh
+const cache = {
+  enrolledClasses: null,
+  classData: new Map(),
+  exercises: new Map(),
+  progress: new Map(),
+  timestamps: new Map(),
+  sessionId: SESSION_KEY
+};
+
+const isCacheValid = (key) => {
+  const timestamp = cache.timestamps.get(key);
+  return timestamp && (Date.now() - timestamp) < CACHE_DURATION;
+};
+
+const setCacheData = (key, data) => {
+  cache.timestamps.set(key, Date.now());
+  return data;
+};
 
 const StudentMyClass = ({ classId }) => {
   const [user] = useAuthState(auth);
@@ -26,6 +48,32 @@ const StudentMyClass = ({ classId }) => {
     return null;
   });
 
+  // Navigation-based cache invalidation (detects back/forward/refresh)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && user) {
+        // Check if we've been away for more than 30 seconds, refresh data
+        const lastActivity = localStorage.getItem('lastActivity');
+        if (!lastActivity || Date.now() - parseInt(lastActivity) > 30000) {
+          console.log('🔄 Auto-refreshing after being away');
+          invalidateCache();
+        }
+      }
+    };
+
+    const handleBeforeUnload = () => {
+      localStorage.setItem('lastActivity', Date.now().toString());
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [user]);
+
   useEffect(() => {
     if (user) {
       fetchExercises();
@@ -40,6 +88,19 @@ const StudentMyClass = ({ classId }) => {
       if (classId) {
         console.log('=== FETCHING EXERCISES FOR CLASS ===');
         console.log('User:', user.uid, 'Class:', classId);
+        
+        // CACHE CHECK: Check if we have cached data for this specific class
+        const cacheKey = `${user.uid}_${classId}`;
+        if (isCacheValid(cacheKey) && cache.exercises.has(cacheKey)) {
+          console.log('🚀 Using cached data for class', classId);
+          setExercises(cache.exercises.get(cacheKey));
+          const cachedClassData = cache.classData.get(classId);
+          if (cachedClassData) {
+            setClassData(cachedClassData);
+          }
+          setExercisesLoading(false);
+          return;
+        }
         
         // Run enrollment check and class data fetch in parallel
         const [enrollmentSnapshot, classDoc] = await Promise.all([
@@ -61,10 +122,13 @@ const StudentMyClass = ({ classId }) => {
         // FIXED: Only update class data if we got real data from DB
         const classDataFromDb = classDoc.exists() ? classDoc.data() : null;
         if (classDataFromDb) {
-          setClassData({
+          const classInfo = {
             ...classDataFromDb,
             id: classId
-          });
+          };
+          setClassData(classInfo);
+          // CACHE: Store class data
+          cache.classData.set(classId, setCacheData(`class_${classId}`, classInfo));
         }
         
         // Get exercises and all progress in parallel
@@ -90,6 +154,9 @@ const StudentMyClass = ({ classId }) => {
           console.log('Progress data:', progressData);
           progressMap[progressData.exerciseId] = progressData;
         });
+        
+        // CACHE: Store progress data
+        cache.progress.set(cacheKey, setCacheData(`progress_${cacheKey}`, progressMap));
         
         const allExercises = [];
         
@@ -145,10 +212,21 @@ const StudentMyClass = ({ classId }) => {
         });
         
         console.log('✅ Exercises loaded:', allExercises.length);
+        
+        // CACHE: Store exercises data
+        cache.exercises.set(cacheKey, setCacheData(cacheKey, allExercises));
         setExercises(allExercises);
         
       } else {
-        // For all classes view
+        // For all classes view - ADD CACHING HERE TOO
+        const allClassesCacheKey = `all_classes_${user.uid}`;
+        if (isCacheValid(allClassesCacheKey) && cache.exercises.has(allClassesCacheKey)) {
+          console.log('🚀 Using cached data for all classes');
+          setExercises(cache.exercises.get(allClassesCacheKey));
+          setExercisesLoading(false);
+          return;
+        }
+        
         const studentClassesSnapshot = await getDocs(query(
           collection(db, 'studentClasses'),
           where('studentId', '==', user.uid)
@@ -162,6 +240,9 @@ const StudentMyClass = ({ classId }) => {
           return;
         }
         
+        // CACHE: Store enrolled classes
+        cache.enrolledClasses = setCacheData('enrolled_classes', enrolledClassIds);
+        
         // Get all progress for all classes at once
         const allProgressSnapshot = await getDocs(query(
           collection(db, 'studentProgress'),
@@ -174,6 +255,9 @@ const StudentMyClass = ({ classId }) => {
           const key = `${progressData.classId}_${progressData.exerciseId}`;
           progressMap[key] = progressData;
         });
+        
+        // CACHE: Store all progress
+        cache.progress.set(allClassesCacheKey, setCacheData(`progress_${allClassesCacheKey}`, progressMap));
         
         const allExercises = [];
         
@@ -189,6 +273,11 @@ const StudentMyClass = ({ classId }) => {
             ]);
             
             const classData = classDoc.exists() ? classDoc.data() : null;
+            
+            // CACHE: Store individual class data
+            if (classData) {
+              cache.classData.set(classId, setCacheData(`class_${classId}`, classData));
+            }
             
             return exercisesSnapshot.docs.map(exerciseDoc => {
               const exerciseData = { 
@@ -244,6 +333,8 @@ const StudentMyClass = ({ classId }) => {
           return createdA - createdB;
         });
         
+        // CACHE: Store all exercises
+        cache.exercises.set(allClassesCacheKey, setCacheData(allClassesCacheKey, flatExercises));
         setExercises(flatExercises);
       }
     } catch (err) {
@@ -252,6 +343,19 @@ const StudentMyClass = ({ classId }) => {
     } finally {
       setExercisesLoading(false);
     }
+  };
+
+  // ADD CACHE INVALIDATION METHOD
+  const invalidateCache = () => {
+    const cacheKey = classId ? `${user?.uid}_${classId}` : `all_classes_${user?.uid}`;
+    cache.exercises.delete(cacheKey);
+    cache.progress.delete(cacheKey);
+    if (classId) {
+      cache.classData.delete(classId);
+    }
+    cache.timestamps.delete(cacheKey);
+    console.log('🗑️ Cache invalidated, refetching...');
+    fetchExercises();
   };
 
   // Filter exercises based on search term and status
@@ -366,6 +470,7 @@ const StudentMyClass = ({ classId }) => {
       <div className="stud-mc-header">
         <h1 className="stud-mc-title">My Exercises</h1>
         <p className="stud-mc-subtitle">View available exercises and submit your answers</p>
+
       </div>
   
       <div className="stud-mc-section">

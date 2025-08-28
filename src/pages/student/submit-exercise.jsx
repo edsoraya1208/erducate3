@@ -13,8 +13,8 @@ import {
 } from 'firebase/firestore';
 
 import { db, auth } from '../../config/firebase';
-import { uploadToCloudinary } from '../../config/cloudinary';
-import { useAuthState } from 'react-firebase-hooks/auth';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '../../config/firebase';import { useAuthState } from 'react-firebase-hooks/auth';
 import StudentSubmitClass from '../../components/class/student-submit-exercise';
 import DashboardHeader from '../../components/dashboard/dashboard-header';
 import { setDoc } from 'firebase/firestore';
@@ -172,13 +172,28 @@ const SubmitExercise = () => {
       setUploading(true);
       console.log('📤 Starting exercise submission...');
 
-      // 🌤️ STEP 1: Upload to Cloudinary
-      console.log('☁️ Uploading file to Cloudinary...');
-      const cloudinaryData = await uploadToCloudinary(
-        selectedFile, 
-        'student-submissions'
-      );
-      console.log('✅ File uploaded to Cloudinary:', cloudinaryData.url);
+      // 🔥 STEP 1: Upload to Firebase Storage
+      console.log('🔥 Uploading file to Firebase Storage...');
+      const timestamp = Date.now();
+      const fileName = `${timestamp}_${selectedFile.name}`;
+      const storageRef = ref(storage, `submissions/${user.uid}/${fileName}`);
+      const uploadResult = await uploadBytes(storageRef, selectedFile);
+      const downloadURL = await getDownloadURL(uploadResult.ref);
+
+      // Create data object (same structure as cloudinary)
+      const uploadData = {
+        url: downloadURL,
+        originalName: selectedFile.name,
+        publicId: `submissions/${user.uid}/${fileName}`,
+        fileType: selectedFile.type,
+        fileSize: selectedFile.size,
+        createdAt: new Date().toISOString(),
+        width: null,  // ADD THIS LINE
+        height: null,
+        format: selectedFile.name.split('.').pop() // ADD THIS LINE
+
+      };
+      console.log('✅ File uploaded to Firebase Storage:', uploadData.url);
 
       // 🔍 STEP 2: Check for existing submission
       const submissionsRef = collection(db, 'submissions');
@@ -198,17 +213,17 @@ const SubmitExercise = () => {
         classId: classId,
         exerciseId: exerciseId,
         exerciseTitle: exercise.title,
-        fileURL: cloudinaryData.url,
-        fileName: cloudinaryData.originalName,
-        cloudinaryPublicId: cloudinaryData.publicId,
-        fileType: cloudinaryData.fileType,
-        fileSize: cloudinaryData.fileSize,
-        imageWidth: cloudinaryData.width,
-        imageHeight: cloudinaryData.height,
-        imageFormat: cloudinaryData.format,
+        fileURL: uploadData.url,
+        fileName: uploadData.originalName,
+        cloudinaryPublicId: uploadData.publicId,
+        fileType: uploadData.fileType,
+        fileSize: uploadData.fileSize,
+        imageWidth: uploadData.width || null,
+        imageHeight: uploadData.height || null,
+        imageFormat: uploadData.format || null,
         comments: additionalComments.trim(),
         submittedAt: new Date(),
-        uploadedAt: cloudinaryData.createdAt,
+        uploadedAt: uploadData.createdAt,
         status: 'submitted',
         grade: null,
         feedback: null
@@ -235,7 +250,7 @@ const SubmitExercise = () => {
         submitted: true,
         isCompleted: true,
         status: 'completed',
-        fileUrl: cloudinaryData.url,
+        fileUrl: uploadData.url,
         fileName: selectedFile.name, // 🔧 FIXED: Use selectedFile.name instead of file.name
         submittedAt: new Date(),
         updatedAt: new Date(),

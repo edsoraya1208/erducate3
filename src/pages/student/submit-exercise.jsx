@@ -227,7 +227,7 @@ const SubmitExercise = () => {
         console.log('✅ Submission updated successfully (resubmission)');
       }
 
-      // 🆕 STEP 5: CRITICAL - Save to studentProgress collection
+      // 🆕 STEP 5: CRITICAL - Save to studentProgress collection + edit attempts
       const progressData = {
         studentId: user.uid,
         classId: classId,
@@ -236,8 +236,11 @@ const SubmitExercise = () => {
         isCompleted: true,
         status: 'completed',
         fileUrl: cloudinaryData.url,
+        fileName: selectedFile.name, // 🔧 FIXED: Use selectedFile.name instead of file.name
         submittedAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        editCount: 0, // 🆕 ADD: Track edit attempts (0 = initial submission)
+        maxEdits: 2   // 🆕 ADD: Maximum allowed edits
       };
 
       const progressDocId = `${user.uid}_${classId}_${exerciseId}`;

@@ -35,12 +35,12 @@ service cloud.firestore {
     }
     
     // Users collection rules
-    match /users/{userId} {
-      allow create: if isAuthenticated() && isOwner(userId);
-      allow update: if isAuthenticated() && isOwner(userId);
-      allow read: if isAuthenticated() && isOwner(userId);
-      allow delete: if false;
-    }
+match /users/{userId} {
+  allow create: if isAuthenticated() && isOwner(userId);
+  allow update: if isAuthenticated() && isOwner(userId);
+  allow read: if isAuthenticated();  // ← ALLOW ANY AUTHENTICATED USER TO READ
+  allow delete: if false;
+}
 
     // Classes collection rules
     match /classes/{classId} {

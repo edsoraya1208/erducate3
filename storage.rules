@@ -1,0 +1,78 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user is a lecturer
+    function isLecturer() {
+      return isAuthenticated() &&
+             firestore.exists(/databases/(default)/documents/users/$(request.auth.uid)) &&
+             firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'lecturer';
+    }
+    
+    // Helper function to check if user is a student
+    function isStudent() {
+      return isAuthenticated() &&
+             firestore.exists(/databases/(default)/documents/users/$(request.auth.uid)) &&
+             firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'student';
+    }
+    
+    // Answer schemes - Only lecturers can upload/manage
+    match /answer-schemes/{filename} {
+      allow read, write: if isLecturer();
+    }
+    
+    // 🆕 RUBRICS - This is probably missing in your rules
+    match /rubrics/{filename} {
+      allow read, write: if isLecturer();
+    }
+    
+    // Exercise attachments - Only lecturers can upload/manage
+    match /exercise-attachments/{filename} {
+      allow read, write: if isLecturer();
+    }
+    
+    // Student submissions - Students can upload their own, lecturers can read all
+    match /submissions/{studentId}/{filename} {
+      allow write: if isAuthenticated() && 
+                     isStudent() && 
+                     request.auth.uid == studentId;
+      allow read: if isAuthenticated() && 
+                    isStudent() && 
+                    request.auth.uid == studentId;
+      allow read: if isLecturer();
+      allow delete: if isLecturer();
+    }
+    
+    // Class materials - Lecturers can upload, everyone can read
+    match /class-materials/{classId}/{filename} {
+      allow write: if isLecturer();
+      allow read: if isAuthenticated();
+    }
+    
+    // Profile pictures - Users can manage their own
+    match /profile-pictures/{userId}/{filename} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Temporary uploads folder - for processing before moving to final location
+    match /temp-uploads/{userId}/{filename} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Public assets - Read-only for everyone, write for lecturers
+    match /public/{filename} {
+      allow read: if true;
+      allow write: if isLecturer();
+    }
+    
+    // Deny access to all other paths
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

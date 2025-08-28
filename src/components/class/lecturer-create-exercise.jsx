@@ -2,12 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom'; 
 import { useUser } from '../../contexts/UserContext';
 
-// 🔥 FIREBASE IMPORTS - Only for Firestore (exercise data)
-import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'firebase/firestore';
+// 🔥 FIREBASE IMPORTS - Only for loading draft data
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../config/firebase';
-
-// 🌤️ CLOUDINARY IMPORT - For file uploads
-import { uploadToCloudinary } from '../../config/cloudinary';
 
 // 🆕 COMPONENT IMPORTS
 import UnsavedChangesModal from '../../components/modals/UnsavedChangesModal';
@@ -15,12 +12,20 @@ import LectExerciseFormFields from './lect-exercise-form-fields';
 import LectFileUploadSection from './lect-file-upload-section';
 import LectExerciseTips from './lect-exercise-tips';
 
+// 🆕 CUSTOM HOOKS IMPORTS
+import { useUploadHandler } from './lect-upload-handler';
+import { useFormSubmission } from './lect-form-submission';
+
 // 🎯 MAIN COMPONENT: This handles the create exercise form logic and UI
 const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDashboardClick }) => { 
   const { user, getUserDisplayName } = useUser();
   const [searchParams] = useSearchParams(); 
   const classId = propClassId || searchParams.get('classId');
   const draftId = searchParams.get('draftId'); 
+
+  // 🆕 CUSTOM HOOKS
+  const { validateFile, uploadFiles, formatFirebaseStorageData } = useUploadHandler();
+  const { validateForm, saveDraft, submitExercise } = useFormSubmission();
 
   // 📝 STATE MANAGEMENT: These store all form data
   const [formData, setFormData] = useState({
@@ -52,39 +57,40 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // 📁 DRAG AND DROP HANDLERS
-const handleDragOver = (e) => {
-  if (isPublishedExercise || isLoading) {
+  const handleDragOver = (e) => {
+    if (isPublishedExercise || isLoading) {
+      e.preventDefault();
+      return;
+    }
     e.preventDefault();
-    return;
-  }
-  e.preventDefault();
-  e.currentTarget.classList.add('drag-over');
-};
+    e.currentTarget.classList.add('drag-over');
+  };
 
-const handleDragLeave = (e) => {
-  if (isPublishedExercise || isLoading) {
+  const handleDragLeave = (e) => {
+    if (isPublishedExercise || isLoading) {
+      e.preventDefault();
+      return;
+    }
     e.preventDefault();
-    return;
-  }
-  e.preventDefault();
-  e.currentTarget.classList.remove('drag-over');
-};
+    e.currentTarget.classList.remove('drag-over');
+  };
 
   const handleDrop = (e, fileType) => {
-  if (isPublishedExercise || isLoading) {
+    if (isPublishedExercise || isLoading) {
+      e.preventDefault();
+      return;
+    }
+    
     e.preventDefault();
-    return;
-  }
-  
-  e.preventDefault();
-  e.currentTarget.classList.remove('drag-over');
-  
-  const file = e.dataTransfer.files[0];
-  if (file) {
-    const fakeEvent = { target: { files: [file] } };
-    handleFileUpload(fakeEvent, fileType);
-  }
-};
+    e.currentTarget.classList.remove('drag-over');
+    
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      const fakeEvent = { target: { files: [file] } };
+      handleFileUpload(fakeEvent, fileType);
+    }
+  };
+
   // 🆕 NEW: Load draft data when draftId exists
   useEffect(() => {
     const loadDraftData = async () => {
@@ -186,7 +192,7 @@ const handleDragLeave = (e) => {
     if (Object.keys(validationErrors).length > 0) {
       const timer = setTimeout(() => {
         scrollToFirstError();
-      }, 100); // Small delay to ensure DOM is updated
+      }, 100);
       
       return () => clearTimeout(timer);
     }
@@ -214,39 +220,9 @@ const handleDragLeave = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // 🛡️ ENHANCED FILE VALIDATION
     try {
-      // Size validation (10MB limit)
-      const maxSize = 10 * 1024 * 1024; // 10MB
-      if (file.size > maxSize) {
-        alert('File size must be less than 10MB');
-        e.target.value = ''; // Clear the input
-        return;
-      }
-
-      // 📝 TYPE VALIDATION based on field
-      if (fileType === 'answerSchemeFile') {
-        // Answer scheme should be images only
-        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-        if (!allowedTypes.includes(file.type)) {
-          alert('Answer scheme must be an image file (JPG, PNG, GIF, WebP)');
-          e.target.value = '';
-          return;
-        }
-      } else if (fileType === 'rubricFile') {
-        // Rubric should be PDF only
-        if (file.type !== 'application/pdf') {
-          alert('Rubric must be a PDF file');
-          e.target.value = '';
-          return;
-        }
-      }
-
-      // 🔒 FILENAME VALIDATION - Prevent malicious filenames
-      const sanitizedName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
-      if (sanitizedName !== file.name) {
-        console.warn('Filename was sanitized for security');
-      }
+      // 🛡️ VALIDATE FILE USING CUSTOM HOOK
+      validateFile(file, fileType);
 
       // ✅ FILE ACCEPTED
       setFormData(prev => ({
@@ -264,129 +240,18 @@ const handleDragLeave = (e) => {
 
     } catch (error) {
       console.error('File validation error:', error);
-      alert('Error validating file. Please try again.');
+      alert(error.message);
       e.target.value = '';
     }
   };
 
-  // 🆕 NEW: Custom validation function
-  const validateForm = () => {
-    const errors = {};
-
-    if (!formData.title.trim()) {
-      errors.title = 'Please fill out this field.';
-    }
-    if (!formData.description.trim()) {
-      errors.description = 'Please fill out this field.';
-    }
-    if (!formData.totalMarks || formData.totalMarks <= 0) {
-      errors.totalMarks = 'Please fill out this field.';
-    }
-    if (!formData.answerSchemeFile && !isPublishedExercise) {
-      errors.answerSchemeFile = 'Please fill out this field.';
-    }
-    if (!formData.rubricFile && !isPublishedExercise) {
-      errors.rubricFile = 'Please fill out this field.';
-    }
-
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  // 🆕 NEW: Save as draft function
-  const saveDraft = async () => {
-    // Only save if there's meaningful content
-    if (!formData.title.trim() && !formData.description.trim()) {
-      console.log('No content to save as draft');
-      return false;
-    }
-
-    if (!classId || !user?.uid) {
-      console.warn('Cannot save draft: missing classId or user');
-      return false;
-    }
-
-    try {
-      setIsLoading(true);
-      console.log('Saving draft exercise...');
-
-      // 🌤️ Upload files if they exist (same as regular submit but mark as draft)
-      let answerSchemeData = null;
-      let rubricData = null;
-
-      if (formData.answerSchemeFile) {
-        console.log('Uploading answer scheme for draft...');
-        answerSchemeData = await uploadToCloudinary(
-          formData.answerSchemeFile, 
-          'answer-schemes'
-        );
-      }
-
-      if (formData.rubricFile) {
-        console.log('Uploading rubric for draft...');
-        rubricData = await uploadToCloudinary(
-          formData.rubricFile, 
-          'rubrics'
-        );
-      }
-
-      // 📝 Create draft exercise data
-      const draftData = {
-        title: formData.title.trim() || 'Untitled Exercise',
-        description: formData.description.trim() || '',
-        dueDate: formData.dueDate || null,
-        totalMarks: formData.totalMarks ? parseInt(formData.totalMarks) : null,
-        
-        answerScheme: answerSchemeData ? {
-          url: answerSchemeData.url,
-          publicId: answerSchemeData.publicId,
-          originalName: answerSchemeData.originalName,
-          fileType: answerSchemeData.fileType,
-          fileSize: answerSchemeData.fileSize,
-          width: answerSchemeData.width,
-          height: answerSchemeData.height,
-          format: answerSchemeData.format,
-          uploadedAt: answerSchemeData.createdAt
-        } : null,
-        
-        rubric: rubricData ? {
-          url: rubricData.url,
-          publicId: rubricData.publicId,
-          originalName: rubricData.originalName,
-          fileType: rubricData.fileType,
-          fileSize: rubricData.fileSize,
-          format: rubricData.format,
-          uploadedAt: rubricData.createdAt
-        } : null,
-        
-        createdBy: getUserDisplayName(),
-        createdById: user.uid,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        status: 'draft' // 🆕 KEY DIFFERENCE: Mark as draft
-      };
-
-      // Save to Firestore
-      let docRef;
-      if (draftId) {
-        // Update existing draft
-        const existingDraftRef = doc(db, 'classes', classId, 'exercises', draftId);
-        await updateDoc(existingDraftRef, draftData);
-        docRef = { id: draftId };
-      } else {
-        // Create new draft
-        docRef = await addDoc(collection(db, 'classes', classId, 'exercises'), draftData);
-      }
-      console.log('✅ Draft saved with ID:', docRef.id);
-      
-      return true; // Success
-      
-    } catch (error) {
-      console.error('❌ Error saving draft:', error);
-      alert('Failed to save draft. Changes will be lost.');
-      return false; // Failed
-    } finally {
-      setIsLoading(false);
+  const scrollToFirstError = () => {
+    const firstError = document.querySelector('.validation-error');
+    if (firstError) {
+      firstError.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'center'
+      });
     }
   };
 
@@ -412,35 +277,42 @@ const handleDragLeave = (e) => {
 
   const handleModalSaveDraft = async () => {
     setShowCancelModal(false);
-    const saved = await saveDraft();
-    if (saved) {
-      alert('Exercise saved as draft! You can continue editing it later.');
+    setIsLoading(true);
+    
+    try {
+      const saved = await saveDraft(
+        formData, 
+        classId, 
+        user, 
+        getUserDisplayName, 
+        uploadFiles, 
+        formatFirebaseStorageData, 
+        draftId
+      );
+      
+      if (saved) {
+        alert('Exercise saved as draft! You can continue editing it later.');
+      }
+      setHasUnsavedChanges(false);
+      onCancel();
+    } catch (error) {
+      alert('Failed to save draft. Changes will be lost.');
+    } finally {
+      setIsLoading(false);
     }
-    setHasUnsavedChanges(false); // Clear the unsaved changes flag
-    onCancel();
   };
 
   const handleModalDiscardChanges = () => {
     setShowCancelModal(false);
-    setHasUnsavedChanges(false); // Clear the unsaved changes flag
+    setHasUnsavedChanges(false);
     onCancel();
   };
 
   const handleModalCancel = () => {
     setShowCancelModal(false);
   };
-
-  const scrollToFirstError = () => {
-    const firstError = document.querySelector('.validation-error');
-    if (firstError) {
-      firstError.scrollIntoView({ 
-        behavior: 'smooth',
-        block: 'center'
-      });
-    }
-  };
   
-  // 🚀 SUBMIT FORM: This uploads to Cloudinary and saves to Firestore
+  // 🚀 SUBMIT FORM: Uses custom hooks for upload and submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -449,9 +321,11 @@ const handleDragLeave = (e) => {
       return;
     }
 
-    // ⚠️ VALIDATION: Use custom validation instead of HTML5 validation
-    if (!validateForm()) {
-      return; // The useEffect will handle scrolling when validationErrors is set
+    // ⚠️ VALIDATION: Use custom validation from hook
+    const errors = validateForm(formData, isPublishedExercise);
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      return;
     }
 
     // ✅ VALIDATION: Ensure user is authenticated
@@ -463,93 +337,20 @@ const handleDragLeave = (e) => {
     setIsLoading(true);
 
     try {
-      // 🌤️ STEP 1: Upload files to Cloudinary
-      let answerSchemeData = null;
-      let rubricData = null;
-
-      if (formData.answerSchemeFile) {
-        console.log('Uploading answer scheme to Cloudinary...');
-        try {
-          answerSchemeData = await uploadToCloudinary(
-            formData.answerSchemeFile, 
-            'answer-schemes'
-          );
-          console.log('✅ Answer scheme uploaded:', answerSchemeData.url);
-        } catch (uploadError) {
-          throw new Error(`Answer scheme upload failed: ${uploadError.message}`);
-        }
-      }
-
-      if (formData.rubricFile) {
-        console.log('Uploading rubric to Cloudinary...');
-        try {
-          rubricData = await uploadToCloudinary(
-            formData.rubricFile, 
-            'rubrics'
-          );
-          console.log('✅ Rubric uploaded:', rubricData.url);
-        } catch (uploadError) {
-          throw new Error(`Rubric upload failed: ${uploadError.message}`);
-        }
-      }
-
-      // 🗄️ STEP 2: Save exercise data to Firestore
-      const exerciseData = {
-        title: formData.title.trim(),
-        description: formData.description.trim(),
-        dueDate: formData.dueDate || null,
-        totalMarks: formData.totalMarks ? parseInt(formData.totalMarks) : null,
-        
-        // 🌤️ CLOUDINARY DATA - More detailed for AI integration
-        answerScheme: answerSchemeData ? {
-          url: answerSchemeData.url,           
-          publicId: answerSchemeData.publicId, 
-          originalName: answerSchemeData.originalName,
-          fileType: answerSchemeData.fileType,
-          fileSize: answerSchemeData.fileSize,
-          width: answerSchemeData.width,       
-          height: answerSchemeData.height,
-          format: answerSchemeData.format,
-          uploadedAt: answerSchemeData.createdAt
-        } : null,
-        
-        rubric: rubricData ? {
-          url: rubricData.url,
-          publicId: rubricData.publicId,
-          originalName: rubricData.originalName,
-          fileType: rubricData.fileType,
-          fileSize: rubricData.fileSize,
-          format: rubricData.format,
-          uploadedAt: rubricData.createdAt
-        } : null,
-        
-        // ✅ User and metadata
-        createdBy: getUserDisplayName(),
-        createdById: user.uid,
-        updatedAt: serverTimestamp(),
-        status: 'active' // Keep as active for regular submit
-      };
-
-      console.log('Saving exercise to Firestore...');
-      console.log('About to save to path:', `classes/${classId}/exercises`);
-      console.log('ClassID value:', classId);
+      // 🚀 SUBMIT USING CUSTOM HOOK
+      await submitExercise(
+        formData, 
+        classId, 
+        user, 
+        getUserDisplayName, 
+        uploadFiles, 
+        formatFirebaseStorageData, 
+        draftId
+      );
       
-      let docRef;
-      if (draftId) {
-        // Update existing draft
-        const existingDraftRef = doc(db, 'classes', classId, 'exercises', draftId);
-        await updateDoc(existingDraftRef, exerciseData);
-        docRef = { id: draftId };
-      } else {
-        // Create new exercise
-        exerciseData.createdAt = serverTimestamp();
-        docRef = await addDoc(collection(db, 'classes', classId, 'exercises'), exerciseData);
-      }
+      alert('Exercise created successfully! Files uploaded to Firebase.');
       
-      console.log('✅ Exercise created with ID:', docRef.id);
-      alert('Exercise created successfully! Files uploaded to Cloudinary.');
-      
-      // 🔄 RESET FORM: Clear form after successful submission
+      // 🔄 RESET FORM
       setFormData({
         title: '',
         description: '',
@@ -559,7 +360,7 @@ const handleDragLeave = (e) => {
         rubricFile: null
       });
       
-      setHasUnsavedChanges(false); // Clear the unsaved changes flag
+      setHasUnsavedChanges(false);
       
       // Clear file inputs
       const answerSchemeInput = document.getElementById('answerScheme');
@@ -567,7 +368,6 @@ const handleDragLeave = (e) => {
       if (answerSchemeInput) answerSchemeInput.value = '';
       if (rubricInput) rubricInput.value = '';
 
-      // Navigate back after successful creation
       onCancel();
       
     } catch (error) {
@@ -675,4 +475,4 @@ const handleDragLeave = (e) => {
   );
 };
 
-export default LecturerCreateExercise; 
+export default LecturerCreateExercise;

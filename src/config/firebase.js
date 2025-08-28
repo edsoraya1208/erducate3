@@ -29,7 +29,8 @@ if (USE_EMULATORS) {
   try {
     connectAuthEmulator(auth, 'http://localhost:9099');
     connectFirestoreEmulator(db, 'localhost', 8080);
-    console.log('Connected to Firebase emulators');
+    connectStorageEmulator(storage, 'localhost', 9199); // 👈 ADD THIS LINE
+    console.log('Connected to Firebase emulators (Auth, Firestore, Storage)');
   } catch (error) {
     console.log('Emulator connection failed:', error);
   }

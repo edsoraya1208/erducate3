@@ -9,8 +9,11 @@ import { db } from '../../config/firebase';
 // 🌤️ CLOUDINARY IMPORT - For file uploads
 import { uploadToCloudinary } from '../../config/cloudinary';
 
-// 🆕 MODAL COMPONENT IMPORT
+// 🆕 COMPONENT IMPORTS
 import UnsavedChangesModal from '../../components/modals/UnsavedChangesModal';
+import LectExerciseFormFields from './lect-exercise-form-fields';
+import LectFileUploadSection from './lect-file-upload-section';
+import LectExerciseTips from './lect-exercise-tips';
 
 // 🎯 MAIN COMPONENT: This handles the create exercise form logic and UI
 const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDashboardClick }) => { 
@@ -48,28 +51,40 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
   // 🔙 NEW: Browser back button detection
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  // Handle drag and drop
-  const handleDragOver = (e) => {
+  // 📁 DRAG AND DROP HANDLERS
+const handleDragOver = (e) => {
+  if (isPublishedExercise || isLoading) {
     e.preventDefault();
-    e.currentTarget.classList.add('drag-over');
-  };
+    return;
+  }
+  e.preventDefault();
+  e.currentTarget.classList.add('drag-over');
+};
 
-  const handleDragLeave = (e) => {
+const handleDragLeave = (e) => {
+  if (isPublishedExercise || isLoading) {
     e.preventDefault();
-    e.currentTarget.classList.remove('drag-over');
-  };
+    return;
+  }
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+};
 
   const handleDrop = (e, fileType) => {
+  if (isPublishedExercise || isLoading) {
     e.preventDefault();
-    e.currentTarget.classList.remove('drag-over');
-    
-    const file = e.dataTransfer.files[0];
-    if (file) {
-      const fakeEvent = { target: { files: [file] } };
-      handleFileUpload(fakeEvent, fileType);
-    }
-  };
-
+    return;
+  }
+  
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  
+  const file = e.dataTransfer.files[0];
+  if (file) {
+    const fakeEvent = { target: { files: [file] } };
+    handleFileUpload(fakeEvent, fileType);
+  }
+};
   // 🆕 NEW: Load draft data when draftId exists
   useEffect(() => {
     const loadDraftData = async () => {
@@ -168,14 +183,14 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
   }, [hasUnsavedChanges, isEditingDraft]);
 
   useEffect(() => {
-  if (Object.keys(validationErrors).length > 0) {
-    const timer = setTimeout(() => {
-      scrollToFirstError();
-    }, 100); // Small delay to ensure DOM is updated
-    
-    return () => clearTimeout(timer);
-  }
-}, [validationErrors]);
+    if (Object.keys(validationErrors).length > 0) {
+      const timer = setTimeout(() => {
+        scrollToFirstError();
+      }, 100); // Small delay to ensure DOM is updated
+      
+      return () => clearTimeout(timer);
+    }
+  }, [validationErrors]);
 
   // 🎯 HANDLE INPUT CHANGES: Updates state when user types
   const handleInputChange = (e) => {
@@ -429,15 +444,15 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-  if (!classId) {
-  alert('No class selected. Please access this page from a specific class.');
-  return;
-}
+    if (!classId) {
+      alert('No class selected. Please access this page from a specific class.');
+      return;
+    }
 
-// ⚠️ VALIDATION: Use custom validation instead of HTML5 validation
-if (!validateForm()) {
-  return; // The useEffect will handle scrolling when validationErrors is set
-}
+    // ⚠️ VALIDATION: Use custom validation instead of HTML5 validation
+    if (!validateForm()) {
+      return; // The useEffect will handle scrolling when validationErrors is set
+    }
 
     // ✅ VALIDATION: Ensure user is authenticated
     if (!user || !user.uid) {
@@ -602,231 +617,29 @@ if (!validateForm()) {
           )}
           
           <form onSubmit={handleSubmit} className="exercise-form" noValidate>
-            {/* 📝 EXERCISE TITLE */}
-            <div className="form-group">
-              <label htmlFor="title" className="ce-form-label">Exercise Title *</label>
-              <input
-                type="text"
-                id="title"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                placeholder="e.g., Exercise 3A - University Database"
-                className={`form-input ${validationErrors.title ? 'error' : ''}`}
-                disabled={isLoading}
-              />
-              {validationErrors.title && (
-                <div className="validation-error">
-                  <span className="error-icon">⚠️</span>
-                  <span className="error-message">{validationErrors.title}</span>
-                </div>
-              )}
-            </div>
+            {/* 📝 BASIC FORM FIELDS COMPONENT */}
+            <LectExerciseFormFields
+              formData={formData}
+              validationErrors={validationErrors}
+              isLoading={isLoading}
+              handleInputChange={handleInputChange}
+            />
 
-            {/* 📄 DESCRIPTION */}
-            <div className="form-group">
-              <label htmlFor="description" className="ce-form-label">Description *</label>
-              <textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                placeholder="Provide some description for your exercise..."
-                className={`form-textarea ${validationErrors.description ? 'error' : ''}`}
-                rows="6"
-                disabled={isLoading}
-              />
-              {validationErrors.description && (
-                <div className="validation-error">
-                  <span className="error-icon">⚠️</span>
-                  <span className="error-message">{validationErrors.description}</span>
-                </div>
-              )}
-            </div>
+            {/* 📁 FILE UPLOAD SECTIONS COMPONENT */}
+            <LectFileUploadSection
+              formData={formData}
+              validationErrors={validationErrors}
+              isLoading={isLoading}
+              isPublishedExercise={isPublishedExercise}
+              originalFileNames={originalFileNames}
+              handleFileUpload={handleFileUpload}
+              handleDragOver={handleDragOver}
+              handleDragLeave={handleDragLeave}
+              handleDrop={handleDrop}
+            />
 
-            {/* 📅 DUE DATE & MARKS ROW */}
-            <div className="form-row">
-              <div className="form-group half-width">
-                <label htmlFor="dueDate" className="ce-form-label">Due Date</label>
-                <input
-                  type="date"
-                  id="dueDate"
-                  name="dueDate"
-                  value={formData.dueDate}
-                  onChange={handleInputChange}
-                  className="form-input"
-                  disabled={isLoading}
-                />
-              </div>
-              <div className="form-group half-width">
-                <label htmlFor="totalMarks" className="ce-form-label">Total Marks</label>
-                <input
-                  type="number"
-                  id="totalMarks"
-                  name="totalMarks"
-                  value={formData.totalMarks}
-                  onChange={handleInputChange}
-                  className={`form-input ${validationErrors.totalMarks ? 'error' : ''}`}
-                  min="1"
-                  placeholder="e.g., 100"
-                  disabled={isLoading}
-                />
-                {validationErrors.totalMarks && (
-                  <div className="validation-error">
-                    <span className="error-icon">⚠️</span>
-                    <span className="error-message">{validationErrors.totalMarks}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* 📁 UPLOAD SECTIONS - 2 COLUMN LAYOUT (CLEANED UP) */}
-            <div className="upload-sections-container">
-              {/* ANSWER SCHEME SECTION */}
-              <div className="upload-section">
-                <div className="section-header">
-                  <span className="folder-icon">📁</span>
-                  <h3 className="section-title">Answer Scheme *</h3>
-                </div>
-                
-                <div 
-                  className="upload-area"
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={(e) => handleDrop(e, 'answerSchemeFile')}
-                >
-                  <div className="upload-content">
-                    <div className="upload-icon">📁</div>
-                    <h4 className="upload-title">Upload Answer Scheme</h4>
-                    <p className="upload-text">Drag and drop your ERD image here or click to browse</p>
-                    <input
-                      type="file"
-                      id="answerScheme"
-                      accept="image/*"
-                      onChange={(e) => handleFileUpload(e, 'answerSchemeFile')}
-                      className="file-input"
-                      disabled={isLoading || isPublishedExercise}
-                    />
-                    <button 
-                      type="button" 
-                      className="browse-btn"
-                      onClick={() => document.getElementById('answerScheme').click()}
-                      disabled={isLoading || isPublishedExercise}
-                    >
-                      Browse Files
-                    </button>
-                    <small className="file-info">
-                      Supported formats: PNG, JPG, GIF, WebP (Max 10MB)
-                    </small>
-                    
-                    {(formData.answerSchemeFile || (isPublishedExercise && originalFileNames.answerScheme)) && (
-                      <p className="file-selected">
-                        {formData.answerSchemeFile ? 
-                          `✅ Selected: ${formData.answerSchemeFile.name} (${(formData.answerSchemeFile.size / 1024 / 1024).toFixed(2)} MB)` :
-                          `📁 Current file: ${originalFileNames.answerScheme}`
-                        }
-                      </p>
-                    )}
-
-                    {validationErrors.answerSchemeFile && (
-                      <div className="validation-error">
-                        <span className="error-icon">⚠️</span>
-                        <span className="error-message">{validationErrors.answerSchemeFile}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* RUBRIC SECTION */}
-              <div className="upload-section">
-                <div className="section-header">
-                  <span className="folder-icon">📋</span>
-                  <h3 className="section-title">Rubric *</h3>
-                </div>
-                
-                <div 
-                  className="upload-area"
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={(e) => handleDrop(e, 'rubricFile')}
-                >
-                  <div className="upload-content">
-                    <div className="upload-icon">📋</div>
-                    <h4 className="upload-title">Upload Rubric</h4>
-                    <p className="upload-text">Drag and drop your PDF rubric here or click to browse</p>
-                    <input
-                      type="file"
-                      id="rubric"
-                      accept=".pdf"
-                      onChange={(e) => handleFileUpload(e, 'rubricFile')}
-                      className="file-input"
-                      disabled={isLoading || isPublishedExercise}
-                    />
-                    <button 
-                      type="button" 
-                      className="browse-btn"
-                      onClick={() => document.getElementById('rubric').click()}
-                      disabled={isLoading || isPublishedExercise}
-                    >
-                      Browse Files
-                    </button>
-                    <small className="file-info">
-                      Supported format: PDF (Max 10MB)
-                    </small>
-                    
-                    {(formData.rubricFile || (isPublishedExercise && originalFileNames.rubric)) && (
-                      <p className="file-selected">
-                        {formData.rubricFile ? 
-                          `✅ Selected: ${formData.rubricFile.name} (${(formData.rubricFile.size / 1024 / 1024).toFixed(2)} MB)` :
-                          `📁 Current file: ${originalFileNames.rubric}`
-                        }
-                      </p>
-                    )}
-                    
-                    {validationErrors.rubricFile && (
-                      <div className="validation-error">
-                        <span className="error-icon">⚠️</span>
-                        <span className="error-message">{validationErrors.rubricFile}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 💡 TIPS ROW - 2 COLUMN LAYOUT */}
-            <div className="tips-row">
-              {/* ANSWER SCHEME TIPS */}
-              <div className="tips-section">
-                <div className="tips-header">
-                  <span className="bulb-icon">💡</span>
-                  <span className="tips-title">Answer Scheme Tips</span>
-                </div>
-                <ul className="tips-list">
-                  <li>Ensure all ERD components are clearly visible</li>
-                  <li>Use Crow's Foot notation for consistency</li>
-                  <li>Include all required entities, relationships, and attributes</li>
-                  <li>High resolution images (1080p+) work best for AI analysis</li>
-                  <li>Avoid shadows, glare, or tilted angles</li>
-                </ul>
-              </div>
-
-              {/* RUBRIC TIPS */}
-              <div className="tips-section rubric-tips">
-                <div className="tips-header">
-                  <span className="tips-icon">📋</span>
-                  <span className="tips-title">Rubric Tips</span>
-                </div>
-                <ul className="tips-list">
-                  <li>Include clear marking criteria and point allocations</li>
-                  <li>Specify requirements for each ERD component</li>
-                  <li>Ensure PDF is readable and well-formatted</li>
-                  <li>Include specific grading guidelines for AI processing</li>
-                  <li>Use consistent terminology throughout</li>
-                </ul>
-              </div>
-            </div>
+            {/* 💡 TIPS SECTION COMPONENT */}
+            <LectExerciseTips />
 
             {/* 🎯 FORM BUTTONS */}
             <div className="form-actions">
@@ -862,4 +675,4 @@ if (!validateForm()) {
   );
 };
 
-export default LecturerCreateExercise;
+export default LecturerCreateExercise; 

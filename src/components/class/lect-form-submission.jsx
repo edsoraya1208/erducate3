@@ -103,21 +103,15 @@ export const useFormSubmission = () => {
     }
   };
 
-  // 🚀 SUBMIT EXERCISE FUNCTION
-  const submitExercise = async (formData, classId, user, getUserDisplayName, uploadFiles, formatFirebaseStorageData, draftId = null) => {
+  // 🚀 SUBMIT EXERCISE FUNCTION - FIXED VERSION
+  const submitExercise = async (formData, classId, user, getUserDisplayName, uploadFiles, formatFirebaseStorageData, draftId = null, isPublishedExercise = false) => {
     try {
-      // 🌤️ STEP 1: Upload files to firebase
-      const { answerSchemeData, rubricData } = await uploadFiles(formData);
-      const FirebaseStorageUpload = formatFirebaseStorageData(answerSchemeData, rubricData);
-
-      // 🗄️ STEP 2: Prepare exercise data
+      // 🗄️ STEP 1: Prepare basic exercise data (always update these fields)
       const exerciseData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
         dueDate: formData.dueDate || null,
         totalMarks: formData.totalMarks ? parseInt(formData.totalMarks) : null,
-        
-        ...FirebaseStorageUpload,
         
         // ✅ User and metadata
         createdBy: getUserDisplayName(),
@@ -126,14 +120,28 @@ export const useFormSubmission = () => {
         status: 'active' // Keep as active for regular submit
       };
 
+      // 🌤️ STEP 2: Only handle file uploads if NOT editing a published exercise
+      if (!isPublishedExercise) {
+        console.log('📁 Uploading files (new exercise or draft)...');
+        const { answerSchemeData, rubricData } = await uploadFiles(formData);
+        const FirebaseStorageUpload = formatFirebaseStorageData(answerSchemeData, rubricData);
+        
+        // Add file data to exercise data
+        Object.assign(exerciseData, FirebaseStorageUpload);
+      } else {
+        console.log('📁 Skipping file uploads (published exercise - files preserved)...');
+        // For published exercises, we don't touch the answerScheme and rubric fields
+        // They will remain as they were in the database
+      }
+
       // 🗄️ STEP 3: Save to Firestore
       const docRef = await saveExerciseToFirestore(exerciseData, classId, draftId);
       
-      console.log('✅ Exercise created with ID:', docRef.id);
+      console.log('✅ Exercise updated with ID:', docRef.id);
       return docRef;
       
     } catch (error) {
-      console.error('❌ Error creating exercise:', error);
+      console.error('❌ Error creating/updating exercise:', error);
       throw error;
     }
   };

@@ -112,6 +112,42 @@ const MyClassLectPage = () => {
     }
   };
 
+  const fetchStudentCount = async () => {
+  try {
+    console.log('Fetching student count for classId:', classId);
+    
+    // Simple query - just count enrollments
+    const enrollmentsQuery = query(
+      collection(db, 'studentClasses'),
+      where('classId', '==', classId)
+    );
+    const enrollmentSnapshot = await getDocs(enrollmentsQuery);
+    
+    console.log('Found enrollments:', enrollmentSnapshot.size);
+    
+    // Create minimal student data for count display only
+    const studentsData = [];
+    enrollmentSnapshot.forEach((enrollmentDoc) => {
+      const enrollmentData = enrollmentDoc.data();
+      studentsData.push({
+        id: enrollmentData.studentId,
+        name: enrollmentData.studentName || enrollmentData.displayName || 'Unknown Student',
+        email: enrollmentData.studentEmail || 'No email',
+        completedExercises: 0, // Will be calculated when switching to students tab
+        totalExercises: 0,     // Will be calculated when switching to students tab
+        enrolledAt: enrollmentData.enrolledAt || enrollmentData.createdAt
+      });
+    });
+    
+    console.log('Student count loaded:', studentsData.length);
+    setStudents(studentsData);
+    
+  } catch (error) {
+    console.error('Error fetching student count:', error);
+    setStudents([]);
+  }
+};
+
   const fetchStudents = async () => {
     try {
       console.log('Fetching students for classId:', classId);
@@ -184,27 +220,33 @@ const MyClassLectPage = () => {
     }
   };
 
-  // Fetch both students and exercises on initial load and tab change
-  useEffect(() => {
-    if (classId) {
-      const fetchInitialData = async () => {
-        setLoading(true);
-        try {
-          // Always fetch students for count display
-          await fetchStudents();
-          
-          // Fetch exercises if we're on exercises tab
-          if (activeTab === 'exercises') {
-            await fetchExercises();
-          }
-        } finally {
-          setLoading(false);
+ useEffect(() => {
+  if (classId) {
+    const fetchInitialData = async () => {
+      setLoading(true);
+      try {
+        if (activeTab === 'exercises') {
+          // FAST PATH: Load exercises + lightweight student count simultaneously
+          await Promise.all([
+            fetchExercises(),
+            fetchStudentCount()  // ← NEW: Super fast student count only
+          ]);
+        } else if (activeTab === 'students') {
+          // FULL PATH: Load complete student data with completion calculations
+          await Promise.all([
+            fetchStudents(),  // ← EXISTING: Full student data for students tab
+            fetchExercises()  // Also load exercises for context
+          ]);
         }
-      };
-      
-      fetchInitialData();
-    }
-  }, [classId, activeTab]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchInitialData();
+  }
+}, [classId, activeTab]);
+
 
   const handleEditExercise = (exerciseId) => {
     console.log('Edit exercise:', exerciseId);

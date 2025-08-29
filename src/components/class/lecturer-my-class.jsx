@@ -83,7 +83,6 @@ const LecturerMyClass = ({
   onTabChange,
   onSearchChange,
   onStatusFilterChange,
-  onPublishExercise,
   onEditExercise,
   onDeleteExercise,
   onDraftExerciseClick,
@@ -95,7 +94,6 @@ const LecturerMyClass = ({
 
   // 🆕 NEW: Modal states
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, exerciseId: null, exerciseTitle: '' });
-  const [publishModal, setPublishModal] = useState({ isOpen: false, exerciseId: null, exerciseTitle: '' });
   const [successModal, setSuccessModal] = useState({ isOpen: false, title: '', message: '' });
 
   
@@ -108,14 +106,6 @@ const LecturerMyClass = ({
     });
   };
 
-  // 🆕 NEW: Handle publish confirmation
-  const handlePublishConfirmation = (exerciseId, exerciseTitle) => {
-    setPublishModal({ 
-      isOpen: true, 
-      exerciseId, 
-      exerciseTitle 
-    });
-  };
 
   // 🆕 NEW: Confirm delete action
   const confirmDelete = async () => {
@@ -129,22 +119,6 @@ const LecturerMyClass = ({
       });
     } catch (error) {
       console.error('Delete failed:', error);
-      // Handle error - maybe show an error modal
-    }
-  };
-
-  // 🆕 NEW: Confirm publish action
-  const confirmPublish = async () => {
-    try {
-      await onPublishExercise(publishModal.exerciseId);
-      setPublishModal({ isOpen: false, exerciseId: null, exerciseTitle: '' });
-      setSuccessModal({
-        isOpen: true,
-        title: 'Exercise Published',
-        message: 'The exercise has been successfully published and is now active for students.'
-      });
-    } catch (error) {
-      console.error('Publish failed:', error);
       // Handle error - maybe show an error modal
     }
   };
@@ -272,27 +246,16 @@ return (
                     </div>
 
                     <div className="exercise-actions">
-                      {exercise.status === 'draft' ? (
-                        <>
-                          <button 
-                            className="btn-class-lect btn-publish"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handlePublishConfirmation(exercise.id, exercise.title);
-                            }}
-                          >
-                            Publish Exercise
-                          </button>
-                          <button 
-                            className="btn btn-delete"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteConfirmation(exercise.id, exercise.title);
-                            }}
-                          >
-                            Delete
-                          </button>
-                        </>
+               {exercise.status === 'draft' ? (
+                  <button 
+                    className="btn btn-delete"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteConfirmation(exercise.id, exercise.title);
+                    }}
+                  >
+                    Delete
+                  </button>
                       ) : exercise.status === 'active' ? (
                         <>
                           <button 
@@ -389,17 +352,6 @@ return (
       confirmText="Delete"
       cancelText="Cancel"
       type="danger"
-    />
-
-    <ConfirmationModal
-      isOpen={publishModal.isOpen}
-      onClose={() => setPublishModal({ isOpen: false, exerciseId: null, exerciseTitle: '' })}
-      onConfirm={confirmPublish}
-      title="Publish Exercise"
-      message={`Are you sure you want to publish "${publishModal.exerciseTitle}"? Once published, students will be able to see and submit this exercise.`}
-      confirmText="Publish"
-      cancelText="Cancel"
-      type="success"
     />
 
     <SuccessModal

@@ -206,32 +206,6 @@ const MyClassLectPage = () => {
     }
   }, [classId, activeTab]);
 
-  // Fixed the publish exercise handler - this was causing the duplicate issue
-  const handlePublishExercise = async (exerciseId) => {
-    try {
-      console.log('Publishing exercise:', exerciseId);
-      
-      // Update the existing exercise instead of creating a new one
-      const exerciseRef = doc(db, 'classes', classId, 'exercises', exerciseId);
-      await updateDoc(exerciseRef, {
-        status: 'active',
-        publishedAt: new Date(),
-        updatedAt: new Date() // Track when it was last updated
-      });
-      
-      console.log('Exercise published successfully');
-      
-      // Refresh exercises to show updated status immediately
-      await fetchExercises();
-      
-      // 🆕 ADDED: Refresh students to update total exercise count
-      await fetchStudents();
-      
-    } catch (error) {
-      console.error('Error publishing exercise:', error);
-      throw error; // Rethrow to handle in component
-    }
-  };
 
   const handleEditExercise = (exerciseId) => {
     console.log('Edit exercise:', exerciseId);
@@ -361,7 +335,6 @@ const handleDeleteExercise = async (exerciseId) => {
         onTabChange={setActiveTab}
         onSearchChange={setSearchTerm}
         onStatusFilterChange={setStatusFilter}
-        onPublishExercise={handlePublishExercise}
         onEditExercise={handleEditExercise}
         onDeleteExercise={handleDeleteExercise}
         onDraftExerciseClick={handleDraftExerciseClick}

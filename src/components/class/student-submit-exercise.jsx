@@ -1,26 +1,33 @@
-// src/components/class/student-submit-class.jsx
+// src/components/class/student-submit-exercise.jsx
 import React from 'react';
 import '../../styles/submit-exercise.css';
 
 const StudentSubmitClass = ({
-  // Exercise data props (unchanged)
+  // Exercise data props
   exercise,
   loading,
   
-  // File upload props (unchanged)
+  // File upload props
   selectedFile,
   dragOver,
   uploading,
   
-  // Form data props (unchanged)
+  // Form data props
   additionalComments,
   
-  // 🆕 NEW: Submission states
-  submissionStatus,
+  // Submission states
   submitted,
   validationMessage,
   
-  // Event handlers (unchanged)
+  // 🆕 FIXED: Correct props that match parent
+  existingSubmission,
+  editCount,
+  maxEdits,
+  isSubmissionDisabled,
+  submissionButtonText,
+  canEdit, // 🆕 NEW: Editing permission
+  
+  // Event handlers
   onFileSelect,
   onDragOver,
   onDragLeave,
@@ -40,6 +47,13 @@ const StudentSubmitClass = ({
 
   // 🚨 Get submission status message
   const getSubmissionStatusMessage = () => {
+    if (isPastDue() && !submitted) {
+      return {
+        type: 'error',
+        text: '⏰ Assignment is past due - submission is no longer allowed'
+      };
+    }
+    
     if (submitted && isPastDue()) {
       const dueDate = exercise.dueDate.toDate ? exercise.dueDate.toDate() : new Date(exercise.dueDate);
       const submissionDate = new Date(); // or actual submission date if available
@@ -49,9 +63,14 @@ const StudentSubmitClass = ({
         text: `Assignment was submitted ${daysLate} day${daysLate > 1 ? 's' : ''} late`
       };
     } else if (submitted) {
+      const remainingEdits = maxEdits - editCount;
+      let text = 'Assignment submitted successfully';
+      if (remainingEdits > 0 && !isPastDue()) {
+        text += ` (${remainingEdits} edit${remainingEdits === 1 ? '' : 's'} remaining)`;
+      }
       return {
         type: 'success',
-        text: 'Assignment submitted successfully'
+        text: text
       };
     }
     return null;
@@ -64,7 +83,7 @@ const StudentSubmitClass = ({
     <div className="se-upload-section">
       <h3 className="se-section-title">Submit Your ERD</h3>
       
-      {/* 🚨 NEW: Validation Message Display */}
+      {/* 🚨 Validation Message Display */}
       {validationMessage && (
         <div className={`se-validation-message ${validationMessage.type}`}>
           {validationMessage.text}
@@ -74,10 +93,10 @@ const StudentSubmitClass = ({
       {!selectedFile ? (
         // Upload area when no file selected
         <div 
-          className={`se-upload-area ${dragOver ? 'se-drag-over' : ''} ${submitted ? 'se-disabled' : ''}`}
-          onDragOver={!submitted ? onDragOver : undefined}
-          onDragLeave={!submitted ? onDragLeave : undefined}
-          onDrop={!submitted ? onDrop : undefined}
+          className={`se-upload-area ${dragOver ? 'se-drag-over' : ''} ${!canEdit ? 'se-disabled' : ''}`}
+          onDragOver={canEdit ? onDragOver : undefined}
+          onDragLeave={canEdit ? onDragLeave : undefined}
+          onDrop={canEdit ? onDrop : undefined}
         >
           <div className="se-upload-icon">📁</div>
           <h4>Upload Your ERD Diagram</h4>
@@ -93,11 +112,11 @@ const StudentSubmitClass = ({
             onChange={onFileSelect}
             className="se-file-input"
             id="erd-file-input"
-            disabled={submitted}
+            disabled={!canEdit}
           />
           <label 
             htmlFor="erd-file-input" 
-            className={`se-browse-btn ${submitted ? 'disabled' : ''}`}
+            className={`se-browse-btn ${!canEdit ? 'disabled' : ''}`}
           >
             Choose File
           </label>
@@ -111,7 +130,7 @@ const StudentSubmitClass = ({
               <span className="se-file-size">
                 {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
               </span>
-              {!submitted && (
+              {canEdit && (
                 <button 
                   onClick={onRemoveFile}
                   className="se-remove-file-btn"
@@ -143,7 +162,7 @@ const StudentSubmitClass = ({
         onChange={(e) => onCommentsChange(e.target.value)}
         className="se-comments-textarea"
         rows="4"
-        disabled={submitted}
+        disabled={!canEdit}
       />
     </div>
   );
@@ -169,13 +188,13 @@ const StudentSubmitClass = ({
 
   return (
     <div className="se-container">
-      {/* ✅ HEADER - Same as My Classes */}
+      {/* HEADER */}
       <div className="se-header">
         <h1 className="se-title">My Exercises</h1>
         <p className="se-subtitle">View available exercises and submit your answers</p>
       </div>
 
-      {/* ✅ SECTION WRAPPER - Same structure as My Classes */}
+      {/* SECTION WRAPPER */}
       <div className="se-section">
         <div className="se-section-header">
           <h2 className="se-section-title">
@@ -183,7 +202,7 @@ const StudentSubmitClass = ({
           </h2>
         </div>
 
-        {/* 🎉 STATUS MESSAGE - Success/Warning/Error */}
+        {/* STATUS MESSAGE - Success/Warning/Error */}
         {statusMessage && (
           <div className={`se-status-banner se-status-${statusMessage.type}`}>
             <div className="se-status-content">
@@ -198,14 +217,14 @@ const StudentSubmitClass = ({
           </div>
         )}
 
-        {/* ✅ EXERCISE CONTENT - Two column responsive layout */}
+        {/* EXERCISE CONTENT - Two column responsive layout */}
         <div className="se-exercise-content">
           {/* Left panel - Instructions */}
           <div className="se-instructions-panel">
             <h3 className="se-panel-title">Exercise Instructions</h3>
             <div className="se-instructions-content">
               
-              {/* 📝 EXERCISE DESCRIPTION */}
+              {/* EXERCISE DESCRIPTION */}
               <div className="se-exercise-description">
                 <h4>Description:</h4>
                 <div className="se-description-text">
@@ -213,7 +232,7 @@ const StudentSubmitClass = ({
                 </div>
               </div>
 
-              {/* 📅 DUE DATE AND MARKS INFO */}
+              {/* DUE DATE AND MARKS INFO */}
               <div className="se-due-info">
                 <div className="se-info-item">
                   <strong>Due Date:</strong> 
@@ -226,7 +245,7 @@ const StudentSubmitClass = ({
                 </div>
               </div>
 
-              {/* 💡 SUBMISSION GUIDELINES */}
+              {/* SUBMISSION GUIDELINES */}
               <div className="se-guidelines">
                 <h4>Submission Guidelines:</h4>
                 <ul>
@@ -235,6 +254,8 @@ const StudentSubmitClass = ({
                   <li>Keep diagram clear and well-organized</li>
                   <li>Ensure all text is readable</li>
                   <li>High resolution images are preferred</li>
+                  <li> <strong>Submit before due date</strong></li>
+                  <li> <strong>Maximum 2 edits allowed</strong></li>
                 </ul>
               </div>
             </div>
@@ -247,7 +268,7 @@ const StudentSubmitClass = ({
             
             {/* Submit button section */}
             <div className="se-submit-section">
-              {/* 🔄 UPLOAD STATUS */}
+              {/* UPLOAD STATUS */}
               {uploading && (
                 <div className="se-upload-progress">
                   <div className="se-progress-bar">
@@ -259,21 +280,25 @@ const StudentSubmitClass = ({
                 </div>
               )}
 
-              {/* 📤 SUBMIT BUTTON - ALLOWS LATE SUBMISSION */}
+              {/* 🆕 FIXED: Submit button with proper logic */}
               <button
                 onClick={onSubmitExercise}
-                disabled={!selectedFile || uploading || submitted}
-                className={`se-submit-btn ${submitted ? 'submitted' : ''}`}
+                disabled={!selectedFile || isSubmissionDisabled}
+                className={`se-submit-btn ${isSubmissionDisabled ? 'disabled' : ''}`}
               >
-                {submitted ? '✅ Submitted' : 
-                 uploading ? 'Uploading...' : 
-                 'Submit Exercise'}
+                {submissionButtonText}
               </button>
 
-              {/* 🎉 SUBMISSION CONFIRMATION */}
-              {submitted && (
+              {/* SUBMISSION CONFIRMATION */}
+              {submitted && !isPastDue() && editCount < maxEdits && (
                 <p className="se-submitted-note">
-                  Your exercise has been successfully submitted and is ready for grading.
+                  Your exercise has been submitted. You can still edit and resubmit before the due date.
+                </p>
+              )}
+              
+              {submitted && (isPastDue() || editCount >= maxEdits) && (
+                <p className="se-submitted-note">
+                  Your exercise has been submitted and is ready for grading.
                 </p>
               )}
             </div>

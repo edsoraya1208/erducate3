@@ -37,7 +37,7 @@ const SubmitExercise = () => {
   const [submitted, setSubmitted] = useState(false);
   const [validationMessage, setValidationMessage] = useState(null);
   
-  // 🆕 NEW: Track existing submission data
+  // Track existing submission data
   const [existingSubmission, setExistingSubmission] = useState(null);
   const [editCount, setEditCount] = useState(0);
   const [maxEdits] = useState(2); // Maximum allowed edits
@@ -47,6 +47,15 @@ const SubmitExercise = () => {
       loadExerciseAndSubmissionData();
     }
   }, [classId, exerciseId, user]);
+
+  /**
+   * 🆕 NEW: Helper function to check if due date has passed
+   */
+  const isPastDue = () => {
+    if (!exercise?.dueDate) return false;
+    const dueDate = exercise.dueDate.toDate ? exercise.dueDate.toDate() : new Date(exercise.dueDate);
+    return new Date() > dueDate;
+  };
 
   /**
    * 📚 Load exercise data AND check for existing submission
@@ -69,7 +78,7 @@ const SubmitExercise = () => {
       setExercise(exerciseData);
       console.log('✅ Exercise loaded:', exerciseData.title);
       
-      // 🔍 Check for existing submission in studentProgress
+      // Check for existing submission in studentProgress
       const progressDocId = `${user.uid}_${classId}_${exerciseId}`;
       const progressRef = doc(db, 'studentProgress', progressDocId);
       const progressDoc = await getDoc(progressRef);
@@ -85,15 +94,6 @@ const SubmitExercise = () => {
           submitted: progressData.submitted,
           maxEdits
         });
-        
-        // 🚫 Check if max edits reached
-        if ((progressData.editCount || 0) >= maxEdits) {
-          showValidationMessage(
-            `⚠️ Maximum edit attempts (${maxEdits}) reached. You cannot resubmit this exercise.`, 
-            'error', 
-            0 // Don't auto-hide this message
-          );
-        }
       } else {
         console.log('📝 No existing submission found');
         setExistingSubmission(null);
@@ -192,13 +192,19 @@ const SubmitExercise = () => {
   };
 
   /**
-   * 🚀 Handle submission - WITH EDIT LIMIT ENFORCEMENT
+   * 🚀 Handle submission - WITH DUE DATE AND EDIT LIMIT ENFORCEMENT
    */
   const handleSubmitExercise = async () => {
     // Clear validation messages
     setValidationMessage(null);
 
-    // ⚠️ Validation checks - WITH VISUAL FEEDBACK
+    // 🆕 NEW: Check due date FIRST
+    if (isPastDue()) {
+      showValidationMessage('❌ Cannot submit - assignment is past due date', 'error');
+      return;
+    }
+
+    // ⚠️ Validation checks
     if (!selectedFile) {
       showValidationMessage('❌ Please select a file to submit', 'error');
       return;
@@ -209,7 +215,7 @@ const SubmitExercise = () => {
       return;
     }
 
-    // 🚫 NEW: Check edit limit BEFORE proceeding
+    // Check edit limit BEFORE proceeding
     if (existingSubmission && editCount >= maxEdits) {
       showValidationMessage(
         `🚫 Maximum edit attempts (${maxEdits}) reached. You cannot resubmit this exercise.`, 
@@ -222,7 +228,7 @@ const SubmitExercise = () => {
       setUploading(true);
       console.log('📤 Starting exercise submission...');
 
-      // 🔥 STEP 1: Upload to Firebase Storage
+      // STEP 1: Upload to Firebase Storage
       console.log('🔥 Uploading file to Firebase Storage...');
       const timestamp = Date.now();
       const fileName = `${timestamp}_${selectedFile.name}`;
@@ -244,7 +250,7 @@ const SubmitExercise = () => {
       };
       console.log('✅ File uploaded to Firebase Storage:', uploadData.url);
 
-      // 🔍 STEP 2: Check for existing submission
+      // STEP 2: Check for existing submission
       const submissionsRef = collection(db, 'submissions');
       const existingQuery = query(
         submissionsRef,
@@ -254,7 +260,7 @@ const SubmitExercise = () => {
       );
       const existingDocs = await getDocs(existingQuery);
 
-      // 📝 STEP 3: Create submission data
+      // STEP 3: Create submission data
       const submissionData = {
         studentId: user.uid,
         studentName: user.displayName || user.email || 'Unknown Student',
@@ -278,7 +284,7 @@ const SubmitExercise = () => {
         feedback: null
       };
 
-      // 💾 STEP 4: Save to Firestore
+      // STEP 4: Save to Firestore
       if (existingDocs.empty) {
         await addDoc(submissionsRef, submissionData);
         console.log('✅ New submission created successfully');
@@ -291,7 +297,7 @@ const SubmitExercise = () => {
         console.log('✅ Submission updated successfully (resubmission)');
       }
 
-      // 🔧 STEP 5: FIXED - Save to studentProgress with proper edit counting
+      // STEP 5: Save to studentProgress with proper edit counting
       const newEditCount = existingSubmission ? (editCount + 1) : 0;
       
       const progressData = {
@@ -305,20 +311,20 @@ const SubmitExercise = () => {
         fileName: selectedFile.name,
         submittedAt: new Date(),
         updatedAt: new Date(),
-        editCount: newEditCount, // 🔧 FIXED: Properly increment edit count
+        editCount: newEditCount,
         maxEdits: maxEdits,
-        isResubmission: existingSubmission ? true : false // Track if this is a resubmission
+        isResubmission: existingSubmission ? true : false
       };
 
       const progressDocId = `${user.uid}_${classId}_${exerciseId}`;
       await setDoc(doc(db, 'studentProgress', progressDocId), progressData);
       console.log('✅ Progress saved with editCount:', newEditCount);
 
-      // 🆕 Update local state
+      // Update local state
       setExistingSubmission(progressData);
       setEditCount(newEditCount);
 
-      // 🎉 SUCCESS STATE - Better UX
+      // SUCCESS STATE
       setSubmitted(true);
       setUploading(false);
       
@@ -362,15 +368,21 @@ const SubmitExercise = () => {
 
   // 🔧 Check if submission is disabled
   const isSubmissionDisabled = () => {
-    return uploading || (existingSubmission && editCount >= maxEdits);
+    return uploading || isPastDue() || (existingSubmission && editCount >= maxEdits);
   };
 
   // 🔧 Get submission button text
   const getSubmissionButtonText = () => {
     if (uploading) return 'Uploading...';
+    if (isPastDue()) return 'Past Due Date';
     if (!existingSubmission) return 'Submit Exercise';
     if (editCount >= maxEdits) return 'Maximum Edits Reached';
     return `Resubmit (${maxEdits - editCount} edit${maxEdits - editCount === 1 ? '' : 's'} left)`;
+  };
+
+  // 🔧 Check if editing is allowed
+  const canEdit = () => {
+    return !isPastDue() && (!existingSubmission || editCount < maxEdits);
   };
 
   return (
@@ -398,12 +410,13 @@ const SubmitExercise = () => {
         submitted={submitted}
         validationMessage={validationMessage}
         
-        // 🆕 NEW: Edit limit props
+        // 🆕 FIXED: Pass correct props that match UI component
         existingSubmission={existingSubmission}
         editCount={editCount}
         maxEdits={maxEdits}
         isSubmissionDisabled={isSubmissionDisabled()}
         submissionButtonText={getSubmissionButtonText()}
+        canEdit={canEdit()} // 🆕 NEW: Pass editing permission
         
         // Event handlers
         onFileSelect={handleFileSelect}

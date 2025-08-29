@@ -14,7 +14,8 @@ import {
 
 import { db, auth } from '../../config/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../../config/firebase';import { useAuthState } from 'react-firebase-hooks/auth';
+import { storage } from '../../config/firebase';
+import { useAuthState } from 'react-firebase-hooks/auth';
 import StudentSubmitClass from '../../components/class/student-submit-exercise';
 import DashboardHeader from '../../components/dashboard/dashboard-header';
 import { setDoc } from 'firebase/firestore';
@@ -32,23 +33,29 @@ const SubmitExercise = () => {
   const [uploading, setUploading] = useState(false);
   const [additionalComments, setAdditionalComments] = useState('');
   
-  // 🆕 NEW: Submission and validation states
+  // Submission and validation states
   const [submitted, setSubmitted] = useState(false);
   const [validationMessage, setValidationMessage] = useState(null);
+  
+  // 🆕 NEW: Track existing submission data
+  const [existingSubmission, setExistingSubmission] = useState(null);
+  const [editCount, setEditCount] = useState(0);
+  const [maxEdits] = useState(2); // Maximum allowed edits
 
   useEffect(() => {
-    if (classId && exerciseId) {
-      loadExerciseData();
+    if (classId && exerciseId && user) {
+      loadExerciseAndSubmissionData();
     }
-  }, [classId, exerciseId]);
+  }, [classId, exerciseId, user]);
 
   /**
-   * 📚 Load exercise data from Firebase
+   * 📚 Load exercise data AND check for existing submission
    */
-  const loadExerciseData = async () => {
+  const loadExerciseAndSubmissionData = async () => {
     try {
-      console.log('📚 Loading exercise data for:', { classId, exerciseId });
+      console.log('📚 Loading exercise and submission data for:', { classId, exerciseId, userId: user.uid });
       
+      // Load exercise data
       const exerciseRef = doc(db, 'classes', classId, 'exercises', exerciseId);
       const exerciseDoc = await getDoc(exerciseRef);
       
@@ -62,8 +69,40 @@ const SubmitExercise = () => {
       setExercise(exerciseData);
       console.log('✅ Exercise loaded:', exerciseData.title);
       
+      // 🔍 Check for existing submission in studentProgress
+      const progressDocId = `${user.uid}_${classId}_${exerciseId}`;
+      const progressRef = doc(db, 'studentProgress', progressDocId);
+      const progressDoc = await getDoc(progressRef);
+      
+      if (progressDoc.exists()) {
+        const progressData = progressDoc.data();
+        setExistingSubmission(progressData);
+        setEditCount(progressData.editCount || 0);
+        setSubmitted(progressData.submitted || false);
+        
+        console.log('📋 Found existing submission:', {
+          editCount: progressData.editCount || 0,
+          submitted: progressData.submitted,
+          maxEdits
+        });
+        
+        // 🚫 Check if max edits reached
+        if ((progressData.editCount || 0) >= maxEdits) {
+          showValidationMessage(
+            `⚠️ Maximum edit attempts (${maxEdits}) reached. You cannot resubmit this exercise.`, 
+            'error', 
+            0 // Don't auto-hide this message
+          );
+        }
+      } else {
+        console.log('📝 No existing submission found');
+        setExistingSubmission(null);
+        setEditCount(0);
+        setSubmitted(false);
+      }
+      
     } catch (error) {
-      console.error('❌ Error loading exercise:', error);
+      console.error('❌ Error loading data:', error);
     } finally {
       setLoading(false);
     }
@@ -74,9 +113,11 @@ const SubmitExercise = () => {
    */
   const showValidationMessage = (text, type = 'error', duration = 4000) => {
     setValidationMessage({ text, type });
-    setTimeout(() => {
-      setValidationMessage(null);
-    }, duration);
+    if (duration > 0) {
+      setTimeout(() => {
+        setValidationMessage(null);
+      }, duration);
+    }
   };
 
   /**
@@ -95,7 +136,7 @@ const SubmitExercise = () => {
       return;
     }
 
-    // ✅ File size validation (10MB = 10 * 1024 * 1024 bytes)
+    // ✅ File size validation (2MB = 2 * 1024 * 1024 bytes)
     const maxSize = 2 * 1024 * 1024;
     if (file.size > maxSize) {
       showValidationMessage('❌ File too large. Maximum size is 2MB.', 'error');
@@ -151,7 +192,7 @@ const SubmitExercise = () => {
   };
 
   /**
-   * 🚀 Handle submission - WITH BETTER UX
+   * 🚀 Handle submission - WITH EDIT LIMIT ENFORCEMENT
    */
   const handleSubmitExercise = async () => {
     // Clear validation messages
@@ -168,6 +209,15 @@ const SubmitExercise = () => {
       return;
     }
 
+    // 🚫 NEW: Check edit limit BEFORE proceeding
+    if (existingSubmission && editCount >= maxEdits) {
+      showValidationMessage(
+        `🚫 Maximum edit attempts (${maxEdits}) reached. You cannot resubmit this exercise.`, 
+        'error'
+      );
+      return;
+    }
+
     try {
       setUploading(true);
       console.log('📤 Starting exercise submission...');
@@ -180,7 +230,7 @@ const SubmitExercise = () => {
       const uploadResult = await uploadBytes(storageRef, selectedFile);
       const downloadURL = await getDownloadURL(uploadResult.ref);
 
-      // Create data object (same structure as cloudinary)
+      // Create data object
       const uploadData = {
         url: downloadURL,
         originalName: selectedFile.name,
@@ -188,10 +238,9 @@ const SubmitExercise = () => {
         fileType: selectedFile.type,
         fileSize: selectedFile.size,
         createdAt: new Date().toISOString(),
-        width: null,  // ADD THIS LINE
+        width: null,
         height: null,
-        format: selectedFile.name.split('.').pop() // ADD THIS LINE
-
+        format: selectedFile.name.split('.').pop()
       };
       console.log('✅ File uploaded to Firebase Storage:', uploadData.url);
 
@@ -242,7 +291,9 @@ const SubmitExercise = () => {
         console.log('✅ Submission updated successfully (resubmission)');
       }
 
-      // 🆕 STEP 5: CRITICAL - Save to studentProgress collection + edit attempts
+      // 🔧 STEP 5: FIXED - Save to studentProgress with proper edit counting
+      const newEditCount = existingSubmission ? (editCount + 1) : 0;
+      
       const progressData = {
         studentId: user.uid,
         classId: classId,
@@ -251,37 +302,47 @@ const SubmitExercise = () => {
         isCompleted: true,
         status: 'completed',
         fileUrl: uploadData.url,
-        fileName: selectedFile.name, // 🔧 FIXED: Use selectedFile.name instead of file.name
+        fileName: selectedFile.name,
         submittedAt: new Date(),
         updatedAt: new Date(),
-        editCount: 0, // 🆕 ADD: Track edit attempts (0 = initial submission)
-        maxEdits: 2   // 🆕 ADD: Maximum allowed edits
+        editCount: newEditCount, // 🔧 FIXED: Properly increment edit count
+        maxEdits: maxEdits,
+        isResubmission: existingSubmission ? true : false // Track if this is a resubmission
       };
 
       const progressDocId = `${user.uid}_${classId}_${exerciseId}`;
       await setDoc(doc(db, 'studentProgress', progressDocId), progressData);
-      console.log('✅ Progress saved to studentProgress:', progressData);
+      console.log('✅ Progress saved with editCount:', newEditCount);
+
+      // 🆕 Update local state
+      setExistingSubmission(progressData);
+      setEditCount(newEditCount);
 
       // 🎉 SUCCESS STATE - Better UX
       setSubmitted(true);
       setUploading(false);
       
-      // Show success message
-      showValidationMessage('🎉 Exercise submitted successfully!', 'success', 3000);
+      // Show success message with edit info
+      const isResubmission = existingSubmission !== null;
+      const remainingEdits = maxEdits - newEditCount;
+      
+      let successMsg = '🎉 Exercise submitted successfully!';
+      if (isResubmission && remainingEdits > 0) {
+        successMsg += ` (${remainingEdits} edit${remainingEdits === 1 ? '' : 's'} remaining)`;
+      } else if (isResubmission && remainingEdits === 0) {
+        successMsg += ' (No more edits allowed)';
+      }
+      
+      showValidationMessage(successMsg, 'success', 3000);
 
-      // 🆕 CHANGED: Scroll to top on success
+      // Scroll to top on success
       window.scrollTo({ top: 0, behavior: 'smooth' });
-
-      // ❌ REMOVED: Auto navigate after few seconds
-      // setTimeout(() => {
-      //   navigate(`/student/class/${classId}`);
-      // }, 30000);
       
     } catch (error) {
       console.error('❌ Error submitting exercise:', error);
       setUploading(false);
       
-      // 🚨 Better error handling with visual feedback
+      // Better error handling with visual feedback
       if (error.message.includes('Upload failed')) {
         showValidationMessage('❌ File upload failed. Please try again.', 'error');
       } else if (error.message.includes('Firestore')) {
@@ -297,6 +358,19 @@ const SubmitExercise = () => {
    */
   const handleGoBack = () => {
     navigate(`/student/class/${classId}`);
+  };
+
+  // 🔧 Check if submission is disabled
+  const isSubmissionDisabled = () => {
+    return uploading || (existingSubmission && editCount >= maxEdits);
+  };
+
+  // 🔧 Get submission button text
+  const getSubmissionButtonText = () => {
+    if (uploading) return 'Uploading...';
+    if (!existingSubmission) return 'Submit Exercise';
+    if (editCount >= maxEdits) return 'Maximum Edits Reached';
+    return `Resubmit (${maxEdits - editCount} edit${maxEdits - editCount === 1 ? '' : 's'} left)`;
   };
 
   return (
@@ -320,9 +394,16 @@ const SubmitExercise = () => {
         // Form data
         additionalComments={additionalComments}
         
-        // 🆕 NEW: Submission states
+        // Submission states
         submitted={submitted}
         validationMessage={validationMessage}
+        
+        // 🆕 NEW: Edit limit props
+        existingSubmission={existingSubmission}
+        editCount={editCount}
+        maxEdits={maxEdits}
+        isSubmissionDisabled={isSubmissionDisabled()}
+        submissionButtonText={getSubmissionButtonText()}
         
         // Event handlers
         onFileSelect={handleFileSelect}

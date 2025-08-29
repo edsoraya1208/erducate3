@@ -83,6 +83,13 @@ const StudentSubmitClass = ({
     <div className="se-upload-section">
       <h3 className="se-section-title">Submit Your ERD</h3>
       
+      {/* 🆕 DISPLAY CURRENT FILE NAME WHEN EDITING (only when no new file selected) */}
+      {(!selectedFile && submitted && existingSubmission?.fileName) && (
+        <p className="se-file-selected">
+          📁 Current file: {existingSubmission.fileName}
+        </p>
+      )}
+      
       {/* 🚨 Validation Message Display */}
       {validationMessage && (
         <div className={`se-validation-message ${validationMessage.type}`}>
@@ -99,7 +106,7 @@ const StudentSubmitClass = ({
           onDrop={canEdit ? onDrop : undefined}
         >
           <div className="se-upload-icon">📁</div>
-          <h4>Upload Your ERD Diagram</h4>
+          <h4>{submitted ? 'Upload New ERD Diagram' : 'Upload Your ERD Diagram'}</h4>
           <p>Drag and drop your image here or click to browse</p>
           
           <p className="upload-hint">

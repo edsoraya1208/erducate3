@@ -754,3 +754,14 @@ ransform: translateY(-1px);
 .dashboard-main .se-container {
   padding-top: 0;
 }
+
+.se-file-selected {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 10px 0;
+  color: #34943a;
+  font-size: 0.9em;
+  font-weight: 500;
+}

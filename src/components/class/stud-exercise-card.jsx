@@ -36,8 +36,7 @@ const StudExerciseCard = ({
         show: true,
         enabled: false,
         text: 'Edit Disabled',
-        class: 'stud-mc-btn-edit-disabled',
-        tooltip: 'Cannot edit - Exercise has been graded'
+        class: 'stud-mc-btn-edit-disabled'
       };
     }
     
@@ -50,20 +49,29 @@ const StudExerciseCard = ({
         show: true,
         enabled: false,
         text: 'Edit Disabled',
-        class: 'stud-mc-btn-edit-disabled',
-        tooltip: 'Edit limit reached (2 edits used)'
+        class: 'stud-mc-btn-edit-disabled'
       };
     }
     
     const editsLeft = maxEdits - editCount;
-    const buttonText = editsLeft === maxEdits ? 'Edit Submission' : `Edit Submission (${editsLeft} left)`;
-    const buttonClass = editsLeft === 1 ? 'stud-mc-btn-edit-warning' : 'stud-mc-btn-edit';
+    
+    // Better UX: Just show "Edit Submission" but make button orange when 1 edit left
+    // Tooltip shows on hover with remaining edits info
+    if (editsLeft === 1) {
+      return {
+        show: true,
+        enabled: true,
+        text: 'Edit Submission',
+        class: 'stud-mc-btn-edit-warning',
+        tooltip: '1 edit remaining'
+      };
+    }
     
     return {
       show: true,
       enabled: true,
-      text: buttonText,
-      class: buttonClass
+      text: 'Edit Submission',
+      class: 'stud-mc-btn-edit'
     };
   };
 
@@ -80,7 +88,7 @@ const StudExerciseCard = ({
         enabled: false,
         text: 'View Results',
         class: 'stud-mc-btn-results-disabled',
-        tooltip: 'Results are not ready yet - Exercise not graded'
+        tooltip: 'Results not ready - Exercise not graded yet'
       };
     }
     
@@ -163,7 +171,7 @@ const StudExerciseCard = ({
         </div>
         
         <div className="stud-mc-card-actions">
-          {/* Show Start Exercise button only for non-submitted exercises */}
+          {/* Start Exercise button for non-submitted exercises */}
           {actionButton && (
             <button 
               className={`stud-mc-action-btn ${actionButton.class}`}
@@ -173,7 +181,7 @@ const StudExerciseCard = ({
             </button>
           )}
           
-          {/* Show Edit and View Results buttons for submitted exercises */}
+          {/* Edit and View Results buttons for submitted exercises */}
           {(editButton.show || viewResultsButton.show) && (
             <div className="stud-mc-submitted-actions">
               {/* Edit Submission Button */}
@@ -182,6 +190,7 @@ const StudExerciseCard = ({
                   className={`stud-mc-action-btn ${editButton.class}`}
                   onClick={editButton.enabled ? () => onEditSubmission(exercise.classId, exercise.id) : undefined}
                   disabled={!editButton.enabled}
+                  data-tooltip={editButton.tooltip || ''}
                 >
                   {editButton.text}
                 </button>
@@ -193,7 +202,7 @@ const StudExerciseCard = ({
                   className={`stud-mc-action-btn ${viewResultsButton.class}`}
                   onClick={viewResultsButton.enabled ? () => onViewResults(exercise.classId, exercise.id) : undefined}
                   disabled={!viewResultsButton.enabled}
-                  title={viewResultsButton.tooltip || ''}
+                  data-tooltip={viewResultsButton.tooltip || ''}
                 >
                   {viewResultsButton.text}
                 </button>

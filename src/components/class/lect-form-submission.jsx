@@ -24,6 +24,9 @@ export const useFormSubmission = () => {
     if (!formData.rubricFile && !isPublishedExercise) {
       errors.rubricFile = 'Please fill out this field.';
     }
+    if (!formData.dueDate || !formData.dueDate.trim()) {
+      errors.dueDate = 'Please fill out this field.';
+    }
 
     return errors;
   };

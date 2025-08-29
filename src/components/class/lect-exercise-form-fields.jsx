@@ -54,16 +54,22 @@ const LectExerciseFormFields = ({
       {/* 📅 DUE DATE & MARKS ROW */}
       <div className="form-row">
         <div className="form-group half-width">
-          <label htmlFor="dueDate" className="ce-form-label">Due Date</label>
+          <label htmlFor="dueDate" className="ce-form-label">Due Date *</label>
           <input
             type="date"
             id="dueDate"
             name="dueDate"
             value={formData.dueDate}
             onChange={handleInputChange}
-            className="form-input"
+            className={`form-input ${validationErrors.dueDate ? 'error' : ''}`}
             disabled={isLoading}
           />
+          {validationErrors.dueDate && (
+            <div className="validation-error">
+              <span className="error-icon">⚠️</span>
+              <span className="error-message">{validationErrors.dueDate}</span>
+            </div>
+          )}
         </div>
         <div className="form-group half-width">
           <label htmlFor="totalMarks" className="ce-form-label">Total Marks</label>

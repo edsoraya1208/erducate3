@@ -11,7 +11,8 @@ import {
   where,
   orderBy 
 } from 'firebase/firestore';
-import { db, auth } from '../../config/firebase';
+import { ref, deleteObject } from 'firebase/storage';
+import { db, auth, storage } from '../../config/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useUser } from '../../contexts/UserContext';
 import LecturerDashboard from '../../components/dashboard/lecturer-dashboard';
@@ -167,22 +168,134 @@ const Dashboard1 = () => {
     });
   };
 
-  // Delete class from Firebase and update state
-  const handleDeleteClass = async () => {
-    setDeleteModal(prev => ({ ...prev, isDeleting: true }));
+// FIXED: Complete delete function that removes class and ALL associated data
+const handleDeleteClass = async () => {
+  setDeleteModal(prev => ({ ...prev, isDeleting: true }));
+  
+  try {
+    const classId = deleteModal.classId;
+    const className = deleteModal.className;
     
-    try {
-      await deleteDoc(doc(db, 'classes', deleteModal.classId));
-      setClasses(classes.filter(cls => cls.id !== deleteModal.classId));
+    console.log('🗑️ Starting complete class deletion for:', classId);
+    
+    // STEP 1: GET ALL EXERCISES IN THIS CLASS
+    const exercisesRef = collection(db, 'classes', classId, 'exercises');
+    const exercisesSnapshot = await getDocs(exercisesRef);
+    
+    console.log(`Found ${exercisesSnapshot.size} exercises to delete`);
+    
+    // STEP 2: DELETE EACH EXERCISE AND ITS ASSOCIATED DATA
+    for (const exerciseDoc of exercisesSnapshot.docs) {
+      const exerciseId = exerciseDoc.id;
+      const exerciseData = exerciseDoc.data();
       
-      setDeleteModal({ isOpen: false, classId: null, className: '', isDeleting: false });
-      alert(`Class "${deleteModal.className}" deleted successfully.`);
-    } catch (error) {
-      console.error('Error deleting class:', error);
-      alert('Error deleting class. Please try again.');
-      setDeleteModal(prev => ({ ...prev, isDeleting: false }));
+      console.log('Deleting exercise:', exerciseId);
+      
+      // Delete exercise files (answer scheme & rubric) from storage
+      if (exerciseData.answerScheme?.storageName) {
+        try {
+          const answerSchemeRef = ref(storage, `answer-schemes/${exerciseData.answerScheme.storageName}`);
+          await deleteObject(answerSchemeRef);
+          console.log('✅ Deleted answer scheme:', exerciseData.answerScheme.storageName);
+        } catch (error) {
+          console.log('⚠️ Answer scheme delete failed:', error);
+        }
+      }
+      
+      if (exerciseData.rubric?.storageName) {
+        try {
+          const rubricRef = ref(storage, `rubrics/${exerciseData.rubric.storageName}`);
+          await deleteObject(rubricRef);
+          console.log('✅ Deleted rubric:', exerciseData.rubric.storageName);
+        } catch (error) {
+          console.log('⚠️ Rubric delete failed:', error);
+        }
+      }
+      
+      // Delete student submission files from storage
+      const submissionsQuery = query(
+        collection(db, 'submissions'),
+        where('classId', '==', classId),
+        where('exerciseId', '==', exerciseId)
+      );
+      const submissionsSnapshot = await getDocs(submissionsQuery);
+      
+      for (const submissionDoc of submissionsSnapshot.docs) {
+        const submissionData = submissionDoc.data();
+        
+        if (submissionData.cloudinaryPublicId) {
+          try {
+            const filePath = submissionData.cloudinaryPublicId;
+            const fileRef = ref(storage, filePath);
+            await deleteObject(fileRef);
+            console.log('✅ Deleted student submission file:', filePath);
+          } catch (error) {
+            console.log('⚠️ Student submission file delete failed:', error);
+          }
+        }
+      }
+      
+      // Delete submission records from Firestore
+      const deleteSubmissionPromises = [];
+      submissionsSnapshot.forEach((submissionDoc) => {
+        deleteSubmissionPromises.push(deleteDoc(submissionDoc.ref));
+      });
+      await Promise.all(deleteSubmissionPromises);
+      
+      // Delete student progress records
+      const progressQuery = query(
+        collection(db, 'studentProgress'),
+        where('classId', '==', classId),
+        where('exerciseId', '==', exerciseId)
+      );
+      const progressSnapshot = await getDocs(progressQuery);
+      const deleteProgressPromises = [];
+      progressSnapshot.forEach((doc) => {
+        deleteProgressPromises.push(deleteDoc(doc.ref));
+      });
+      await Promise.all(deleteProgressPromises);
+      
+      // Delete the exercise document itself
+      await deleteDoc(exerciseDoc.ref);
+      
+      console.log(`✅ Exercise ${exerciseId} completely deleted`);
     }
-  };
+    
+    // STEP 3: DELETE ANY REMAINING CLASS-LEVEL DATA
+    // Delete any student classes (enrollement) for this class
+    const enrollmentsQuery = query(
+      collection(db, 'studentClasses'), // or whatever collection you use for student-class relationships
+      where('classId', '==', classId)
+    );
+    try {
+      const enrollmentsSnapshot = await getDocs(enrollmentsQuery);
+      const deleteEnrollmentPromises = [];
+      enrollmentsSnapshot.forEach((doc) => {
+        deleteEnrollmentPromises.push(deleteDoc(doc.ref));
+      });
+      await Promise.all(deleteEnrollmentPromises);
+      console.log('✅ Deleted class enrollments');
+    } catch (error) {
+      console.log('⚠️ No enrollments to delete or error:', error);
+    }
+    
+    // STEP 4: FINALLY DELETE THE CLASS DOCUMENT
+    await deleteDoc(doc(db, 'classes', classId));
+    
+    // Update local state
+    setClasses(classes.filter(cls => cls.id !== classId));
+    
+    console.log('🎉 Class and all associated data deleted completely!');
+    
+    setDeleteModal({ isOpen: false, classId: null, className: '', isDeleting: false });
+    alert(`Class "${className}" and all its data deleted successfully.`);
+    
+  } catch (error) {
+    console.error('❌ Error deleting class:', error);
+    alert('Error deleting class. Please try again.');
+    setDeleteModal(prev => ({ ...prev, isDeleting: false }));
+  }
+};
 
   // Close delete modal if not currently deleting
   const closeDeleteModal = () => {

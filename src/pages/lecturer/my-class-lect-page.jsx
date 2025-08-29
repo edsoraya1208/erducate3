@@ -14,7 +14,7 @@ import {
 import { db, auth } from '../../config/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import LecturerMyClass from '../../components/class/lecturer-my-class';
-import DashboardHeader from '../../components/dashboard/dashboard-header'; // Import the new component
+import DashboardHeader from '../../components/dashboard/dashboard-header';
 
 const MyClassLectPage = () => {
   const { classId } = useParams();
@@ -111,10 +111,12 @@ const MyClassLectPage = () => {
     }
   };
 
+  // 🔧 FIXED: Proper student completion counting
   const fetchStudents = async () => {
     try {
       console.log('Fetching students for classId:', classId);
       
+      // Step 1: Get enrolled students
       const enrollmentsQuery = query(
         collection(db, 'studentClasses'),
         where('classId', '==', classId)
@@ -123,17 +125,52 @@ const MyClassLectPage = () => {
       
       console.log('Found enrollments:', enrollmentSnapshot.size);
       
+      // Step 2: Get ALL active exercises count for this class
+      const activeExercisesQuery = query(
+        collection(db, 'classes', classId, 'exercises'),
+        where('status', '==', 'active')
+      );
+      const activeExercisesSnapshot = await getDocs(activeExercisesQuery);
+      const totalActiveExercises = activeExercisesSnapshot.size;
+      
+      console.log('Total active exercises:', totalActiveExercises);
+      
+      // Step 3: Get completion data from studentProgress collection
+      const progressQuery = query(
+        collection(db, 'studentProgress'),
+        where('classId', '==', classId)
+      );
+      const progressSnapshot = await getDocs(progressQuery);
+      
+      // Create a map of student completions
+      const completionMap = {};
+      progressSnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.submitted && data.status === 'completed') {
+          if (!completionMap[data.studentId]) {
+            completionMap[data.studentId] = 0;
+          }
+          completionMap[data.studentId]++;
+        }
+      });
+      
+      console.log('Completion map:', completionMap);
+      
       const studentsData = [];
       
       enrollmentSnapshot.forEach((enrollmentDoc) => {
         const enrollmentData = enrollmentDoc.data();
-        console.log('Enrollment data:', enrollmentData);
+        const studentId = enrollmentData.studentId;
+        const completedCount = completionMap[studentId] || 0;
+        
+        console.log(`Student ${studentId}: ${completedCount}/${totalActiveExercises} completed`);
         
         studentsData.push({
-          id: enrollmentData.studentId,
+          id: studentId,
           name: enrollmentData.studentName || enrollmentData.displayName || 'Unknown Student',
           email: enrollmentData.studentEmail || 'No email',
-          completedExercises: enrollmentData.completedExercises || 0,
+          completedExercises: completedCount,
+          totalExercises: totalActiveExercises,
           enrolledAt: enrollmentData.enrolledAt || enrollmentData.createdAt
         });
       });
@@ -187,6 +224,9 @@ const MyClassLectPage = () => {
       // Refresh exercises to show updated status immediately
       await fetchExercises();
       
+      // 🆕 ADDED: Refresh students to update total exercise count
+      await fetchStudents();
+      
     } catch (error) {
       console.error('Error publishing exercise:', error);
       throw error; // Rethrow to handle in component
@@ -194,28 +234,70 @@ const MyClassLectPage = () => {
   };
 
   const handleEditExercise = (exerciseId) => {
-  console.log('Edit exercise:', exerciseId);
-  navigate(`/lecturer/create-exercise?classId=${classId}&draftId=${exerciseId}`);
-};
+    console.log('Edit exercise:', exerciseId);
+    navigate(`/lecturer/create-exercise?classId=${classId}&draftId=${exerciseId}`);
+  };
 
   // Enhanced delete handler with better error handling
-  const handleDeleteExercise = async (exerciseId) => {
-    try {
-      console.log('Deleting exercise:', exerciseId);
-      
-      const exerciseRef = doc(db, 'classes', classId, 'exercises', exerciseId);
-      await deleteDoc(exerciseRef);
-      
-      console.log('Exercise deleted successfully');
-      
-      // Refresh exercises immediately after deletion
-      await fetchExercises();
-      
-    } catch (error) {
-      console.error('Error deleting exercise:', error);
-      throw error; // Rethrow to handle in component
-    }
-  };
+  // Enhanced delete handler with cleanup of studentProgress records
+const handleDeleteExercise = async (exerciseId) => {
+  try {
+    console.log('Deleting exercise:', exerciseId);
+    
+    // STEP 1: Delete the exercise document
+    const exerciseRef = doc(db, 'classes', classId, 'exercises', exerciseId);
+    await deleteDoc(exerciseRef);
+    
+    // STEP 2: 🔧 NEW - Clean up studentProgress records for this exercise
+    console.log('Cleaning up student progress records...');
+    const progressQuery = query(
+      collection(db, 'studentProgress'),
+      where('classId', '==', classId),
+      where('exerciseId', '==', exerciseId)
+    );
+    
+    const progressSnapshot = await getDocs(progressQuery);
+    console.log(`Found ${progressSnapshot.size} progress records to delete`);
+    
+    // Delete all matching studentProgress documents
+    const deletePromises = [];
+    progressSnapshot.forEach((progressDoc) => {
+      deletePromises.push(deleteDoc(progressDoc.ref));
+    });
+    
+    await Promise.all(deletePromises);
+    console.log('Student progress records cleaned up');
+    
+    // STEP 3: Also clean up submissions for this exercise
+    console.log('Cleaning up submission records...');
+    const submissionsQuery = query(
+      collection(db, 'submissions'),
+      where('classId', '==', classId),
+      where('exerciseId', '==', exerciseId)
+    );
+    
+    const submissionsSnapshot = await getDocs(submissionsQuery);
+    console.log(`Found ${submissionsSnapshot.size} submission records to delete`);
+    
+    const deleteSubmissionPromises = [];
+    submissionsSnapshot.forEach((submissionDoc) => {
+      deleteSubmissionPromises.push(deleteDoc(submissionDoc.ref));
+    });
+    
+    await Promise.all(deleteSubmissionPromises);
+    console.log('Submission records cleaned up');
+    
+    console.log('Exercise deleted successfully with full cleanup');
+    
+    // STEP 4: Refresh both exercises and students after deletion
+    await fetchExercises();
+    await fetchStudents(); // This will now show correct counts
+    
+  } catch (error) {
+    console.error('Error deleting exercise:', error);
+    throw error; // Rethrow to handle in component
+  }
+};
 
   const handleDraftExerciseClick = (exerciseId) => {
     handleEditExercise(exerciseId);
@@ -230,8 +312,6 @@ const MyClassLectPage = () => {
     console.log('Create new exercise');
     navigate(`/lecturer/create-exercise?classId=${classId}`);
   };
-
-  // Enhanced logout with draft warning
 
   const filteredExercises = exercises.filter(exercise => {
     const matchesSearch = exercise.title?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -254,7 +334,6 @@ const MyClassLectPage = () => {
 
   return (
     <div className="my-class-page">
-      {/* REPLACED: Old header with shared component */}
       <DashboardHeader 
         userType="lecturer"
         currentPage="class"

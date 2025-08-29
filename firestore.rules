@@ -35,12 +35,12 @@ service cloud.firestore {
     }
     
     // Users collection rules
-match /users/{userId} {
-  allow create: if isAuthenticated() && isOwner(userId);
-  allow update: if isAuthenticated() && isOwner(userId);
-  allow read: if isAuthenticated();  // ← ALLOW ANY AUTHENTICATED USER TO READ
-  allow delete: if false;
-}
+    match /users/{userId} {
+      allow create: if isAuthenticated() && isOwner(userId);
+      allow update: if isAuthenticated() && isOwner(userId);
+      allow read: if isAuthenticated();  // Any authenticated user can read user profiles
+      allow delete: if false; // Users shouldn't delete their own accounts via app
+    }
 
     // Classes collection rules
     match /classes/{classId} {
@@ -53,7 +53,7 @@ match /users/{userId} {
                               resource.data.instructorId == request.auth.uid;
     }
     
-    // Student-Class enrollment collection
+    // 🔧 FIXED: Student-Class enrollment collection - proper cascade delete support
     match /studentClasses/{enrollmentId} {
       allow create: if isAuthenticated() && 
                        isStudent() && 
@@ -68,25 +68,23 @@ match /users/{userId} {
                        isLecturer() && 
                        ownsClass(resource.data.classId);
       
-      allow delete: if isAuthenticated() && 
-                       isStudent() && 
-                       resource.data.studentId == request.auth.uid;
+      // 🔧 FIXED: Allow students to leave class AND lecturers to remove students
+      allow delete: if isAuthenticated() && (
+        (isStudent() && resource.data.studentId == request.auth.uid) ||
+        (isLecturer() && ownsClass(resource.data.classId))
+      );
     }
     
-    // FIXED: Exercise rules that work with your data structure
+    // Exercise rules - same as before
     match /classes/{classId}/exercises/{exerciseId} {
-      // Lecturers can do everything with their class exercises
       allow create, update, delete: if isAuthenticated() && ownsClass(classId);
-      
-      // Students can read exercises if they're students (enrollment check in app)
-      // Lecturers can read their own class exercises
       allow read: if isAuthenticated() && (
         ownsClass(classId) ||
         isStudent()
       );
     }
     
-    // FIXED: Student progress tracking with proper rules
+    // 🔧 FIXED: Student progress - allow proper cleanup
     match /studentProgress/{progressId} {
       // Students can create their own progress
       allow create: if isAuthenticated() && 
@@ -104,10 +102,14 @@ match /users/{userId} {
                     exists(/databases/$(database)/documents/classes/$(resource.data.classId)) &&
                     get(/databases/$(database)/documents/classes/$(resource.data.classId)).data.instructorId == request.auth.uid;
       
-      allow delete: if false;
+      // 🔧 FIXED: Allow lecturers to delete progress when cleaning up exercises/classes
+      allow delete: if isAuthenticated() && 
+                      isLecturer() && 
+                      exists(/databases/$(database)/documents/classes/$(resource.data.classId)) &&
+                      get(/databases/$(database)/documents/classes/$(resource.data.classId)).data.instructorId == request.auth.uid;
     }
     
-    // 🆕 ADD THIS: Submissions collection rules
+    // 🔧 FIXED: Submissions collection - allow proper cleanup  
     match /submissions/{submissionId} {
       // Students can create/update their own submissions
       allow create, update: if isAuthenticated() && 
@@ -131,7 +133,11 @@ match /users/{userId} {
                       exists(/databases/$(database)/documents/classes/$(resource.data.classId)) &&
                       get(/databases/$(database)/documents/classes/$(resource.data.classId)).data.instructorId == request.auth.uid;
       
-      allow delete: if false;
+      // 🔧 FIXED: Allow lecturers to delete submissions when cleaning up exercises/classes
+      allow delete: if isAuthenticated() && 
+                      isLecturer() && 
+                      exists(/databases/$(database)/documents/classes/$(resource.data.classId)) &&
+                      get(/databases/$(database)/documents/classes/$(resource.data.classId)).data.instructorId == request.auth.uid;
     }
     
     // Deny all other collections

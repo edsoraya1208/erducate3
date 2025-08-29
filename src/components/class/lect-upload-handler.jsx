@@ -17,9 +17,9 @@ export const useUploadHandler = () => {
       // 📝 TYPE VALIDATION based on field
       if (fileType === 'answerSchemeFile') {
         // Answer scheme should be images only
-        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
         if (!allowedTypes.includes(file.type)) {
-          throw new Error('Answer scheme must be an image file (JPG, PNG, GIF, WebP)');
+          throw new Error('Answer scheme must be an image file (JPG, PNG)');
         }
       } else if (fileType === 'rubricFile') {
         // Rubric should be PDF only

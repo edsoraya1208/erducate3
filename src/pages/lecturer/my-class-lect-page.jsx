@@ -11,7 +11,8 @@ import {
   getDoc,
   deleteDoc
 } from 'firebase/firestore';
-import { db, auth } from '../../config/firebase';
+import { ref, deleteObject } from 'firebase/storage';
+import { db, auth, storage } from '../../config/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import LecturerMyClass from '../../components/class/lecturer-my-class';
 import DashboardHeader from '../../components/dashboard/dashboard-header';
@@ -111,7 +112,6 @@ const MyClassLectPage = () => {
     }
   };
 
-  // 🔧 FIXED: Proper student completion counting
   const fetchStudents = async () => {
     try {
       console.log('Fetching students for classId:', classId);
@@ -206,72 +206,108 @@ const MyClassLectPage = () => {
     }
   }, [classId, activeTab]);
 
-
   const handleEditExercise = (exerciseId) => {
     console.log('Edit exercise:', exerciseId);
     navigate(`/lecturer/create-exercise?classId=${classId}&draftId=${exerciseId}`);
   };
 
-  // Enhanced delete handler with better error handling
-  // Enhanced delete handler with cleanup of studentProgress records
-const handleDeleteExercise = async (exerciseId) => {
-  try {
+  // FIXED: Complete delete function that safely removes everything for ONE exercise only
+  const handleDeleteExercise = async (exerciseId) => {
     console.log('Deleting exercise:', exerciseId);
-    
-    // STEP 1: Delete the exercise document
-    const exerciseRef = doc(db, 'classes', classId, 'exercises', exerciseId);
-    await deleteDoc(exerciseRef);
-    
-    // STEP 2: 🔧 NEW - Clean up studentProgress records for this exercise
-    console.log('Cleaning up student progress records...');
-    const progressQuery = query(
-      collection(db, 'studentProgress'),
-      where('classId', '==', classId),
-      where('exerciseId', '==', exerciseId)
-    );
-    
-    const progressSnapshot = await getDocs(progressQuery);
-    console.log(`Found ${progressSnapshot.size} progress records to delete`);
-    
-    // Delete all matching studentProgress documents
-    const deletePromises = [];
-    progressSnapshot.forEach((progressDoc) => {
-      deletePromises.push(deleteDoc(progressDoc.ref));
-    });
-    
-    await Promise.all(deletePromises);
-    console.log('Student progress records cleaned up');
-    
-    // STEP 3: Also clean up submissions for this exercise
-    console.log('Cleaning up submission records...');
-    const submissionsQuery = query(
-      collection(db, 'submissions'),
-      where('classId', '==', classId),
-      where('exerciseId', '==', exerciseId)
-    );
-    
-    const submissionsSnapshot = await getDocs(submissionsQuery);
-    console.log(`Found ${submissionsSnapshot.size} submission records to delete`);
-    
-    const deleteSubmissionPromises = [];
-    submissionsSnapshot.forEach((submissionDoc) => {
-      deleteSubmissionPromises.push(deleteDoc(submissionDoc.ref));
-    });
-    
-    await Promise.all(deleteSubmissionPromises);
-    console.log('Submission records cleaned up');
-    
-    console.log('Exercise deleted successfully with full cleanup');
-    
-    // STEP 4: Refresh both exercises and students after deletion
-    await fetchExercises();
-    await fetchStudents(); // This will now show correct counts
-    
-  } catch (error) {
-    console.error('Error deleting exercise:', error);
-    throw error; // Rethrow to handle in component
-  }
-};
+    try {
+      // STEP 1: GET EXERCISE DATA FIRST (before deleting!)
+      const exerciseRef = doc(db, 'classes', classId, 'exercises', exerciseId);
+      const exerciseSnap = await getDoc(exerciseRef);
+      const exerciseData = exerciseSnap.data();
+      
+      console.log('Exercise data:', exerciseData);
+      
+      // STEP 2: DELETE EXERCISE FILES (answer scheme & rubric)
+      if (exerciseData) {
+        console.log('Checking for exercise files...');
+        
+        // Delete answer scheme file
+        if (exerciseData.answerScheme?.storageName) {
+          try {
+            const answerSchemeRef = ref(storage, `answer-schemes/${exerciseData.answerScheme.storageName}`);
+            await deleteObject(answerSchemeRef);
+            console.log('Deleted answer scheme:', exerciseData.answerScheme.storageName);
+          } catch (error) {
+            console.log('Answer scheme delete failed:', error);
+          }
+        }
+        
+        // Delete rubric file  
+        if (exerciseData.rubric?.storageName) {
+          try {
+            const rubricRef = ref(storage, `rubrics/${exerciseData.rubric.storageName}`);
+            await deleteObject(rubricRef);
+            console.log('Deleted rubric:', exerciseData.rubric.storageName);
+          } catch (error) {
+            console.log('Rubric delete failed:', error);
+          }
+        }
+      }
+      
+      // STEP 3: DELETE STUDENT SUBMISSION FILES FROM STORAGE
+      const submissionsQuery = query(
+        collection(db, 'submissions'),
+        where('classId', '==', classId),
+        where('exerciseId', '==', exerciseId)
+      );
+      const submissionsSnapshot = await getDocs(submissionsQuery);
+      
+      // Delete each student's submission file from storage
+      for (const submissionDoc of submissionsSnapshot.docs) {
+        const submissionData = submissionDoc.data();
+        
+        if (submissionData.cloudinaryPublicId) {
+          try {
+            // Extract the file path from publicId (format: submissions/userId/filename)
+            const filePath = submissionData.cloudinaryPublicId;
+            const fileRef = ref(storage, filePath);
+            await deleteObject(fileRef);
+            console.log('Deleted student submission file:', filePath);
+          } catch (error) {
+            console.log('Student submission file delete failed:', error);
+          }
+        }
+      }
+      
+      // STEP 4: DELETE THE EXERCISE DOCUMENT FROM FIRESTORE
+      await deleteDoc(exerciseRef);
+      
+      // STEP 5: DELETE STUDENT PROGRESS RECORDS
+      const progressQuery = query(
+        collection(db, 'studentProgress'),
+        where('classId', '==', classId),
+        where('exerciseId', '==', exerciseId)
+      );
+      const progressSnapshot = await getDocs(progressQuery);
+      const deleteProgressPromises = [];
+      progressSnapshot.forEach((doc) => {
+        deleteProgressPromises.push(deleteDoc(doc.ref));
+      });
+      await Promise.all(deleteProgressPromises);
+      
+      // STEP 6: DELETE SUBMISSION RECORDS
+      const deleteSubmissionPromises = [];
+      submissionsSnapshot.forEach((submissionDoc) => {
+        deleteSubmissionPromises.push(deleteDoc(submissionDoc.ref));
+      });
+      await Promise.all(deleteSubmissionPromises);
+      
+      console.log('Exercise and all related data deleted completely!');
+      
+      // Refresh data
+      await fetchExercises();
+      await fetchStudents();
+      
+    } catch (error) {
+      console.error('Error deleting exercise:', error);
+      throw error;
+    }
+  };
 
   const handleDraftExerciseClick = (exerciseId) => {
     handleEditExercise(exerciseId);

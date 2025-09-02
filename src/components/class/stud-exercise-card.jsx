@@ -32,12 +32,8 @@ const StudExerciseCard = ({
     );
     
     if (isGraded) {
-      return {
-        show: true,
-        enabled: false,
-        text: 'Edit Disabled',
-        class: 'stud-mc-btn-edit-disabled'
-      };
+      // 🆕 HIDE button completely when graded (better UX)
+      return { show: false };
     }
     
     // Check edit count (default to 0 if not set)
@@ -45,12 +41,8 @@ const StudExerciseCard = ({
     const maxEdits = progress?.maxEdits || 2;
     
     if (editCount >= maxEdits) {
-      return {
-        show: true,
-        enabled: false,
-        text: 'Edit Disabled',
-        class: 'stud-mc-btn-edit-disabled'
-      };
+      // 🆕 HIDE button completely when max edits reached (better UX)
+      return { show: false };
     }
     
     const editsLeft = maxEdits - editCount;
@@ -184,7 +176,7 @@ const StudExerciseCard = ({
           {/* Edit and View Results buttons for submitted exercises */}
           {(editButton.show || viewResultsButton.show) && (
             <div className="stud-mc-submitted-actions">
-              {/* Edit Submission Button */}
+              {/* Edit Submission Button - Only show if editButton.show is true */}
               {editButton.show && (
                 <button 
                   className={`stud-mc-action-btn ${editButton.class}`}

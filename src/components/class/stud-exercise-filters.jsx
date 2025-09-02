@@ -6,11 +6,12 @@ const StudExerciseFilters = ({
   setSearchTerm, 
   statusFilter, 
   setStatusFilter,
-  exerciseCount 
+  exerciseCount,
+  sectionTitle // Add this prop
 }) => {
   return (
     <div className="stud-mc-section-header">
-      <h2 className="stud-mc-section-title">Available Exercises</h2>
+      <h2 className="stud-mc-section-title">{sectionTitle}</h2>
       <p className="stud-mc-class-meta-inline">
         {exerciseCount} exercise{exerciseCount !== 1 ? 's' : ''} available
       </p>

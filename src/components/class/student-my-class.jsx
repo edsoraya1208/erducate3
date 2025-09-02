@@ -329,6 +329,9 @@ const StudentMyClass = ({ classId }) => {
     return classData?.name || classData?.title || 'My Exercises';
   };
 
+  const isLoadingClassData = classId && (!classData || (!classData.name && !classData.title));
+
+
   if (error) {
     return (
       <div className="stud-mc-container">
@@ -341,51 +344,53 @@ const StudentMyClass = ({ classId }) => {
     );
   }
 
-  return (
-    <div className="stud-mc-container">
-      <div className="stud-mc-header">
-        <h1 className="stud-mc-title">My Exercises</h1>
-        <p className="stud-mc-subtitle">View available exercises and submit your answers</p>
-      </div>
-  
-      <div className="stud-mc-section">
-        <StudExerciseFilters
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
-          exerciseCount={filteredExercises.length}
-        />
-        
-        {filteredExercises.length === 0 && !exercisesLoading ? (
-          <div className="stud-mc-empty-state">
-            {exercises.length === 0 ? (
-              <div className="stud-mc-empty-content">
-                <div className="stud-mc-empty-icon">📝</div>
-                <h3>No exercises available</h3>
-                <p>No exercises available{classId ? ' for this class' : '. Make sure you\'re enrolled in a class'}.</p>
-              </div>
-            ) : (
-              <div className="stud-mc-empty-content">
-                <div className="stud-mc-empty-icon">🔍</div>
-                <h3>No exercises found</h3>
-                <p>No exercises match your current search and filter criteria. Try adjusting your search term or filter.</p>
-              </div>
-            )}
-          </div>
-        ) : (
-          <StudExerciseList
-            exercises={filteredExercises}
-            loading={exercisesLoading}
-            showClassName={!classId}
-            onStartExercise={handleStartExercise}
-            onEditSubmission={handleEditSubmission}
-            onViewResults={handleViewResults}
-          />
-        )}
-      </div>
+  // Update the render section in your StudentMyClass component
+return (
+  <div className="stud-mc-container">
+    <div className="stud-mc-header">
+      <h1 className="stud-mc-title">My Exercises</h1>
+      <p className="stud-mc-subtitle">View available exercises and submit your answers</p>
     </div>
-  );
+
+    <div className="stud-mc-section">
+      <StudExerciseFilters
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        exerciseCount={filteredExercises.length}
+        sectionTitle={getSectionTitle()} // Call the function here
+      />
+      
+      {filteredExercises.length === 0 && !exercisesLoading ? (
+        <div className="stud-mc-empty-state">
+          {exercises.length === 0 ? (
+            <div className="stud-mc-empty-content">
+              <div className="stud-mc-empty-icon">📝</div>
+              <h3>No exercises available</h3>
+              <p>No exercises available{classId ? ' for this class' : '. Make sure you\'re enrolled in a class'}.</p>
+            </div>
+          ) : (
+            <div className="stud-mc-empty-content">
+              <div className="stud-mc-empty-icon">🔍</div>
+              <h3>No exercises found</h3>
+              <p>No exercises match your current search and filter criteria. Try adjusting your search term or filter.</p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <StudExerciseList
+          exercises={filteredExercises}
+          loading={exercisesLoading}
+          showClassName={!classId}
+          onStartExercise={handleStartExercise}
+          onEditSubmission={handleEditSubmission}
+          onViewResults={handleViewResults}
+        />
+      )}
+    </div>
+  </div>
+);
 };
 
 export default StudentMyClass;

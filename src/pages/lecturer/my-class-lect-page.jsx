@@ -303,10 +303,10 @@ const MyClassLectPage = () => {
       for (const submissionDoc of submissionsSnapshot.docs) {
         const submissionData = submissionDoc.data();
         
-        if (submissionData.cloudinaryPublicId) {
+        if (submissionData.firebasePublicId) {
           try {
             // Extract the file path from publicId (format: submissions/userId/filename)
-            const filePath = submissionData.cloudinaryPublicId;
+            const filePath = submissionData.firebasePublicId;
             const fileRef = ref(storage, filePath);
             await deleteObject(fileRef);
             console.log('Deleted student submission file:', filePath);

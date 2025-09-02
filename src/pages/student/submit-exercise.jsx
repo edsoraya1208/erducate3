@@ -270,7 +270,7 @@ const SubmitExercise = () => {
         exerciseTitle: exercise.title,
         fileURL: uploadData.url,
         fileName: uploadData.originalName,
-        cloudinaryPublicId: uploadData.publicId,
+        firebasePublicId: uploadData.publicId,
         fileType: uploadData.fileType,
         fileSize: uploadData.fileSize,
         imageWidth: uploadData.width || null,

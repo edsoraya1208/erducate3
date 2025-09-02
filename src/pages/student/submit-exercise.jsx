@@ -1,5 +1,5 @@
 // src/pages/student/submit-exercise.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
   collection, 
@@ -13,7 +13,7 @@ import {
 } from 'firebase/firestore';
 
 import { db, auth } from '../../config/firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { storage } from '../../config/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import StudentSubmitClass from '../../components/class/student-submit-exercise';
@@ -191,8 +191,13 @@ const SubmitExercise = () => {
     console.log('📁 File removed');
   };
 
+  // 🔧 FIXED: Use useCallback for comments to prevent re-renders
+  const handleCommentsChange = useCallback((value) => {
+    setAdditionalComments(value);
+  }, []);
+
   /**
-   * 🚀 Handle submission - WITH DUE DATE AND EDIT LIMIT ENFORCEMENT
+   * 🚀 FIXED: Handle submission - WITH PROPER FIREBASE STORAGE OVERRIDE
    */
   const handleSubmitExercise = async () => {
     // Clear validation messages
@@ -228,11 +233,14 @@ const SubmitExercise = () => {
       setUploading(true);
       console.log('📤 Starting exercise submission...');
 
-      // STEP 1: Upload to Firebase Storage
+      // 🔥 STEP 1: FIXED - Use CONSISTENT filename to force override in Firebase Storage
       console.log('🔥 Uploading file to Firebase Storage...');
-      const timestamp = Date.now();
-      const fileName = `${timestamp}_${selectedFile.name}`;
-      const storageRef = ref(storage, `submissions/${user.uid}/${fileName}`);
+      
+      // 🚀 FIXED: Use same filename every time to override previous uploads
+      const consistentFileName = `submission_${classId}_${exerciseId}`;
+      const storageRef = ref(storage, `submissions/${user.uid}/${consistentFileName}`);
+      
+      // Upload new file (this will automatically override the old one with same path)
       const uploadResult = await uploadBytes(storageRef, selectedFile);
       const downloadURL = await getDownloadURL(uploadResult.ref);
 
@@ -240,7 +248,7 @@ const SubmitExercise = () => {
       const uploadData = {
         url: downloadURL,
         originalName: selectedFile.name,
-        publicId: `submissions/${user.uid}/${fileName}`,
+        publicId: `submissions/${user.uid}/${consistentFileName}`,
         fileType: selectedFile.type,
         fileSize: selectedFile.size,
         createdAt: new Date().toISOString(),
@@ -248,7 +256,7 @@ const SubmitExercise = () => {
         height: null,
         format: selectedFile.name.split('.').pop()
       };
-      console.log('✅ File uploaded to Firebase Storage:', uploadData.url);
+      console.log('✅ File uploaded to Firebase Storage (OVERRIDDEN):', uploadData.url);
 
       // STEP 2: Check for existing submission
       const submissionsRef = collection(db, 'submissions');
@@ -284,7 +292,7 @@ const SubmitExercise = () => {
         feedback: null
       };
 
-      // STEP 4: Save to Firestore
+      // STEP 4: Save to Firestore (this DOES override when using same doc)
       if (existingDocs.empty) {
         await addDoc(submissionsRef, submissionData);
         console.log('✅ New submission created successfully');
@@ -418,13 +426,13 @@ const SubmitExercise = () => {
         submissionButtonText={getSubmissionButtonText()}
         canEdit={canEdit()} // 🆕 NEW: Pass editing permission
         
-        // Event handlers
+        // Event handlers - FIXED: Use memoized callback for comments
         onFileSelect={handleFileSelect}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onRemoveFile={handleRemoveFile}
-        onCommentsChange={setAdditionalComments}
+        onCommentsChange={handleCommentsChange} // 🔧 FIXED: Now memoized
         onSubmitExercise={handleSubmitExercise}
         onGoBack={handleGoBack}
       />

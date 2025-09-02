@@ -1,5 +1,5 @@
 // src/components/class/student-submit-exercise.jsx
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import '../../styles/submit-exercise.css';
 
 const StudentSubmitClass = ({
@@ -38,23 +38,23 @@ const StudentSubmitClass = ({
   onGoBack
 }) => {
 
-  // 📅 Helper function to check if assignment is past due
-  const isPastDue = () => {
+  // 📅 Helper function to check if assignment is past due - MEMOIZED TO PREVENT RE-RENDERS
+  const isPastDue = useMemo(() => {
     if (!exercise?.dueDate) return false;
     const dueDate = exercise.dueDate.toDate ? exercise.dueDate.toDate() : new Date(exercise.dueDate);
     return new Date() > dueDate;
-  };
+  }, [exercise?.dueDate]);
 
-  // 🚨 Get submission status message
-  const getSubmissionStatusMessage = () => {
-    if (isPastDue() && !submitted) {
+  // 🚨 Get submission status message - MEMOIZED TO PREVENT RE-RENDERS
+  const statusMessage = useMemo(() => {
+    if (isPastDue && !submitted) {
       return {
         type: 'error',
         text: '⏰ Assignment is past due - submission is no longer allowed'
       };
     }
     
-    if (submitted && isPastDue()) {
+    if (submitted && isPastDue) {
       const dueDate = exercise.dueDate.toDate ? exercise.dueDate.toDate() : new Date(exercise.dueDate);
       const submissionDate = new Date(); // or actual submission date if available
       const daysLate = Math.ceil((submissionDate - dueDate) / (1000 * 60 * 60 * 24));
@@ -65,7 +65,7 @@ const StudentSubmitClass = ({
     } else if (submitted) {
       const remainingEdits = maxEdits - editCount;
       let text = 'Assignment submitted successfully';
-      if (remainingEdits > 0 && !isPastDue()) {
+      if (remainingEdits > 0 && !isPastDue) {
         text += ` (${remainingEdits} edit${remainingEdits === 1 ? '' : 's'} remaining)`;
       }
       return {
@@ -74,12 +74,34 @@ const StudentSubmitClass = ({
       };
     }
     return null;
-  };
+  }, [isPastDue, submitted, maxEdits, editCount, exercise?.dueDate]);
 
-  const statusMessage = getSubmissionStatusMessage();
+  // 🎯 FORMAT DUE DATE: Helper function - MEMOIZED
+  const formattedDueDate = useMemo(() => {
+    if (!exercise?.dueDate) return 'No due date set';
+    
+    try {
+      const date = exercise.dueDate.toDate ? exercise.dueDate.toDate() : new Date(exercise.dueDate);
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      console.warn('Date formatting error:', error);
+      return 'Invalid date format';
+    }
+  }, [exercise?.dueDate]);
 
-  // 📁 File Upload Component 
-  const FileUploadArea = () => (
+  // 🔧 FIXED: Memoize the textarea change handler to prevent re-renders
+  const handleTextareaChange = useCallback((e) => {
+    onCommentsChange(e.target.value);
+  }, [onCommentsChange]);
+
+  // 📁 File Upload Component - MEMOIZED TO PREVENT RE-RENDERS
+  const FileUploadArea = useMemo(() => (
     <div className="se-upload-section">
       <h3 className="se-section-title">Submit Your ERD</h3>
       
@@ -158,40 +180,7 @@ const StudentSubmitClass = ({
         </div>
       )}
     </div>
-  );
-
-  // 💬 Comments Section Component
-  const CommentsSection = () => (
-    <div className="se-comments-section">
-      <h3 className="se-section-title">Additional Comments (Optional)</h3>
-      <textarea
-        value={additionalComments}
-        onChange={(e) => onCommentsChange(e.target.value)}
-        className="se-comments-textarea"
-        rows="4"
-        disabled={!canEdit}
-      />
-    </div>
-  );
-
-  // 🎯 FORMAT DUE DATE: Helper function
-  const formatDueDate = (dueDate) => {
-    if (!dueDate) return 'No due date set';
-    
-    try {
-      const date = dueDate.toDate ? dueDate.toDate() : new Date(dueDate);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch (error) {
-      console.warn('Date formatting error:', error);
-      return 'Invalid date format';
-    }
-  };
+  ), [selectedFile, submitted, existingSubmission?.fileName, validationMessage, dragOver, canEdit, onDragOver, onDragLeave, onDrop, onFileSelect, onRemoveFile]);
 
   return (
     <div className="se-container">
@@ -243,8 +232,8 @@ const StudentSubmitClass = ({
               <div className="se-due-info">
                 <div className="se-info-item">
                   <strong>Due Date:</strong> 
-                  <span className={isPastDue() ? 'se-overdue' : 'se-on-time'}>
-                    {formatDueDate(exercise?.dueDate)}
+                  <span className={isPastDue ? 'se-overdue' : 'se-on-time'}>
+                    {formattedDueDate}
                   </span>
                 </div>
                 <div className="se-info-item">
@@ -270,8 +259,20 @@ const StudentSubmitClass = ({
 
           {/* Right panel - Submission area */}
           <div className="se-submission-panel">
-            <FileUploadArea />
-            <CommentsSection />
+            {FileUploadArea}
+            
+            {/* 💬 FIXED: Comments Section - Now properly memoized to prevent re-renders */}
+            <div className="se-comments-section">
+              <h3 className="se-section-title">Additional Comments (Optional)</h3>
+              <textarea
+                value={additionalComments}
+                onChange={handleTextareaChange} // 🔧 FIXED: Using memoized handler
+                className="se-comments-textarea"
+                rows="4"
+                disabled={!canEdit}
+                placeholder={!canEdit ? "Comments are disabled" : "Enter any additional comments..."}
+              />
+            </div>
             
             {/* Submit button section */}
             <div className="se-submit-section">
@@ -297,13 +298,13 @@ const StudentSubmitClass = ({
               </button>
 
               {/* SUBMISSION CONFIRMATION */}
-              {submitted && !isPastDue() && editCount < maxEdits && (
+              {submitted && !isPastDue && editCount < maxEdits && (
                 <p className="se-submitted-note">
                   Your exercise has been submitted. You can still edit and resubmit before the due date.
                 </p>
               )}
               
-              {submitted && (isPastDue() || editCount >= maxEdits) && (
+              {submitted && (isPastDue || editCount >= maxEdits) && (
                 <p className="se-submitted-note">
                   Your exercise has been submitted and is ready for grading.
                 </p>

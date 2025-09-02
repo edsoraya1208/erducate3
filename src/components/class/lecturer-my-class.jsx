@@ -21,7 +21,12 @@ const ConfirmationModal = ({
       <div className="mc-modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="mc-modal-header">
           <h3 className={`mc-modal-title ${type}`}>{title}</h3>
-          <button className="modal-close" onClick={onClose}>&times;</button>
+            <button 
+              className="modal-close" 
+              onClick={isLoading ? null : onClose}
+              disabled={isLoading}
+              style={isLoading ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+            >&times;</button>
         </div>
         <div className="mc-modal-body">
           <p>{message}</p>

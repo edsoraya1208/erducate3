@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import '../../styles/my-class-lect.css';
 import '../../styles/lecturer-shared-header.css';
 
-// 🆕 NEW: Confirmation Modal Component
+// Confirmation Modal Component
 const ConfirmationModal = ({ 
   isOpen, 
   onClose, 
@@ -11,12 +11,13 @@ const ConfirmationModal = ({
   message, 
   confirmText = "Confirm", 
   cancelText = "Cancel",
-  type = "default" // default, danger, success
+  type = "default", // default, danger, success
+  isLoading = false // NEW: Add loading state
 }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="mc-modal-overlay" onClick={onClose}>
+    <div className="mc-modal-overlay" onClick={isLoading ? null : onClose}>
       <div className="mc-modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="mc-modal-header">
           <h3 className={`mc-modal-title ${type}`}>{title}</h3>
@@ -26,11 +27,21 @@ const ConfirmationModal = ({
           <p>{message}</p>
         </div>
         <div className="mc-modal-actions">
-          <button className="mc-modal-btn mc-modal-btn-cancel" onClick={onClose}>
+          <button 
+            className="mc-modal-btn mc-modal-btn-cancel" 
+            onClick={isLoading ? null : onClose}
+            disabled={isLoading}
+            style={isLoading ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+          >
             {cancelText}
           </button>
-          <button className={`mc-modal-btn mc-modal-btn-confirm ${type}`} onClick={onConfirm}>
-            {confirmText}
+          <button 
+            className={`mc-modal-btn mc-modal-btn-confirm ${type}`} 
+            onClick={onConfirm}
+            disabled={isLoading}
+            style={isLoading ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+          >
+            {isLoading ? 'Deleting...' : confirmText}
           </button>
         </div>
       </div>
@@ -38,7 +49,7 @@ const ConfirmationModal = ({
   );
 };
 
-// 🆕 NEW: Success Modal Component
+// Success Modal Component
 const SuccessModal = ({ isOpen, onClose, title, message }) => {
   if (!isOpen) return null;
 
@@ -71,6 +82,7 @@ const LecturerMyClass = ({
   searchTerm,
   statusFilter,
   loading,
+  deletingExerciseId,
   
   // User data
   getUserDisplayName,
@@ -92,12 +104,12 @@ const LecturerMyClass = ({
   onLogout
 }) => {
 
-  // 🆕 NEW: Modal states
+  // Modal states
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, exerciseId: null, exerciseTitle: '' });
   const [successModal, setSuccessModal] = useState({ isOpen: false, title: '', message: '' });
+  const [isDeleting, setIsDeleting] = useState(false); // NEW: Local deleting state for modal
 
-  
-  // 🆕 NEW: Handle delete confirmation
+  // Handle delete confirmation
   const handleDeleteConfirmation = (exerciseId, exerciseTitle) => {
     setDeleteModal({ 
       isOpen: true, 
@@ -106,9 +118,9 @@ const LecturerMyClass = ({
     });
   };
 
-
-  // 🆕 NEW: Confirm delete action
+  // Confirm delete action
   const confirmDelete = async () => {
+    setIsDeleting(true); // Show "Deleting..." on modal button
     try {
       await onDeleteExercise(deleteModal.exerciseId);
       setDeleteModal({ isOpen: false, exerciseId: null, exerciseTitle: '' });
@@ -120,6 +132,8 @@ const LecturerMyClass = ({
     } catch (error) {
       console.error('Delete failed:', error);
       // Handle error - maybe show an error modal
+    } finally {
+      setIsDeleting(false); // Reset deleting state
     }
   };
 
@@ -219,7 +233,10 @@ return (
                   </div>
                 </div>
               ) : (
-                exercises.map((exercise) => (
+                exercises.map((exercise) => {
+                  const isExerciseDeleting = deletingExerciseId === exercise.id;
+                  
+                  return (
                   <div 
                     key={exercise.id} 
                    className="exercise-card clickable"
@@ -235,27 +252,26 @@ return (
                     
                     <div className="exercise-meta">
                       <p>Due: {exercise.dueDate || 'No due date'}</p>
-                      {/* Show submissions count only if available */}
                       {exercise.submissionCount !== undefined && (
                         <p>{exercise.submissionCount} submission{exercise.submissionCount !== 1 ? 's' : ''}</p>
                       )}
-                      {/* Show marks only if available */}
                       {exercise.totalMarks !== undefined && exercise.totalMarks > 0 && (
                         <p>{exercise.totalMarks} marks</p>
                       )}
                     </div>
 
                     <div className="exercise-actions">
-               {exercise.status === 'draft' ? (
-                  <button 
-                    className="btn btn-delete"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteConfirmation(exercise.id, exercise.title);
-                    }}
-                  >
-                    Delete
-                  </button>
+                      {exercise.status === 'draft' ? (
+                        <button 
+                          className="btn btn-delete"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteConfirmation(exercise.id, exercise.title);
+                          }}
+                          disabled={isExerciseDeleting}
+                        >
+                          {isExerciseDeleting ? 'Deleting...' : 'Delete'}
+                        </button>
                       ) : exercise.status === 'active' ? (
                         <>
                           <button 
@@ -273,8 +289,9 @@ return (
                               e.stopPropagation();
                               handleDeleteConfirmation(exercise.id, exercise.title);
                             }}
+                            disabled={isExerciseDeleting}
                           >
-                            Delete
+                            {isExerciseDeleting ? 'Deleting...' : 'Delete'}
                           </button>
                         </>
                       ) : (
@@ -294,14 +311,15 @@ return (
                               e.stopPropagation();
                               handleDeleteConfirmation(exercise.id, exercise.title);
                             }}
+                            disabled={isExerciseDeleting}
                           >
-                            Delete
+                            {isExerciseDeleting ? 'Deleting...' : 'Delete'}
                           </button>
                         </>
                       )}
                     </div>
                   </div>
-                ))
+                )})
               )}
             </div>
           </div>
@@ -352,6 +370,7 @@ return (
       confirmText="Delete"
       cancelText="Cancel"
       type="danger"
+      isLoading={isDeleting} // Pass the deleting state to modal
     />
 
     <SuccessModal

@@ -29,7 +29,7 @@ const MyClassLectPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [loading, setLoading] = useState(true);
-  const [isPublishedExercise, setIsPublishedExercise] = useState(false);
+  const [deletingExerciseId, setDeletingExerciseId] = useState(null);
 
   const [user] = useAuthState(auth);
 
@@ -40,7 +40,6 @@ const MyClassLectPage = () => {
   // Add beforeunload handler for unsaved changes warning
   useEffect(() => {
     const handleBeforeUnload = (e) => {
-      // Check if there are any draft exercises
       const hasDrafts = exercises.some(exercise => exercise.status === 'draft');
       
       if (hasDrafts) {
@@ -113,53 +112,43 @@ const MyClassLectPage = () => {
   };
 
   const fetchStudentCount = async () => {
-  try {
-    console.log('Fetching student count for classId:', classId);
-    
-    // Simple query - just count enrollments
-    const enrollmentsQuery = query(
-      collection(db, 'studentClasses'),
-      where('classId', '==', classId)
-    );
-    const enrollmentSnapshot = await getDocs(enrollmentsQuery);
-    
-    console.log('Found enrollments:', enrollmentSnapshot.size);
-    
-    // Create minimal student data for count display only
-    const studentsData = [];
-    enrollmentSnapshot.forEach((enrollmentDoc) => {
-      const enrollmentData = enrollmentDoc.data();
-      studentsData.push({
-        id: enrollmentData.studentId,
-        name: enrollmentData.studentName || enrollmentData.displayName || 'Unknown Student',
-        email: enrollmentData.studentEmail || 'No email',
-        completedExercises: 0, // Will be calculated when switching to students tab
-        totalExercises: 0,     // Will be calculated when switching to students tab
-        enrolledAt: enrollmentData.enrolledAt || enrollmentData.createdAt
-      });
-    });
-    
-    console.log('Student count loaded:', studentsData.length);
-    setStudents(studentsData);
-    
-  } catch (error) {
-    console.error('Error fetching student count:', error);
-    setStudents([]);
-  }
-};
-
-  const fetchStudents = async () => {
     try {
-      console.log('Fetching students for classId:', classId);
-      
-      // Step 1: Get enrolled students
       const enrollmentsQuery = query(
         collection(db, 'studentClasses'),
         where('classId', '==', classId)
       );
       const enrollmentSnapshot = await getDocs(enrollmentsQuery);
       
-      console.log('Found enrollments:', enrollmentSnapshot.size);
+      // Create minimal student data for count display only
+      const studentsData = [];
+      enrollmentSnapshot.forEach((enrollmentDoc) => {
+        const enrollmentData = enrollmentDoc.data();
+        studentsData.push({
+          id: enrollmentData.studentId,
+          name: enrollmentData.studentName || enrollmentData.displayName || 'Unknown Student',
+          email: enrollmentData.studentEmail || 'No email',
+          completedExercises: 0,
+          totalExercises: 0,
+          enrolledAt: enrollmentData.enrolledAt || enrollmentData.createdAt
+        });
+      });
+      
+      setStudents(studentsData);
+      
+    } catch (error) {
+      console.error('Error fetching student count:', error);
+      setStudents([]);
+    }
+  };
+
+  const fetchStudents = async () => {
+    try {
+      // Step 1: Get enrolled students
+      const enrollmentsQuery = query(
+        collection(db, 'studentClasses'),
+        where('classId', '==', classId)
+      );
+      const enrollmentSnapshot = await getDocs(enrollmentsQuery);
       
       // Step 2: Get ALL active exercises count for this class
       const activeExercisesQuery = query(
@@ -168,8 +157,6 @@ const MyClassLectPage = () => {
       );
       const activeExercisesSnapshot = await getDocs(activeExercisesQuery);
       const totalActiveExercises = activeExercisesSnapshot.size;
-      
-      console.log('Total active exercises:', totalActiveExercises);
       
       // Step 3: Get completion data from studentProgress collection
       const progressQuery = query(
@@ -190,16 +177,12 @@ const MyClassLectPage = () => {
         }
       });
       
-      console.log('Completion map:', completionMap);
-      
       const studentsData = [];
       
       enrollmentSnapshot.forEach((enrollmentDoc) => {
         const enrollmentData = enrollmentDoc.data();
         const studentId = enrollmentData.studentId;
         const completedCount = completionMap[studentId] || 0;
-        
-        console.log(`Student ${studentId}: ${completedCount}/${totalActiveExercises} completed`);
         
         studentsData.push({
           id: studentId,
@@ -211,7 +194,6 @@ const MyClassLectPage = () => {
         });
       });
       
-      console.log('Final students data:', studentsData);
       setStudents(studentsData);
       
     } catch (error) {
@@ -220,60 +202,53 @@ const MyClassLectPage = () => {
     }
   };
 
- useEffect(() => {
-  if (classId) {
-    const fetchInitialData = async () => {
-      setLoading(true);
-      try {
-        if (activeTab === 'exercises') {
-          // FAST PATH: Load exercises + lightweight student count simultaneously
-          await Promise.all([
-            fetchExercises(),
-            fetchStudentCount()  // ← NEW: Super fast student count only
-          ]);
-        } else if (activeTab === 'students') {
-          // FULL PATH: Load complete student data with completion calculations
-          await Promise.all([
-            fetchStudents(),  // ← EXISTING: Full student data for students tab
-            fetchExercises()  // Also load exercises for context
-          ]);
+  useEffect(() => {
+    if (classId) {
+      const fetchInitialData = async () => {
+        setLoading(true);
+        try {
+          if (activeTab === 'exercises') {
+            await Promise.all([
+              fetchExercises(),
+              fetchStudentCount()
+            ]);
+          } else if (activeTab === 'students') {
+            await Promise.all([
+              fetchStudents(),
+              fetchExercises()
+            ]);
+          }
+        } finally {
+          setLoading(false);
         }
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchInitialData();
-  }
-}, [classId, activeTab]);
-
+      };
+      
+      fetchInitialData();
+    }
+  }, [classId, activeTab]);
 
   const handleEditExercise = (exerciseId) => {
-    console.log('Edit exercise:', exerciseId);
     navigate(`/lecturer/create-exercise?classId=${classId}&draftId=${exerciseId}`);
   };
 
-  // FIXED: Complete delete function that safely removes everything for ONE exercise only
   const handleDeleteExercise = async (exerciseId) => {
-    console.log('Deleting exercise:', exerciseId);
+    setDeletingExerciseId(exerciseId);
+    
     try {
-      // STEP 1: GET EXERCISE DATA FIRST (before deleting!)
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Visual feedback delay
+      
+      // STEP 1: GET EXERCISE DATA FIRST
       const exerciseRef = doc(db, 'classes', classId, 'exercises', exerciseId);
       const exerciseSnap = await getDoc(exerciseRef);
       const exerciseData = exerciseSnap.data();
       
-      console.log('Exercise data:', exerciseData);
-      
-      // STEP 2: DELETE EXERCISE FILES (answer scheme & rubric)
+      // STEP 2: DELETE EXERCISE FILES
       if (exerciseData) {
-        console.log('Checking for exercise files...');
-        
         // Delete answer scheme file
         if (exerciseData.answerScheme?.storageName) {
           try {
             const answerSchemeRef = ref(storage, `answer-schemes/${exerciseData.answerScheme.storageName}`);
             await deleteObject(answerSchemeRef);
-            console.log('Deleted answer scheme:', exerciseData.answerScheme.storageName);
           } catch (error) {
             console.log('Answer scheme delete failed:', error);
           }
@@ -284,14 +259,13 @@ const MyClassLectPage = () => {
           try {
             const rubricRef = ref(storage, `rubrics/${exerciseData.rubric.storageName}`);
             await deleteObject(rubricRef);
-            console.log('Deleted rubric:', exerciseData.rubric.storageName);
           } catch (error) {
             console.log('Rubric delete failed:', error);
           }
         }
       }
       
-      // STEP 3: DELETE STUDENT SUBMISSION FILES FROM STORAGE
+      // STEP 3: DELETE STUDENT SUBMISSION FILES
       const submissionsQuery = query(
         collection(db, 'submissions'),
         where('classId', '==', classId),
@@ -299,24 +273,21 @@ const MyClassLectPage = () => {
       );
       const submissionsSnapshot = await getDocs(submissionsQuery);
       
-      // Delete each student's submission file from storage
       for (const submissionDoc of submissionsSnapshot.docs) {
         const submissionData = submissionDoc.data();
         
         if (submissionData.firebasePublicId) {
           try {
-            // Extract the file path from publicId (format: submissions/userId/filename)
             const filePath = submissionData.firebasePublicId;
             const fileRef = ref(storage, filePath);
             await deleteObject(fileRef);
-            console.log('Deleted student submission file:', filePath);
           } catch (error) {
             console.log('Student submission file delete failed:', error);
           }
         }
       }
       
-      // STEP 4: DELETE THE EXERCISE DOCUMENT FROM FIRESTORE
+      // STEP 4: DELETE THE EXERCISE DOCUMENT
       await deleteDoc(exerciseRef);
       
       // STEP 5: DELETE STUDENT PROGRESS RECORDS
@@ -339,8 +310,6 @@ const MyClassLectPage = () => {
       });
       await Promise.all(deleteSubmissionPromises);
       
-      console.log('Exercise and all related data deleted completely!');
-      
       // Refresh data
       await fetchExercises();
       await fetchStudents();
@@ -348,6 +317,8 @@ const MyClassLectPage = () => {
     } catch (error) {
       console.error('Error deleting exercise:', error);
       throw error;
+    } finally {
+      setDeletingExerciseId(null);
     }
   };
 
@@ -356,12 +327,10 @@ const MyClassLectPage = () => {
   };
 
   const handleViewSubmissions = (exerciseId) => {
-    console.log('View submissions for:', exerciseId);
     // navigate(`/lecturer/exercise/${exerciseId}/submissions`);
   };
 
   const handleNewExercise = () => {
-    console.log('Create new exercise');
     navigate(`/lecturer/create-exercise?classId=${classId}`);
   };
 
@@ -401,6 +370,7 @@ const MyClassLectPage = () => {
         searchTerm={searchTerm}
         statusFilter={statusFilter}
         loading={loading}
+        deletingExerciseId={deletingExerciseId}
         
         // User data
         getUserDisplayName={getUserDisplayName}

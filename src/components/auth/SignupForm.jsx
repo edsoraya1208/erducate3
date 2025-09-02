@@ -32,10 +32,19 @@ const SignupForm = () => {
 
 
   // HELPER FUNCTION FOR MESSAGES - NO CHANGES (keep as is)
-  const showMessage = (text, type = 'error') => {
-    setMessage({ text, type });
-    
-  };
+ const showMessage = (text, type = 'error') => {
+  setMessage({ text, type });
+  // Auto-scroll to top so user can see the message
+  setTimeout(() => scrollToTop(), 100);
+};
+
+  // Auto-scroll to top when message is shown
+const scrollToTop = () => {
+  window.scrollTo({
+    top: 150,
+    behavior: 'smooth'
+  });
+};
 
   // CLEAR MESSAGES - NO CHANGES (keep as is)
   const clearMessage = () => {

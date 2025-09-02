@@ -42,9 +42,18 @@ const LoginForm = ({ onSwitchToSignup }) => {
     }
   };
 
-  // Display message helper function
   const showMessage = (text, type = 'error') => {
     setMessage({ text, type });
+    // Auto-scroll to top so user can see the message
+    setTimeout(() => scrollToTop(), 100);
+  };
+
+  // Auto-scroll to top when message is shown
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 90,
+      behavior: 'smooth'
+    });
   };
 
   // Handle form submission with role-based logic (email/password)

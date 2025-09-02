@@ -72,7 +72,7 @@ const LectExerciseFormFields = ({
           )}
         </div>
         <div className="form-group half-width">
-          <label htmlFor="totalMarks" className="ce-form-label">Total Marks</label>
+          <label htmlFor="totalMarks" className="ce-form-label">Total Marks *</label>
           <input
             type="number"
             id="totalMarks"

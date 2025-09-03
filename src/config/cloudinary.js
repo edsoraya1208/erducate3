@@ -1,134 +1,71 @@
-// src/config/cloudinary.js
-
-// 🌤️ CLOUDINARY CONFIGURATION
-// This replaces Firebase Storage for file uploads only
-// Auth, users, and exercise data still use Firebase
-
-/**
- * 🔧 ENVIRONMENT VARIABLES NEEDED:
- * Add these to your .env file:
- * VITE_CLOUDINARY_CLOUD_NAME=your_cloud_name
- * VITE_CLOUDINARY_UPLOAD_PRESET=your_unsigned_upload_preset
- */
-
-// ✅ SECURE UPLOAD FUNCTION - Uses unsigned upload preset
-// This prevents API secret exposure in frontend code
+// src/config/cloudinary.js - SECURE VERSION (REMOVED DANGEROUS LOGS)
 export const uploadToCloudinary = async (file, folder = 'exercises') => {
-  // 🛡️ SECURITY VALIDATIONS
   if (!file) {
     throw new Error('No file provided');
   }
 
-  // ⚠️ Environment check
-  if (!import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || !import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET) {
-    throw new Error('Cloudinary not configured. Check your .env file.');
+  // 🔧 REQUIRED ENVIRONMENT VARIABLES
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+  const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+  const apiKey = import.meta.env.VITE_CLOUDINARY_API_KEY;
+
+  // ❌ This is what's causing your 401 error
+  if (!cloudName || !uploadPreset || !apiKey) {
+    throw new Error('Cloudinary not configured. Missing cloud name, upload preset, or API key.');
   }
 
-  // 📏 File size validation (2MB limit to stay within free tier)
-  const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+  // File validations
+  const maxSize = 2 * 1024 * 1024; // 2MB
   if (file.size > maxSize) {
-    throw new Error('File size exceeds 2MB limit. Please compress your image.');
+    throw new Error('File size exceeds 2MB limit');
   }
 
-  // 📝 FILE TYPE VALIDATION - More secure than just accept attribute
-  const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-  const allowedDocTypes = ['application/pdf'];
-  const allAllowedTypes = [...allowedImageTypes, ...allowedDocTypes];
-    
-  if (!allAllowedTypes.includes(file.type)) {
-    throw new Error('Invalid file type. Only images (JPG, PNG, GIF, WebP) and PDFs allowed');
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+  if (!allowedTypes.includes(file.type)) {
+    throw new Error('Invalid file type');
   }
 
-  // 🔒 PREVENT DUPLICATES - Generate unique filename
-  const timestamp = Date.now();
-  const randomString = Math.random().toString(36).substring(2, 15);
-  const fileExtension = file.name.split('.').pop();
-  const uniqueFilename = `${folder}_${timestamp}_${randomString}.${fileExtension}`;
-
-  // 📤 UPLOAD TO CLOUDINARY
   try {
     console.log(`🌤️ Uploading ${file.name} to Cloudinary...`);
     
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
-    formData.append('folder', folder); // Organize files in folders
-    formData.append('public_id', uniqueFilename); // Unique filename
-    formData.append('resource_type', 'auto'); // Auto-detect file type
+    formData.append('upload_preset', uploadPreset);
+    formData.append('api_key', apiKey);
+    formData.append('folder', folder);
     
-    // 🏷️ Add metadata for better organization
-    formData.append('context', `original_name=${file.name}`);
-    formData.append('tags', `${folder},student-work,auto-uploaded`);
-        
-    // 🌤️ UPLOAD REQUEST
-    const response = await fetch(
-      `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/upload`,
-      {
-        method: 'POST',
-        body: formData,
-      }
-    );
+    const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/upload`;
+    
+    const response = await fetch(uploadUrl, {
+      method: 'POST',
+      body: formData,
+    });
 
     if (!response.ok) {
       const errorData = await response.json();
+      console.error('❌ Upload failed:', errorData.error?.message || 'Unknown error');
       throw new Error(`Upload failed: ${errorData.error?.message || 'Unknown error'}`);
     }
 
     const result = await response.json();
-    console.log('✅ Cloudinary upload successful:', result.secure_url);
-        
-    // 📊 RETURN USEFUL DATA FOR AI INTEGRATION
+    console.log('✅ File uploaded successfully');
+    
     return {
-      url: result.secure_url,           // HTTPS URL for file access
-      publicId: result.public_id,       // For future deletions/transformations
-      originalName: file.name,          // Original filename
-      fileType: file.type,              // MIME type
-      fileSize: file.size,              // File size in bytes
-      width: result.width,              // Image dimensions (null for PDFs)
-      height: result.height,            // Image dimensions (null for PDFs)
-      format: result.format,            // File format
-      resourceType: result.resource_type, // 'image' or 'raw'
-      createdAt: result.created_at,     // Upload timestamp
-      
-      // 🆕 ADDITIONAL USEFUL DATA
-      cloudinaryFolder: folder,         // Which folder it's stored in
-      uniqueFilename: uniqueFilename,   // Our generated unique name
-      bytesToMB: (file.size / 1024 / 1024).toFixed(2), // Human readable size
+      url: result.secure_url,
+      publicId: result.public_id,
+      originalName: file.name,
+      fileType: file.type,
+      fileSize: file.size,
+      width: result.width,
+      height: result.height,
+      format: result.format,
+      resourceType: result.resource_type,
+      createdAt: result.created_at,
+      cloudinaryFolder: folder
     };
 
   } catch (error) {
-    console.error('❌ Cloudinary upload error:', error);
+    console.error('❌ Cloudinary upload error:', error.message);
     throw new Error(`Upload failed: ${error.message}`);
   }
-};
-
-// 🗑️ DELETE FILE FUNCTION (for future use)
-export const deleteFromCloudinary = async (publicId) => {
-  // This requires server-side implementation for security
-  // Frontend cannot delete files directly
-  console.log('Delete request for:', publicId);
-  // You'll implement this server-side later
-  return false;
-};
-
-// 🔄 GET OPTIMIZED IMAGE URL (for displaying thumbnails)
-export const getOptimizedImageUrl = (publicId, width = 300, height = 200) => {
-  if (!publicId || !import.meta.env.VITE_CLOUDINARY_CLOUD_NAME) {
-    return null;
-  }
-  
-  // Generate optimized URL for thumbnails/previews
-  return `https://res.cloudinary.com/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload/w_${width},h_${height},c_fill,f_auto,q_auto/${publicId}`;
-};
-
-// 🔧 DEBUG FUNCTION - Check if Cloudinary is properly configured
-export const checkCloudinaryConfig = () => {
-  const config = {
-    hasCloudName: !!import.meta.env.VITE_CLOUDINARY_CLOUD_NAME,
-    hasUploadPreset: !!import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET,
-    cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME,
-  };
-  
-  console.log('🌤️ Cloudinary Configuration Check:', config);
-  return config.hasCloudName && config.hasUploadPreset;
 };

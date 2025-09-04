@@ -57,11 +57,6 @@ export const uploadToCloudinary = async (file, folder = 'exercises') => {
     formData.append('public_id', uniqueFilename);
     formData.append('resource_type', 'auto');
 
-    // 🆕 ADD: Incoming transformation (only for images, not PDFs)
-    if (allowedImageTypes.includes(file.type)) {
-      formData.append('transformation', 'c_limit,w_2000,h_1000');    
-    }
-
     // Keep these - they don't cause transformations:
     formData.append('context', `original_name=${file.name}`);
     formData.append('tags', `${folder},student-work,auto-uploaded`);

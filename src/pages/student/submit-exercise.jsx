@@ -13,8 +13,7 @@ import {
 } from 'firebase/firestore';
 
 import { db, auth } from '../../config/firebase';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { storage } from '../../config/firebase';
+import { uploadToCloudinary } from '../../config/cloudinary';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import StudentSubmitClass from '../../components/class/student-submit-exercise';
 import DashboardHeader from '../../components/dashboard/dashboard-header';
@@ -233,30 +232,11 @@ const SubmitExercise = () => {
       setUploading(true);
       console.log('📤 Starting exercise submission...');
 
-      // 🔥 STEP 1: FIXED - Use CONSISTENT filename to force override in Firebase Storage
-      console.log('🔥 Uploading file to Firebase Storage...');
-      
-      // 🚀 FIXED: Use same filename every time to override previous uploads
-      const consistentFileName = `submission_${classId}_${exerciseId}`;
-      const storageRef = ref(storage, `submissions/${user.uid}/${consistentFileName}`);
-      
-      // Upload new file (this will automatically override the old one with same path)
-      const uploadResult = await uploadBytes(storageRef, selectedFile);
-      const downloadURL = await getDownloadURL(uploadResult.ref);
+      // 🌤️ STEP 1: Upload to Cloudinary
+      console.log('🌤️ Uploading file to Cloudinary...');
 
-      // Create data object
-      const uploadData = {
-        url: downloadURL,
-        originalName: selectedFile.name,
-        publicId: `submissions/${user.uid}/${consistentFileName}`,
-        fileType: selectedFile.type,
-        fileSize: selectedFile.size,
-        createdAt: new Date().toISOString(),
-        width: null,
-        height: null,
-        format: selectedFile.name.split('.').pop()
-      };
-      console.log('✅ File uploaded to Firebase Storage (OVERRIDDEN):', uploadData.url);
+      const uploadData = await uploadToCloudinary(selectedFile, 'student-submissions');
+      console.log('✅ File uploaded to Cloudinary:', uploadData.url);
 
       // STEP 2: Check for existing submission
       const submissionsRef = collection(db, 'submissions');
@@ -278,7 +258,7 @@ const SubmitExercise = () => {
         exerciseTitle: exercise.title,
         fileURL: uploadData.url,
         fileName: uploadData.originalName,
-        firebasePublicId: uploadData.publicId,
+        cloudinaryPublicId: uploadData.publicId,
         fileType: uploadData.fileType,
         fileSize: uploadData.fileSize,
         imageWidth: uploadData.width || null,

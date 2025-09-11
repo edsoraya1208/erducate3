@@ -1,4 +1,4 @@
-// api/upload.js - FIXED VERSION
+// api/upload.js - PROPERLY FIXED VERSION
 import { v2 as cloudinary } from 'cloudinary';
 import formidable from 'formidable';
 import fs from 'fs';
@@ -51,9 +51,9 @@ export default async function handler(req, res) {
       type: uploadedFile.mimetype
     });
 
-    // 🔑 CREATE PREDICTABLE FILENAME - FIXED VERSION
-    const fileExtension = uploadedFile.originalFilename?.split('.').pop()?.toLowerCase() || 'jpg';
-    const predictableFileName = `${studentId}_${classId}_${exerciseId}`;
+    // 🔑 CREATE PREDICTABLE FILENAME - FORCE CONSISTENT EXTENSION
+    // Always use .jpg regardless of original file type for consistent overwriting
+    const predictableFileName = `${studentId}_${classId}_${exerciseId}.jpg`;
     
     // 🗂️ ORGANIZED FOLDER STRUCTURE
     const folderPath = `${folder}/${classId}/${exerciseId}`;
@@ -69,7 +69,7 @@ export default async function handler(req, res) {
       overwrite: true,
       invalidate: true, // Clear CDN cache
       resource_type: 'auto',
-      format: fileExtension, // Force consistent format
+      // ❌ REMOVED format parameter - let Cloudinary handle it but force .jpg in public_id
       context: {
         original_name: uploadedFile.originalFilename,
         student_id: studentId,
@@ -77,6 +77,10 @@ export default async function handler(req, res) {
         class_id: classId,
       },
       tags: [`student-${studentId}`, `exercise-${exerciseId}`, `class-${classId}`, 'resubmission-enabled'],
+      transformation: [
+        // Convert everything to JPG for consistency
+        { format: 'jpg', quality: 'auto:good' }
+      ]
     });
 
     // Clean up temporary file
@@ -84,6 +88,7 @@ export default async function handler(req, res) {
 
     console.log('✅ Upload successful:', result.secure_url);
     console.log('🔍 Final public_id:', result.public_id);
+    console.log('🔍 Should have overwritten:', result.overwritten || false);
 
     const response = {
       success: true,
@@ -97,6 +102,7 @@ export default async function handler(req, res) {
       format: result.format,
       resourceType: result.resource_type,
       createdAt: result.created_at,
+      overwritten: result.overwritten || false, // This tells you if it actually overwrote
       
       predictableFileName: predictableFileName,
       folderPath: folderPath,

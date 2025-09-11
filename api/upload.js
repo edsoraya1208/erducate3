@@ -90,6 +90,9 @@ export default async function handler(req, res) {
     console.log('✅ Upload successful:', result.secure_url);
     console.log('🔍 Final public_id:', result.public_id);
     console.log('🔍 Should have overwritten:', result.overwritten || false);
+    console.log('🔍 DEBUG - result.asset_folder:', result.asset_folder);
+    console.log('🔍 DEBUG - Expected folderPath:', folderPath);
+    console.log('🔍 DEBUG - Full result object:', JSON.stringify(result, null, 2));
 
     const response = {
       success: true,

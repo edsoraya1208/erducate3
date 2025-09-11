@@ -51,9 +51,9 @@ export default async function handler(req, res) {
       type: uploadedFile.mimetype
     });
 
-    // 🔑 CREATE PREDICTABLE FILENAME - FORCE CONSISTENT EXTENSION
-    // Always use .jpg regardless of original file type for consistent overwriting
-    const predictableFileName = `${studentId}_${classId}_${exerciseId}.jpg`;
+    // 🔑 CREATE PREDICTABLE FILENAME - NO EXTENSION (Cloudinary adds it)
+    // Don't include extension - let Cloudinary handle it with transformation
+    const predictableFileName = `${studentId}_${classId}_${exerciseId}`;
     
     // 🗂️ ORGANIZED FOLDER STRUCTURE
     const folderPath = `${folder}/${classId}/${exerciseId}`;

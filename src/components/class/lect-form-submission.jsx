@@ -75,7 +75,7 @@ export const useFormSubmission = () => {
       console.log('Saving draft exercise...');
 
       // 🌤️ Upload files if they exist
-      const { answerSchemeData, rubricData } = await uploadFiles(formData);
+      const { answerSchemeData, rubricData } = await uploadFiles(formData, classId, exerciseId);
       const FirebaseStorageUpload = formatFirebaseStorageData(answerSchemeData, rubricData);
 
       // 📝 Create draft exercise data
@@ -126,7 +126,7 @@ export const useFormSubmission = () => {
       // 🌤️ STEP 2: Only handle file uploads if NOT editing a published exercise
       if (!isPublishedExercise) {
         console.log('📁 Uploading files (new exercise or draft)...');
-        const { answerSchemeData, rubricData } = await uploadFiles(formData);
+        const { answerSchemeData, rubricData } = await uploadFiles(formData, classId, exerciseId);
         const FirebaseStorageUpload = formatFirebaseStorageData(answerSchemeData, rubricData);
         
         // Add file data to exercise data

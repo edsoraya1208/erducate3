@@ -13,7 +13,7 @@ import {
 } from 'firebase/firestore';
 
 import { db, auth } from '../../config/firebase';
-import { uploadToCloudinary } from '../../config/cloudinary';
+import { uploadToCloudinary } from '../../config/cloudinary'; // 🔄 Same import, new functionality
 import { useAuthState } from 'react-firebase-hooks/auth';
 import StudentSubmitClass from '../../components/class/student-submit-exercise';
 import DashboardHeader from '../../components/dashboard/dashboard-header';
@@ -24,7 +24,7 @@ const SubmitExercise = () => {
   const navigate = useNavigate();
   const [user] = useAuthState(auth);
   
-  // Component state
+  // Component state (unchanged)
   const [exercise, setExercise] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -32,38 +32,32 @@ const SubmitExercise = () => {
   const [uploading, setUploading] = useState(false);
   const [additionalComments, setAdditionalComments] = useState('');
   
-  // Submission and validation states
+  // Submission and validation states (unchanged)
   const [submitted, setSubmitted] = useState(false);
   const [validationMessage, setValidationMessage] = useState(null);
   
-  // Track existing submission data
+  // Track existing submission data (unchanged)
   const [existingSubmission, setExistingSubmission] = useState(null);
   const [editCount, setEditCount] = useState(0);
-  const [maxEdits] = useState(2); // Maximum allowed edits
+  const [maxEdits] = useState(2);
 
+  // 🔄 All existing useEffect and helper functions stay the same
   useEffect(() => {
     if (classId && exerciseId && user) {
       loadExerciseAndSubmissionData();
     }
   }, [classId, exerciseId, user]);
 
-  /**
-   * 🆕 NEW: Helper function to check if due date has passed
-   */
   const isPastDue = () => {
     if (!exercise?.dueDate) return false;
     const dueDate = exercise.dueDate.toDate ? exercise.dueDate.toDate() : new Date(exercise.dueDate);
     return new Date() > dueDate;
   };
 
-  /**
-   * 📚 Load exercise data AND check for existing submission
-   */
   const loadExerciseAndSubmissionData = async () => {
     try {
       console.log('📚 Loading exercise and submission data for:', { classId, exerciseId, userId: user.uid });
       
-      // Load exercise data
       const exerciseRef = doc(db, 'classes', classId, 'exercises', exerciseId);
       const exerciseDoc = await getDoc(exerciseRef);
       
@@ -77,7 +71,6 @@ const SubmitExercise = () => {
       setExercise(exerciseData);
       console.log('✅ Exercise loaded:', exerciseData.title);
       
-      // Check for existing submission in studentProgress
       const progressDocId = `${user.uid}_${classId}_${exerciseId}`;
       const progressRef = doc(db, 'studentProgress', progressDocId);
       const progressDoc = await getDoc(progressRef);
@@ -107,9 +100,7 @@ const SubmitExercise = () => {
     }
   };
 
-  /**
-   * 🚨 Show validation message (green/red)
-   */
+  // 🔄 All existing validation and UI functions stay the same
   const showValidationMessage = (text, type = 'error', duration = 4000) => {
     setValidationMessage({ text, type });
     if (duration > 0) {
@@ -119,38 +110,27 @@ const SubmitExercise = () => {
     }
   };
 
-  /**
-   * 🛡️ Validate file and set it if valid - WITH VISUAL FEEDBACK
-   */
   const validateAndSetFile = (file) => {
     console.log('📁 File selected:', file.name, file.type, file.size);
-
-    // Clear any previous validation messages
     setValidationMessage(null);
 
-    // ✅ File type validation
     const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
       showValidationMessage('❌ Invalid file type. Please select PNG, JPEG, GIF, or WebP files only.', 'error');
       return;
     }
 
-    // ✅ File size validation (2MB = 2 * 1024 * 1024 bytes)
     const maxSize = 2 * 1024 * 1024;
     if (file.size > maxSize) {
       showValidationMessage('❌ File too large. Maximum size is 2MB.', 'error');
       return;
     }
 
-    // ✅ Success - file is valid
     setSelectedFile(file);
     showValidationMessage('✅ File selected successfully!', 'success', 2000);
     console.log('✅ File validation passed');
   };
 
-  /**
-   * 📁 Handle file selection
-   */
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -158,9 +138,6 @@ const SubmitExercise = () => {
     }
   };
 
-  /**
-   * 🖱️ Drag and drop handlers
-   */
   const handleDragOver = (e) => {
     e.preventDefault();
     setDragOver(true);
@@ -181,34 +158,27 @@ const SubmitExercise = () => {
     }
   };
 
-  /**
-   * 🗑️ Remove selected file
-   */
   const handleRemoveFile = () => {
     setSelectedFile(null);
     setValidationMessage(null);
     console.log('📁 File removed');
   };
 
-  // 🔧 FIXED: Use useCallback for comments to prevent re-renders
   const handleCommentsChange = useCallback((value) => {
     setAdditionalComments(value);
   }, []);
 
   /**
-   * 🚀 FIXED: Handle submission - WITH PROPER FIREBASE STORAGE OVERRIDE
+   * 🔄 UPDATED: Handle submission - Now uses API with metadata
    */
   const handleSubmitExercise = async () => {
-    // Clear validation messages
     setValidationMessage(null);
 
-    // 🆕 NEW: Check due date FIRST
     if (isPastDue()) {
       showValidationMessage('❌ Cannot submit - assignment is past due date', 'error');
       return;
     }
 
-    // ⚠️ Validation checks
     if (!selectedFile) {
       showValidationMessage('❌ Please select a file to submit', 'error');
       return;
@@ -219,7 +189,6 @@ const SubmitExercise = () => {
       return;
     }
 
-    // Check edit limit BEFORE proceeding
     if (existingSubmission && editCount >= maxEdits) {
       showValidationMessage(
         `🚫 Maximum edit attempts (${maxEdits}) reached. You cannot resubmit this exercise.`, 
@@ -232,13 +201,24 @@ const SubmitExercise = () => {
       setUploading(true);
       console.log('📤 Starting exercise submission...');
 
-      // 🌤️ STEP 1: Upload to Cloudinary
-      console.log('🌤️ Uploading file to Cloudinary...');
+      // 🆕 STEP 1: Upload to Cloudinary via API with metadata
+      console.log('🚀 Uploading file via Vercel API...');
 
-      const uploadData = await uploadToCloudinary(selectedFile, 'student-submissions');
-      console.log('✅ File uploaded to Cloudinary:', uploadData.url);
+      const uploadData = await uploadToCloudinary(
+        selectedFile, 
+        'student-submissions',
+        {
+          studentId: user.uid,
+          exerciseId: exerciseId,
+          classId: classId
+        }
+      );
+      
+      console.log('✅ File uploaded via API:', uploadData.url);
+      console.log('🎯 Predictable filename:', uploadData.predictableFileName);
+      console.log('🔄 Is overwrite:', uploadData.isOverwrite);
 
-      // STEP 2: Check for existing submission
+      // STEP 2: Check for existing submission (unchanged)
       const submissionsRef = collection(db, 'submissions');
       const existingQuery = query(
         submissionsRef,
@@ -248,7 +228,7 @@ const SubmitExercise = () => {
       );
       const existingDocs = await getDocs(existingQuery);
 
-      // STEP 3: Create submission data
+      // STEP 3: Create submission data (unchanged)
       const submissionData = {
         studentId: user.uid,
         studentName: user.displayName || user.email || 'Unknown Student',
@@ -256,7 +236,7 @@ const SubmitExercise = () => {
         classId: classId,
         exerciseId: exerciseId,
         exerciseTitle: exercise.title,
-        fileURL: uploadData.url,
+        fileURL: uploadData.url, // 🎯 Same URL every time for same student+exercise!
         fileName: uploadData.originalName,
         cloudinaryPublicId: uploadData.publicId,
         fileType: uploadData.fileType,
@@ -269,10 +249,14 @@ const SubmitExercise = () => {
         uploadedAt: uploadData.createdAt,
         status: 'submitted',
         grade: null,
-        feedback: null
+        feedback: null,
+        
+        // 🆕 NEW: Add overwrite info
+        isOverwrite: uploadData.isOverwrite,
+        predictableFileName: uploadData.predictableFileName
       };
 
-      // STEP 4: Save to Firestore (this DOES override when using same doc)
+      // STEP 4: Save to Firestore (unchanged)
       if (existingDocs.empty) {
         await addDoc(submissionsRef, submissionData);
         console.log('✅ New submission created successfully');
@@ -282,10 +266,10 @@ const SubmitExercise = () => {
           ...submissionData,
           resubmittedAt: new Date()
         });
-        console.log('✅ Submission updated successfully (resubmission)');
+        console.log('✅ Submission updated successfully (resubmission with same URL!)');
       }
 
-      // STEP 5: Save to studentProgress with proper edit counting
+      // STEP 5: Save to studentProgress (unchanged)
       const newEditCount = existingSubmission ? (editCount + 1) : 0;
       
       const progressData = {
@@ -295,7 +279,7 @@ const SubmitExercise = () => {
         submitted: true,
         isCompleted: true,
         status: 'completed',
-        fileUrl: uploadData.url,
+        fileUrl: uploadData.url, // 🎯 Same URL always!
         fileName: selectedFile.name,
         submittedAt: new Date(),
         updatedAt: new Date(),
@@ -308,7 +292,6 @@ const SubmitExercise = () => {
       await setDoc(doc(db, 'studentProgress', progressDocId), progressData);
       console.log('✅ Progress saved with editCount:', newEditCount);
 
-      // Update local state
       setExistingSubmission(progressData);
       setEditCount(newEditCount);
 
@@ -316,50 +299,45 @@ const SubmitExercise = () => {
       setSubmitted(true);
       setUploading(false);
       
-      // Show success message with edit info
       const isResubmission = existingSubmission !== null;
       const remainingEdits = maxEdits - newEditCount;
       
       let successMsg = '🎉 Exercise submitted successfully!';
-      if (isResubmission && remainingEdits > 0) {
-        successMsg += ` (${remainingEdits} edit${remainingEdits === 1 ? '' : 's'} remaining)`;
-      } else if (isResubmission && remainingEdits === 0) {
-        successMsg += ' (No more edits allowed)';
+      if (isResubmission) {
+        successMsg += ` (Same URL - overwrote previous file!)`;
+        if (remainingEdits > 0) {
+          successMsg += ` ${remainingEdits} edit${remainingEdits === 1 ? '' : 's'} remaining.`;
+        }
       }
       
-      showValidationMessage(successMsg, 'success', 3000);
-
-      // Scroll to top on success
+      showValidationMessage(successMsg, 'success', 4000);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       
     } catch (error) {
       console.error('❌ Error submitting exercise:', error);
       setUploading(false);
       
-      // Better error handling with visual feedback
-      if (error.message.includes('Upload failed')) {
-        showValidationMessage('❌ File upload failed. Please try again.', 'error');
-      } else if (error.message.includes('Firestore')) {
-        showValidationMessage('❌ Database error. Please contact support.', 'error');
+      if (error.message.includes('Network error')) {
+        showValidationMessage('❌ Network error. Please check your connection.', 'error');
+      } else if (error.message.includes('File too large')) {
+        showValidationMessage('❌ File upload failed: File too large (max 2MB).', 'error');
+      } else if (error.message.includes('Invalid file type')) {
+        showValidationMessage('❌ Invalid file type. Please select an image file.', 'error');
       } else {
         showValidationMessage('❌ Submission failed. Please try again.', 'error');
       }
     }
   };
 
-  /**
-   * 🔙 Handle going back
-   */
+  // 🔄 All existing helper functions stay the same
   const handleGoBack = () => {
     navigate(`/student/class/${classId}`);
   };
 
-  // 🔧 Check if submission is disabled
   const isSubmissionDisabled = () => {
     return uploading || isPastDue() || (existingSubmission && editCount >= maxEdits);
   };
 
-  // 🔧 Get submission button text
   const getSubmissionButtonText = () => {
     if (uploading) return 'Uploading...';
     if (isPastDue()) return 'Past Due Date';
@@ -368,11 +346,11 @@ const SubmitExercise = () => {
     return `Resubmit (${maxEdits - editCount} edit${maxEdits - editCount === 1 ? '' : 's'} left)`;
   };
 
-  // 🔧 Check if editing is allowed
   const canEdit = () => {
     return !isPastDue() && (!existingSubmission || editCount < maxEdits);
   };
 
+  // 🔄 Return statement unchanged
   return (
     <div className="dashboard-page">
       <DashboardHeader 
@@ -382,37 +360,26 @@ const SubmitExercise = () => {
       />
       
       <StudentSubmitClass 
-        // Exercise data
         exercise={exercise}
         loading={loading}
-        
-        // File upload state
         selectedFile={selectedFile}
         dragOver={dragOver}
         uploading={uploading}
-        
-        // Form data
         additionalComments={additionalComments}
-        
-        // Submission states
         submitted={submitted}
         validationMessage={validationMessage}
-        
-        // 🆕 FIXED: Pass correct props that match UI component
         existingSubmission={existingSubmission}
         editCount={editCount}
         maxEdits={maxEdits}
         isSubmissionDisabled={isSubmissionDisabled()}
         submissionButtonText={getSubmissionButtonText()}
-        canEdit={canEdit()} // 🆕 NEW: Pass editing permission
-        
-        // Event handlers - FIXED: Use memoized callback for comments
+        canEdit={canEdit()}
         onFileSelect={handleFileSelect}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onRemoveFile={handleRemoveFile}
-        onCommentsChange={handleCommentsChange} // 🔧 FIXED: Now memoized
+        onCommentsChange={handleCommentsChange}
         onSubmitExercise={handleSubmitExercise}
         onGoBack={handleGoBack}
       />

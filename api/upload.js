@@ -63,9 +63,10 @@ export default async function handler(req, res) {
     console.log('🔍 DEBUG - Predictable filename:', predictableFileName);
     console.log('🔍 DEBUG - Full path:', fullPublicId);
 
-    // 🌤️ UPLOAD TO CLOUDINARY - FIXED PARAMETERS
+    // 🌤️ UPLOAD TO CLOUDINARY - USING FOLDER PARAMETER (CHATBOT'S SUGGESTION)
     const result = await cloudinary.uploader.upload(uploadedFile.filepath, {
-      public_id: fullPublicId,
+      folder: folderPath, // Use folder parameter instead of including in public_id
+      public_id: predictableFileName, // Just the filename, no path
       overwrite: true,
       invalidate: true, // Clear CDN cache
       resource_type: 'auto',

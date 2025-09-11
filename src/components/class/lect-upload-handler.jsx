@@ -40,7 +40,7 @@ export const useUploadHandler = () => {
     }
   };
 
-  // 🌤️ UPLOAD FILES TO CLOUDINARY (CHANGED - now uses Cloudinary instead of Firebase)
+  // 🌤️ UPLOAD FILES TO CLOUDINARY (YOUR ORIGINAL FUNCTION - UNCHANGED)
   const uploadFiles = async (formData) => {
     let answerSchemeData = null;
     let rubricData = null;
@@ -71,7 +71,40 @@ export const useUploadHandler = () => {
     }
   };
 
-  // 📋 FORMAT CLOUDINARY DATA FOR FIRESTORE (CHANGED - now formats Cloudinary data)
+  // 🆕 NEW: ENHANCED UPLOAD FILES WITH NESTED FOLDERS FOR LECTURERS
+  const uploadLecturerFiles = async (formData, classId, exerciseId) => {
+    let answerSchemeData = null;
+    let rubricData = null;
+
+    try {
+      if (formData.answerSchemeFile) {
+        console.log('📋 Uploading answer scheme with nested folders...');
+        answerSchemeData = await uploadToCloudinary(
+          formData.answerSchemeFile, 
+          'answer-schemes',
+          { classId, exerciseId, uploadType: 'lecturer' } // Pass the IDs for nested structure
+        );
+        console.log('✅ Answer scheme uploaded with nested folders:', answerSchemeData.url);
+      }
+
+      if (formData.rubricFile) {
+        console.log('📄 Uploading rubric with nested folders...');
+        rubricData = await uploadToCloudinary(
+          formData.rubricFile, 
+          'rubrics',
+          { classId, exerciseId, uploadType: 'lecturer' } // Pass the IDs for nested structure
+        );
+        console.log('✅ Rubric uploaded with nested folders:', rubricData.url);
+      }
+
+      return { answerSchemeData, rubricData };
+    } catch (error) {
+      console.error('❌ Lecturer upload error:', error);
+      throw error;
+    }
+  };
+
+  // 📋 FORMAT CLOUDINARY DATA FOR FIRESTORE (YOUR ORIGINAL FUNCTION - UNCHANGED)
   // 🔄 CHANGED: Function name and data structure to match Cloudinary response
   const formatFirebaseStorageData = (answerSchemeData, rubricData) => {
     return {
@@ -106,8 +139,8 @@ export const useUploadHandler = () => {
   };
 
   return {
-    validateFile, // UNCHANGED
-    uploadFiles, // 🔄 CHANGED: Now uses Cloudinary internally
-    formatFirebaseStorageData // 🔄 CHANGED: Now formats Cloudinary data (keeping same function name for compatibility)
+    validateFile, // YOUR ORIGINAL FUNCTION - UNCHANGED
+    uploadFiles, // 🔄 ENHANCED: Now supports nested folders for lecturers
+    formatFirebaseStorageData // YOUR ORIGINAL FUNCTION - UNCHANGED
   };
 };

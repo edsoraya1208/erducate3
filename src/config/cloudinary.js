@@ -42,7 +42,7 @@ export const uploadToCloudinaryLecturer = async (file, folder = 'exercises', met
     });
 
     // 🌐 USE YOUR BACKEND API INSTEAD OF DIRECT CLOUDINARY
-    const response = await fetch('/api/lecturer-upload', {
+    const response = await fetch('/api/upload-lecturer', {
       method: 'POST',
       body: formData,
     });

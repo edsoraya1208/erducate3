@@ -150,7 +150,7 @@ export const useFormSubmission = () => {
       };
 
       // Add createdAt only for new documents
-      if (!existingDraftRef) {
+      if (!existingDraftId) {
         exerciseData.createdAt = serverTimestamp();
       }
 

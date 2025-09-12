@@ -1,6 +1,6 @@
-// 🌤️ CLOUDINARY UPLOAD LOGIC COMPONENT (SWITCHED FROM FIREBASE STORAGE)
-// 🔄 CHANGED: Now using Cloudinary instead of Firebase Storage for file uploads
-import { uploadToCloudinary } from '../../config/cloudinary'; // 🆕 NEW: Import Cloudinary function
+// 🌤️ CLOUDINARY UPLOAD LOGIC COMPONENT (UPDATED FOR SINGLE ID APPROACH)
+// 🔄 CHANGED: Now uses single Firestore ID and proper folder structure
+import { uploadToCloudinary } from '../../config/cloudinary';
 
 // 🎯 UPLOAD HANDLER: Manages all file upload logic and validation
 export const useUploadHandler = () => {
@@ -40,98 +40,79 @@ export const useUploadHandler = () => {
     }
   };
 
-  // 🌤️ UPLOAD FILES TO CLOUDINARY (YOUR ORIGINAL FUNCTION - UNCHANGED)
-  const uploadFiles = async (formData) => {
+  // 🆕 NEW: Single uploadFiles function with proper folder structure
+  const uploadFiles = async (formData, classId, exerciseId) => {
     let answerSchemeData = null;
     let rubricData = null;
 
     try {
+      // 🗂️ PROPER FOLDER STRUCTURE: exercises/classId/exerciseId/
+      const baseFolder = `exercises/${classId}/${exerciseId}`;
+      
       if (formData.answerSchemeFile) {
-        console.log('🌤️ Uploading answer scheme to Cloudinary...'); // 🔄 CHANGED: Updated log message
-        answerSchemeData = await uploadToCloudinary( // 🔄 CHANGED: Now calls Cloudinary function
-          formData.answerSchemeFile, 
-          'answer-schemes' // Cloudinary folder name
-        );
-        console.log('✅ Answer scheme uploaded to Cloudinary:', answerSchemeData.url);
-      }
-
-      if (formData.rubricFile) {
-        console.log('🌤️ Uploading rubric to Cloudinary...'); // 🔄 CHANGED: Updated log message
-        rubricData = await uploadToCloudinary( // 🔄 CHANGED: Now calls Cloudinary function
-          formData.rubricFile, 
-          'rubrics' // Cloudinary folder name
-        );
-        console.log('✅ Rubric uploaded to Cloudinary:', rubricData.url);
-      }
-
-      return { answerSchemeData, rubricData };
-    } catch (error) {
-      console.error('❌ Cloudinary upload error:', error); // 🔄 CHANGED: Updated error message
-      throw error;
-    }
-  };
-
-  // 🆕 NEW: ENHANCED UPLOAD FILES WITH NESTED FOLDERS FOR LECTURERS
-  const uploadLecturerFiles = async (formData, classId, exerciseId) => {
-    let answerSchemeData = null;
-    let rubricData = null;
-
-    try {
-      if (formData.answerSchemeFile) {
-        console.log('📋 Uploading answer scheme with nested folders...');
+        console.log('🌤️ Uploading answer scheme to:', `${baseFolder}/answer-scheme`);
+        
+        // For lecturers: Use direct Cloudinary upload (unsigned preset)
         answerSchemeData = await uploadToCloudinary(
           formData.answerSchemeFile, 
-          'answer-schemes',
-          { classId, exerciseId, uploadType: 'lecturer' } // Pass the IDs for nested structure
+          baseFolder, // This creates: exercises/class123/exerciseABC123/
+          { 
+            filename: 'answer-scheme', // Predictable filename for overwrite
+            resourceType: 'image'
+          }
         );
-        console.log('✅ Answer scheme uploaded with nested folders:', answerSchemeData.url);
+        console.log('✅ Answer scheme uploaded:', answerSchemeData.url);
       }
 
       if (formData.rubricFile) {
-        console.log('📄 Uploading rubric with nested folders...');
+        console.log('🌤️ Uploading rubric to:', `${baseFolder}/rubric`);
+        
+        // For lecturers: Use direct Cloudinary upload (unsigned preset)
         rubricData = await uploadToCloudinary(
           formData.rubricFile, 
-          'rubrics',
-          { classId, exerciseId, uploadType: 'lecturer' } // Pass the IDs for nested structure
+          baseFolder, // This creates: exercises/class123/exerciseABC123/
+          { 
+            filename: 'rubric', // Predictable filename for overwrite
+            resourceType: 'raw' // for PDFs
+          }
         );
-        console.log('✅ Rubric uploaded with nested folders:', rubricData.url);
+        console.log('✅ Rubric uploaded:', rubricData.url);
       }
 
       return { answerSchemeData, rubricData };
     } catch (error) {
-      console.error('❌ Lecturer upload error:', error);
+      console.error('❌ Upload error:', error);
       throw error;
     }
   };
 
-  // 📋 FORMAT CLOUDINARY DATA FOR FIRESTORE (YOUR ORIGINAL FUNCTION - UNCHANGED)
-  // 🔄 CHANGED: Function name and data structure to match Cloudinary response
+  // ❌ REMOVED: uploadLecturerFiles() - merged into single uploadFiles function above
+
+  // 📋 FORMAT CLOUDINARY DATA FOR FIRESTORE (UPDATED function name but same logic)
   const formatFirebaseStorageData = (answerSchemeData, rubricData) => {
     return {
       answerScheme: answerSchemeData ? {
         url: answerSchemeData.url,           
-        publicId: answerSchemeData.publicId,     // 🔄 CHANGED: Cloudinary uses publicId instead of fullPath
+        publicId: answerSchemeData.publicId,     
         originalName: answerSchemeData.originalName,
         fileType: answerSchemeData.fileType,
         fileSize: answerSchemeData.fileSize,
-        width: answerSchemeData.width,       // 🆕 NEW: Cloudinary provides image dimensions
-        height: answerSchemeData.height,     // 🆕 NEW: Cloudinary provides image dimensions
+        width: answerSchemeData.width,       
+        height: answerSchemeData.height,     
         format: answerSchemeData.format,
-        uploadedAt: answerSchemeData.createdAt, // 🔄 CHANGED: Cloudinary uses createdAt
-        // 🆕 NEW: Additional Cloudinary-specific data
+        uploadedAt: answerSchemeData.createdAt, 
         cloudinaryFolder: answerSchemeData.cloudinaryFolder,
         resourceType: answerSchemeData.resourceType
       } : null,
       
       rubric: rubricData ? {
         url: rubricData.url,
-        publicId: rubricData.publicId,           // 🔄 CHANGED: Cloudinary uses publicId instead of fullPath
+        publicId: rubricData.publicId,           
         originalName: rubricData.originalName,
         fileType: rubricData.fileType,
         fileSize: rubricData.fileSize,
         format: rubricData.format,
-        uploadedAt: rubricData.createdAt,        // 🔄 CHANGED: Cloudinary uses createdAt
-        // 🆕 NEW: Additional Cloudinary-specific data
+        uploadedAt: rubricData.createdAt,        
         cloudinaryFolder: rubricData.cloudinaryFolder,
         resourceType: rubricData.resourceType
       } : null
@@ -139,8 +120,8 @@ export const useUploadHandler = () => {
   };
 
   return {
-    validateFile, // YOUR ORIGINAL FUNCTION - UNCHANGED
-    uploadFiles, // 🔄 ENHANCED: Now supports nested folders for lecturers
-    formatFirebaseStorageData // YOUR ORIGINAL FUNCTION - UNCHANGED
+    validateFile,
+    uploadFiles, // 🆕 UPDATED: Single function with proper folder structure
+    formatFirebaseStorageData
   };
 };

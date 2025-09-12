@@ -1,26 +1,23 @@
-// src/config/cloudinary.js
-
-// 🌤️ CLOUDINARY CONFIGURATION - TWO UPLOAD METHODS
-// 1. LECTURERS: Unsigned upload (your old preset) for schemes/rubrics
-// 2. STUDENTS: Signed upload via Vercel API for submissions with overwrite
+// src/config/cloudinary.js - FIXED FOR YOUR TWO PRESETS
 
 /**
  * 🔧 ENVIRONMENT VARIABLES NEEDED:
  * Add these to your .env file:
- * VITE_CLOUDINARY_CLOUD_NAME=your_cloud_name
- * VITE_CLOUDINARY_UPLOAD_PRESET=your_old_unsigned_preset (for lecturers)
+ * 
+ * VITE_CLOUDINARY_CLOUD_NAME=dmc6csxg1
+ * VITE_CLOUDINARY_LECTURER_PRESET=create_exercise_upload
+ * VITE_CLOUDINARY_STUDENT_PRESET=student-submission
+ * 
+ * CLOUDINARY_CLOUD_NAME=dmc6csxg1
+ * CLOUDINARY_API_KEY=886445683169239  
+ * CLOUDINARY_API_SECRET=34OdWGWWn1pgLVxvQUDZk6NjAu4
  */
 
-// 🎓 LECTURER UPLOAD - Uses your OLD unsigned preset (direct to Cloudinary)
-export const uploadToCloudinaryLecturer = async (file, folder = 'schemes') => {
+// 🎓 LECTURER UPLOAD - Uses create_exercise_upload preset
+export const uploadToCloudinaryLecturer = async (file, folder = 'exercises', metadata = {}) => {
   // 🛡️ SECURITY VALIDATIONS
   if (!file) {
     throw new Error('No file provided');
-  }
-
-  // ⚠️ Environment check
-  if (!import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || !import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET) {
-    throw new Error('Cloudinary not configured. Check your .env file.');
   }
 
   // 📏 File size validation (2MB limit)
@@ -30,50 +27,61 @@ export const uploadToCloudinaryLecturer = async (file, folder = 'schemes') => {
   }
 
   // 📝 FILE TYPE VALIDATION
-  const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+  const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png'];
   const allowedDocTypes = ['application/pdf'];
   const allAllowedTypes = [...allowedImageTypes, ...allowedDocTypes];
     
   if (!allAllowedTypes.includes(file.type)) {
-    throw new Error('Invalid file type. Only images (JPG, PNG, GIF, WebP) and PDFs allowed');
+    throw new Error('Invalid file type. Only images (JPG, PNG) and PDFs allowed');
   }
 
-  // 🔒 Generate unique filename for lecturers
-  const timestamp = Date.now();
-  const randomString = Math.random().toString(36).substring(2, 15);
-  const fileExtension = file.name.split('.').pop();
-  const uniqueFilename = `${folder}_${timestamp}_${randomString}.${fileExtension}`;
+  // 🔧 Get environment variables
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+  const uploadPreset = import.meta.env.VITE_CLOUDINARY_LECTURER_PRESET;
 
-  // 📤 UPLOAD TO CLOUDINARY DIRECTLY
+  if (!cloudName || !uploadPreset) {
+    throw new Error('Missing Cloudinary configuration for lecturer uploads');
+  }
+
   try {
-    console.log(`🎓 LECTURER: Uploading ${file.name} to Cloudinary directly...`);
+    console.log(`🎓 LECTURER: Uploading ${file.name} using preset: ${uploadPreset}`);
     
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET); // Uses: create_exercise_upload
+    formData.append('upload_preset', uploadPreset);
     formData.append('folder', folder);
-    formData.append('public_id', uniqueFilename);
-    formData.append('resource_type', 'auto');
-    formData.append('context', `original_name=${file.name}`);
-    formData.append('tags', `${folder},lecturer-content,auto-uploaded`);
-        
-    const uploadUrl = `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/upload`;
-    console.log('🔍 DEBUG - Lecturer upload URL:', uploadUrl);
-        
-    const response = await fetch(uploadUrl, {
+    
+    // Add metadata if provided
+    if (metadata.filename) {
+      formData.append('public_id', `${folder}/${metadata.filename}`);
+    }
+
+    console.log('🔍 DEBUG - Lecturer upload data:', {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+      folder,
+      preset: uploadPreset,
+      filename: metadata.filename
+    });
+
+    // 🌐 DIRECT CLOUDINARY UPLOAD
+    const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
       method: 'POST',
       body: formData,
     });
 
+    console.log('🔍 DEBUG - Cloudinary Response status:', response.status);
+
     if (!response.ok) {
       const errorData = await response.json();
-      console.log('🔍 DEBUG - Lecturer upload error:', errorData);
-      throw new Error(`Upload failed: ${errorData.error?.message || 'Unknown error'}`);
+      console.log('🔍 DEBUG - Cloudinary Error:', errorData);
+      throw new Error(errorData.error?.message || 'Cloudinary upload failed');
     }
 
     const result = await response.json();
     console.log('✅ Lecturer upload successful:', result.secure_url);
-        
+
     return {
       url: result.secure_url,
       publicId: result.public_id,
@@ -86,17 +94,23 @@ export const uploadToCloudinaryLecturer = async (file, folder = 'schemes') => {
       resourceType: result.resource_type,
       createdAt: result.created_at,
       cloudinaryFolder: folder,
-      uniqueFilename: uniqueFilename,
-      bytesToMB: (file.size / 1024 / 1024).toFixed(2),
+      bytesToMB: (file.size / (1024 * 1024)).toFixed(2),
     };
 
   } catch (error) {
     console.error('❌ Lecturer upload error:', error);
-    throw new Error(`Upload failed: ${error.message}`);
+    
+    if (error.message.includes('Failed to fetch')) {
+      throw new Error('Network error. Please check your connection and try again.');
+    } else if (error.message.includes('File too large')) {
+      throw new Error('File size exceeds 2MB limit. Please compress your image.');
+    } else {
+      throw new Error(`Upload failed: ${error.message}`);
+    }
   }
 };
 
-// 🎓 STUDENT UPLOAD - Uses your NEW signed preset via Vercel API
+// 🎓 STUDENT UPLOAD - Uses student-submission preset
 export const uploadToCloudinaryStudent = async (file, folder = 'student-submissions', metadata = {}) => {
   // 🛡️ SECURITY VALIDATIONS
   if (!file) {
@@ -124,59 +138,70 @@ export const uploadToCloudinaryStudent = async (file, folder = 'student-submissi
     throw new Error('Missing required metadata: studentId, exerciseId, classId');
   }
 
-  // 📤 UPLOAD VIA YOUR VERCEL API
+  // 🔧 Get environment variables
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+  const uploadPreset = import.meta.env.VITE_CLOUDINARY_STUDENT_PRESET;
+
+  if (!cloudName || !uploadPreset) {
+    throw new Error('Missing Cloudinary configuration for student uploads');
+  }
+
   try {
-    console.log(`🎓 STUDENT: Uploading ${file.name} via Vercel API...`);
+    console.log(`🎓 STUDENT: Uploading ${file.name} using preset: ${uploadPreset}`);
     
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('upload_preset', uploadPreset);
     formData.append('folder', folder);
-    formData.append('studentId', studentId);
-    formData.append('exerciseId', exerciseId);
-    formData.append('classId', classId);
+    
+    // Create predictable filename for students
+    const predictableFileName = `${classId}-${exerciseId}-${studentId}`;
+    formData.append('public_id', `${folder}/${predictableFileName}`);
 
     console.log('🔍 DEBUG - Student upload data:', {
       fileName: file.name,
       fileSize: file.size,
       fileType: file.type,
       folder,
+      preset: uploadPreset,
       studentId,
       exerciseId,
-      classId
+      classId,
+      predictableFileName
     });
 
-    // 🌐 CALL YOUR VERCEL API
-    const response = await fetch('/api/upload', {
+    // 🌐 DIRECT CLOUDINARY UPLOAD
+    const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
       method: 'POST',
       body: formData,
     });
 
-    console.log('🔍 DEBUG - Student API Response status:', response.status);
+    console.log('🔍 DEBUG - Cloudinary Response status:', response.status);
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.log('🔍 DEBUG - Student API Error:', errorData);
-      throw new Error(errorData.error || 'API upload failed');
+      console.log('🔍 DEBUG - Cloudinary Error:', errorData);
+      throw new Error(errorData.error?.message || 'Cloudinary upload failed');
     }
 
     const result = await response.json();
-    console.log('✅ Student upload successful via API:', result.url);
+    console.log('✅ Student upload successful:', result.secure_url);
 
     return {
-      url: result.url,
-      publicId: result.publicId,
-      originalName: result.originalName,
-      fileType: result.fileType,
-      fileSize: result.fileSize,
+      url: result.secure_url,
+      publicId: result.public_id,
+      originalName: file.name,
+      fileType: file.type,
+      fileSize: file.size,
       width: result.width,
       height: result.height,
       format: result.format,
-      resourceType: result.resourceType,
-      createdAt: result.createdAt,
-      predictableFileName: result.predictableFileName,
-      isOverwrite: result.isOverwrite,
-      cloudinaryFolder: result.cloudinaryFolder,
-      bytesToMB: result.bytesToMB,
+      resourceType: result.resource_type,
+      createdAt: result.created_at,
+      predictableFileName,
+      isOverwrite: true, // Since we're using the same public_id
+      cloudinaryFolder: folder,
+      bytesToMB: (file.size / (1024 * 1024)).toFixed(2),
     };
 
   } catch (error) {
@@ -193,17 +218,16 @@ export const uploadToCloudinaryStudent = async (file, folder = 'student-submissi
 };
 
 /**
- * 🔄 MAIN UPLOAD FUNCTION - AUTO-ROUTES TO CORRECT METHOD
+ * 🔄 MAIN UPLOAD FUNCTION - AUTO-ROUTES TO CORRECT PRESET
  * This is the function you call from your components
  */
 export const uploadToCloudinary = async (file, folder = 'exercises', metadata = {}) => {
-  // If metadata has student info, use student upload (with overwrite capability)
+  // If metadata has student info, use student upload preset
   if (metadata.studentId && metadata.exerciseId && metadata.classId) {
-    console.log('🎓 Routing to STUDENT upload (via API with overwrite)');
+    console.log('🎓 Routing to STUDENT upload (student-submission preset)');
     return uploadToCloudinaryStudent(file, folder, metadata);
   } else {
-    // Otherwise, use lecturer upload (direct to Cloudinary)
-    console.log('🎓 Routing to LECTURER upload (direct to Cloudinary)');
-    return uploadToCloudinaryLecturer(file, folder);
+    console.log('🎓 Routing to LECTURER upload (create_exercise_upload preset)');
+    return uploadToCloudinaryLecturer(file, folder, metadata);
   }
 };

@@ -1,11 +1,13 @@
 // 🔥 FIREBASE IMPORTS
-import { collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, updateDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 
 // 🆕 FORM SUBMISSION HANDLER: Manages all form submission logic
 export const useFormSubmission = () => {
 
-  // 🆕 CUSTOM VALIDATION FUNCTION
+  // ❌ REMOVED: generateExerciseId() - We now use Firestore auto-generated IDs
+
+  // 🆕 CUSTOM VALIDATION FUNCTION (UNCHANGED)
   const validateForm = (formData, isPublishedExercise) => {
     const errors = {};
 
@@ -31,21 +33,25 @@ export const useFormSubmission = () => {
     return errors;
   };
 
-  // 💾 SAVE EXERCISE TO FIRESTORE
-  const saveExerciseToFirestore = async (exerciseData, classId, draftId = null) => {
+  // 🔄 UPDATED: Create document reference first to get ID
+  const createDocumentReference = (classId) => {
+    return doc(collection(db, 'classes', classId, 'exercises'));
+  };
+
+  // 💾 SAVE EXERCISE TO FIRESTORE (UPDATED for single ID approach)
+  const saveExerciseToFirestore = async (exerciseData, classId, exerciseRef = null) => {
     try {
       console.log('Saving exercise to Firestore...');
       console.log('About to save to path:', `classes/${classId}/exercises`);
       console.log('ClassID value:', classId);
       
       let docRef;
-      if (draftId) {
-        // Update existing draft
-        const existingDraftRef = doc(db, 'classes', classId, 'exercises', draftId);
-        await updateDoc(existingDraftRef, exerciseData);
-        docRef = { id: draftId };
+      if (exerciseRef) {
+        // Use existing document reference (for new exercises)
+        await setDoc(exerciseRef, exerciseData);
+        docRef = exerciseRef;
       } else {
-        // Create new exercise
+        // Legacy support: Create new exercise with addDoc (for existing drafts)
         exerciseData.createdAt = serverTimestamp();
         docRef = await addDoc(collection(db, 'classes', classId, 'exercises'), exerciseData);
       }
@@ -58,8 +64,8 @@ export const useFormSubmission = () => {
     }
   };
 
-  // 💾 SAVE AS DRAFT FUNCTION
-  const saveDraft = async (formData, classId, user, getUserDisplayName, uploadFiles, formatFirebaseStorageData, draftId = null) => {
+  // 💾 SAVE AS DRAFT FUNCTION - UPDATED with single ID approach
+  const saveDraft = async (formData, classId, user, getUserDisplayName, uploadFiles, formatFirebaseStorageData, existingDraftRef = null) => {
     // Only save if there's meaningful content
     if (!formData.title.trim() && !formData.description.trim()) {
       console.log('No content to save as draft');
@@ -74,11 +80,20 @@ export const useFormSubmission = () => {
     try {
       console.log('Saving draft exercise...');
 
-      // 🌤️ Upload files if they exist
+      // 🆕 NEW APPROACH: Get document reference first to obtain exerciseId
+      let docRef = existingDraftRef;
+      if (!docRef) {
+        docRef = createDocumentReference(classId);
+      }
+      const exerciseId = docRef.id; // 🔑 This is our single source of truth ID!
+      
+      console.log('📋 Using Firestore-generated exercise ID:', exerciseId);
+
+      // 🌤️ Upload files with proper folder structure: exercises/classId/exerciseId/
       const { answerSchemeData, rubricData } = await uploadFiles(formData, classId, exerciseId);
       const FirebaseStorageUpload = formatFirebaseStorageData(answerSchemeData, rubricData);
 
-      // 📝 Create draft exercise data
+      // 📝 Create draft exercise data (no separate exerciseId field needed!)
       const draftData = {
         title: formData.title.trim() || 'Untitled Exercise',
         description: formData.description.trim() || '',
@@ -94,11 +109,11 @@ export const useFormSubmission = () => {
         status: 'draft' // 🆕 KEY DIFFERENCE: Mark as draft
       };
 
-      // Save to Firestore
-      await saveExerciseToFirestore(draftData, classId, draftId);
-      console.log('✅ Draft saved successfully');
+      // Save to Firestore using the document reference
+      await saveExerciseToFirestore(draftData, classId, docRef);
+      console.log('✅ Draft saved successfully with ID:', exerciseId);
       
-      return true; // Success
+      return { success: true, exerciseId, docRef }; // Return both for future reference
       
     } catch (error) {
       console.error('❌ Error saving draft:', error);
@@ -106,10 +121,18 @@ export const useFormSubmission = () => {
     }
   };
 
-  // 🚀 SUBMIT EXERCISE FUNCTION - FIXED VERSION
-  const submitExercise = async (formData, classId, user, getUserDisplayName, uploadFiles, formatFirebaseStorageData, draftId = null, isPublishedExercise = false) => {
+  // 🚀 SUBMIT EXERCISE FUNCTION - UPDATED with single ID approach
+  const submitExercise = async (formData, classId, user, getUserDisplayName, uploadFiles, formatFirebaseStorageData, existingDraftRef = null, isPublishedExercise = false) => {
     try {
-      // 🗄️ STEP 1: Prepare basic exercise data (always update these fields)
+      // 🗄️ STEP 1: Get document reference and exerciseId
+      let docRef = existingDraftRef;
+      if (!docRef) {
+        docRef = createDocumentReference(classId);
+      }
+      const exerciseId = docRef.id; // 🔑 Single source of truth ID!
+      
+      console.log('📋 Using Firestore-generated exercise ID:', exerciseId);
+
       const exerciseData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
@@ -123,9 +146,14 @@ export const useFormSubmission = () => {
         status: 'active' // Keep as active for regular submit
       };
 
+      // Add createdAt only for new documents
+      if (!existingDraftRef) {
+        exerciseData.createdAt = serverTimestamp();
+      }
+
       // 🌤️ STEP 2: Only handle file uploads if NOT editing a published exercise
       if (!isPublishedExercise) {
-        console.log('📁 Uploading files (new exercise or draft)...');
+        console.log('📁 Uploading files to folder: exercises/', classId, '/', exerciseId);
         const { answerSchemeData, rubricData } = await uploadFiles(formData, classId, exerciseId);
         const FirebaseStorageUpload = formatFirebaseStorageData(answerSchemeData, rubricData);
         
@@ -138,10 +166,11 @@ export const useFormSubmission = () => {
       }
 
       // 🗄️ STEP 3: Save to Firestore
-      const docRef = await saveExerciseToFirestore(exerciseData, classId, draftId);
+      const savedDocRef = await saveExerciseToFirestore(exerciseData, classId, docRef);
       
-      console.log('✅ Exercise updated with ID:', docRef.id);
-      return docRef;
+      console.log('✅ Exercise created/updated with ID:', savedDocRef.id);
+      console.log('📁 Files uploaded to folder:', `exercises/${classId}/${exerciseId}/`);
+      return savedDocRef;
       
     } catch (error) {
       console.error('❌ Error creating/updating exercise:', error);
@@ -152,6 +181,7 @@ export const useFormSubmission = () => {
   return {
     validateForm,
     saveDraft,
-    submitExercise
+    submitExercise,
+    createDocumentReference // 🆕 NEW: Export for external use
   };
 };

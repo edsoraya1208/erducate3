@@ -56,7 +56,7 @@ export default async function handler(req, res) {
     const predictableFileName = `${studentId}_${classId}_${exerciseId}`;
     
     // 🗂️ ORGANIZED FOLDER STRUCTURE
-    const folderPath = `${folder}/${classId}/${exerciseId}`;
+    const folderPath = `${folder}/${classId}/${exerciseId}/${studentId}`;
     const fullPublicId = `${folderPath}/${predictableFileName}`;
 
     console.log('🎯 Upload target:', fullPublicId);

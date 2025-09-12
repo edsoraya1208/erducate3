@@ -1,4 +1,4 @@
-// api/upload-lecturer.js - NEW API ENDPOINT FOR LECTURER UPLOADS
+// api/lecturer-upload.js - SAME AS STUDENT BUT FOR LECTURERS
 import { v2 as cloudinary } from 'cloudinary';
 import formidable from 'formidable';
 import fs from 'fs';
@@ -30,9 +30,10 @@ export default async function handler(req, res) {
 
     const [fields, files] = await form.parse(req);
     
+    // 🔄 DIFFERENT: Get lecturer-specific fields instead of student fields
+    const filename = fields.filename?.[0] || 'exercise-file';
     const folder = fields.folder?.[0] || 'exercises';
-    const filename = fields.filename?.[0] || 'file';
-    const uploadType = fields.uploadType?.[0] || 'lecturer';
+    const uploadType = fields.uploadType?.[0]; // Just for logging
     
     const uploadedFile = files.file?.[0];
     
@@ -47,30 +48,33 @@ export default async function handler(req, res) {
       targetFilename: filename
     });
 
-    // 🗂️ ORGANIZED FOLDER STRUCTURE (same as student but for lecturers)
-    // folder comes in as: "exercises/classId/exerciseId"
-    const fullPublicId = `${folder}/${filename}`;
+    // 🔄 DIFFERENT: Use lecturer filename (not student predictable pattern)
+    const lectureFileName = filename;
+    
+    // 🗂️ LECTURER FOLDER STRUCTURE (simpler than student)
+    const folderPath = folder; // Just use 'exercises' or whatever folder
+    const fullPublicId = `${folderPath}/${lectureFileName}`;
 
     console.log('🎯 Lecturer upload target:', fullPublicId);
-    console.log('🔍 DEBUG - Folder:', folder);
-    console.log('🔍 DEBUG - Filename:', filename);
+    console.log('🔍 DEBUG - Lecturer filename:', lectureFileName);
+    console.log('🔍 DEBUG - Full path:', fullPublicId);
 
-    // 🌤️ UPLOAD TO CLOUDINARY WITH OVERWRITE (same logic as student)
+    // 🌤️ UPLOAD TO CLOUDINARY - SAME AS STUDENT BUT DIFFERENT CONTEXT
     const result = await cloudinary.uploader.upload(uploadedFile.filepath, {
-      folder: folder,
-      public_id: filename, // Predictable filename: answer-scheme or rubric
-      overwrite: true, // 🔑 KEY: Enable overwrite for draft editing
-      invalidate: true, // Clear CDN cache
+      folder: folderPath,
+      public_id: lectureFileName,
+      overwrite: true, // Allow overwrite for lecturers too
+      invalidate: true,
       resource_type: 'auto',
       context: {
         original_name: uploadedFile.originalFilename,
-        upload_type: uploadType,
+        upload_type: 'lecturer',
+        created_by: 'lecturer',
       },
-      tags: [`lecturer-${uploadType}`, 'exercise-content', 'resubmission-enabled'],
-      transformation: uploadedFile.mimetype.startsWith('image/') ? [
-        // Only apply transformations to images
+      tags: ['lecturer-upload', 'exercise-material', 'overwrite-enabled'],
+      transformation: [
         { format: 'jpg', quality: 'auto:good' }
-      ] : [] // No transformation for PDFs
+      ]
     });
 
     // Clean up temporary file
@@ -78,7 +82,7 @@ export default async function handler(req, res) {
 
     console.log('✅ Lecturer upload successful:', result.secure_url);
     console.log('🔍 Final public_id:', result.public_id);
-    console.log('🔍 Was overwritten:', result.overwritten || false);
+    console.log('🔍 Should have overwritten:', result.overwritten || false);
 
     const response = {
       success: true,
@@ -94,8 +98,14 @@ export default async function handler(req, res) {
       createdAt: result.created_at,
       overwritten: result.overwritten || false,
       
+      // 🔄 DIFFERENT: Lecturer-specific response fields
+      filename: lectureFileName,
+      folderPath: folderPath,
+      fullPublicId: fullPublicId,
+      isOverwrite: true,
       cloudinaryFolder: folder,
       bytesToMB: (uploadedFile.size / 1024 / 1024).toFixed(2),
+      uploadType: 'lecturer'
     };
 
     return res.status(200).json(response);
@@ -103,7 +113,7 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error('❌ Lecturer Upload API Error:', error);
     
-    let errorMessage = 'Upload failed';
+    let errorMessage = 'Lecturer upload failed';
     
     if (error.message?.includes('File size')) {
       errorMessage = 'File too large (max 2MB)';

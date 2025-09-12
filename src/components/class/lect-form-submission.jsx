@@ -1,11 +1,9 @@
 // 🔥 FIREBASE IMPORTS
-import { collection, addDoc, serverTimestamp, doc, updateDoc, setDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, updateDoc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 
 // 🆕 FORM SUBMISSION HANDLER: Manages all form submission logic
 export const useFormSubmission = () => {
-
-  // ❌ REMOVED: generateExerciseId() - We now use Firestore auto-generated IDs
 
   // 🆕 CUSTOM VALIDATION FUNCTION (UNCHANGED)
   const validateForm = (formData, isPublishedExercise) => {
@@ -121,7 +119,7 @@ export const useFormSubmission = () => {
     }
   };
 
-  // 🚀 SUBMIT EXERCISE FUNCTION - UPDATED with single ID approach
+  // 🚀 SUBMIT EXERCISE FUNCTION - FIXED with preserved file data
   const submitExercise = async (formData, classId, user, getUserDisplayName, uploadFiles, formatFirebaseStorageData, existingDraftId = null, isPublishedExercise = false) => {
     try {
       let docRef;
@@ -154,25 +152,52 @@ export const useFormSubmission = () => {
         exerciseData.createdAt = serverTimestamp();
       }
 
-      // 🌤️ STEP 2: Only handle file uploads if NOT editing a published exercise
+      // 🔧 FIXED: Handle file uploads and preservation
       if (!isPublishedExercise) {
-        console.log('📁 Uploading files to folder: exercises/', classId, '/', exerciseId);
+        // New exercise or draft - upload new files
+        console.log('📁 Uploading new files to folder: exercises/', classId, '/', exerciseId);
         const { answerSchemeData, rubricData } = await uploadFiles(formData, classId, exerciseId);
         const FirebaseStorageUpload = formatFirebaseStorageData(answerSchemeData, rubricData);
         
         // Add file data to exercise data
         Object.assign(exerciseData, FirebaseStorageUpload);
       } else {
-        console.log('📁 Skipping file uploads (published exercise - files preserved)...');
-        // For published exercises, we don't touch the answerScheme and rubric fields
-        // They will remain as they were in the database
+        // Published exercise - preserve existing file data
+        console.log('📁 Preserving existing file data for published exercise...');
+        
+        try {
+          // Fetch existing document to get current file data
+          const currentDoc = await getDoc(docRef);
+          if (currentDoc.exists()) {
+            const currentData = currentDoc.data();
+            
+            // Preserve existing file data
+            if (currentData.answerScheme) {
+              exerciseData.answerScheme = currentData.answerScheme;
+              console.log('✅ Preserved answer scheme data');
+            }
+            if (currentData.rubric) {
+              exerciseData.rubric = currentData.rubric;
+              console.log('✅ Preserved rubric data');
+            }
+          } else {
+            console.warn('⚠️ Could not find existing document to preserve file data');
+          }
+        } catch (error) {
+          console.error('❌ Error fetching existing document:', error);
+          // Continue with save even if we can't preserve files
+        }
       }
 
       // 🗄️ STEP 3: Save to Firestore
       const savedDocRef = await saveExerciseToFirestore(exerciseData, classId, docRef);
       
       console.log('✅ Exercise created/updated with ID:', savedDocRef.id);
-      console.log('📁 Files uploaded to folder:', `exercises/${classId}/${exerciseId}/`);
+      if (!isPublishedExercise) {
+        console.log('📁 Files uploaded to folder:', `exercises/${classId}/${exerciseId}/`);
+      } else {
+        console.log('📁 File data preserved for published exercise');
+      }
       return savedDocRef;
       
     } catch (error) {

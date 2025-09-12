@@ -122,14 +122,17 @@ export const useFormSubmission = () => {
   };
 
   // 🚀 SUBMIT EXERCISE FUNCTION - UPDATED with single ID approach
-  const submitExercise = async (formData, classId, user, getUserDisplayName, uploadFiles, formatFirebaseStorageData, existingDraftRef = null, isPublishedExercise = false) => {
+  const submitExercise = async (formData, classId, user, getUserDisplayName, uploadFiles, formatFirebaseStorageData, existingDraftId = null, isPublishedExercise = false) => {
     try {
-      // 🗄️ STEP 1: Get document reference and exerciseId
-      let docRef = existingDraftRef;
-      if (!docRef) {
+      let docRef;
+      if (existingDraftId) {
+        // Create proper document reference from the ID string
+        docRef = doc(db, 'classes', classId, 'exercises', existingDraftId);
+      } else {
+        // Create new document reference
         docRef = createDocumentReference(classId);
       }
-      const exerciseId = docRef.id; // 🔑 Single source of truth ID!
+      const exerciseId = docRef.id;
       
       console.log('📋 Using Firestore-generated exercise ID:', exerciseId);
 

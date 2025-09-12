@@ -1,19 +1,8 @@
-// src/config/cloudinary.js - FIXED FOR YOUR TWO PRESETS
+// src/config/cloudinary.js - FIXED TO USE YOUR BACKEND APIs
 
 /**
- * 🔧 ENVIRONMENT VARIABLES NEEDED:
- * Add these to your .env file:
- * 
- * VITE_CLOUDINARY_CLOUD_NAME=dmc6csxg1
- * VITE_CLOUDINARY_LECTURER_PRESET=create_exercise_upload
- * VITE_CLOUDINARY_STUDENT_PRESET=student-submission
- * 
- * CLOUDINARY_CLOUD_NAME=dmc6csxg1
- * CLOUDINARY_API_KEY=886445683169239  
- * CLOUDINARY_API_SECRET=34OdWGWWn1pgLVxvQUDZk6NjAu4
+ * 🎓 LECTURER UPLOAD - Uses your /api/lecturer-upload endpoint
  */
-
-// 🎓 LECTURER UPLOAD - Uses create_exercise_upload preset
 export const uploadToCloudinaryLecturer = async (file, folder = 'exercises', metadata = {}) => {
   // 🛡️ SECURITY VALIDATIONS
   if (!file) {
@@ -35,66 +24,53 @@ export const uploadToCloudinaryLecturer = async (file, folder = 'exercises', met
     throw new Error('Invalid file type. Only images (JPG, PNG) and PDFs allowed');
   }
 
-  // 🔧 Get environment variables
-  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-  const uploadPreset = import.meta.env.VITE_CLOUDINARY_LECTURER_PRESET;
-
-  if (!cloudName || !uploadPreset) {
-    throw new Error('Missing Cloudinary configuration for lecturer uploads');
-  }
-
   try {
-    console.log(`🎓 LECTURER: Uploading ${file.name} using preset: ${uploadPreset}`);
+    console.log(`🎓 LECTURER: Uploading ${file.name} via backend API`);
     
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', uploadPreset);
     formData.append('folder', folder);
-    
-    // Add metadata if provided
-    if (metadata.filename) {
-      formData.append('public_id', `${folder}/${metadata.filename}`);
-    }
+    formData.append('filename', metadata.filename || 'exercise-file');
+    formData.append('uploadType', 'lecturer');
 
     console.log('🔍 DEBUG - Lecturer upload data:', {
       fileName: file.name,
       fileSize: file.size,
       fileType: file.type,
       folder,
-      preset: uploadPreset,
       filename: metadata.filename
     });
 
-    // 🌐 DIRECT CLOUDINARY UPLOAD
-    const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+    // 🌐 USE YOUR BACKEND API INSTEAD OF DIRECT CLOUDINARY
+    const response = await fetch('/api/lecturer-upload', {
       method: 'POST',
       body: formData,
     });
 
-    console.log('🔍 DEBUG - Cloudinary Response status:', response.status);
+    console.log('🔍 DEBUG - Backend Response status:', response.status);
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.log('🔍 DEBUG - Cloudinary Error:', errorData);
-      throw new Error(errorData.error?.message || 'Cloudinary upload failed');
+      console.log('🔍 DEBUG - Backend Error:', errorData);
+      throw new Error(errorData.error || 'Backend upload failed');
     }
 
     const result = await response.json();
-    console.log('✅ Lecturer upload successful:', result.secure_url);
+    console.log('✅ Lecturer upload successful:', result.url);
 
     return {
-      url: result.secure_url,
-      publicId: result.public_id,
-      originalName: file.name,
-      fileType: file.type,
-      fileSize: file.size,
+      url: result.url,
+      publicId: result.publicId,
+      originalName: result.originalName,
+      fileType: result.fileType,
+      fileSize: result.fileSize,
       width: result.width,
       height: result.height,
       format: result.format,
-      resourceType: result.resource_type,
-      createdAt: result.created_at,
-      cloudinaryFolder: folder,
-      bytesToMB: (file.size / (1024 * 1024)).toFixed(2),
+      resourceType: result.resourceType,
+      createdAt: result.createdAt,
+      cloudinaryFolder: result.cloudinaryFolder,
+      bytesToMB: result.bytesToMB,
     };
 
   } catch (error) {
@@ -110,7 +86,9 @@ export const uploadToCloudinaryLecturer = async (file, folder = 'exercises', met
   }
 };
 
-// 🎓 STUDENT UPLOAD - Uses student-submission preset
+/**
+ * 🎓 STUDENT UPLOAD - Uses your /api/upload endpoint
+ */
 export const uploadToCloudinaryStudent = async (file, folder = 'student-submissions', metadata = {}) => {
   // 🛡️ SECURITY VALIDATIONS
   if (!file) {
@@ -138,70 +116,58 @@ export const uploadToCloudinaryStudent = async (file, folder = 'student-submissi
     throw new Error('Missing required metadata: studentId, exerciseId, classId');
   }
 
-  // 🔧 Get environment variables
-  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-  const uploadPreset = import.meta.env.VITE_CLOUDINARY_STUDENT_PRESET;
-
-  if (!cloudName || !uploadPreset) {
-    throw new Error('Missing Cloudinary configuration for student uploads');
-  }
-
   try {
-    console.log(`🎓 STUDENT: Uploading ${file.name} using preset: ${uploadPreset}`);
+    console.log(`🎓 STUDENT: Uploading ${file.name} via backend API`);
     
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', uploadPreset);
     formData.append('folder', folder);
-    
-    // Create predictable filename for students
-    const predictableFileName = `${classId}-${exerciseId}-${studentId}`;
-    formData.append('public_id', `${folder}/${predictableFileName}`);
+    formData.append('studentId', studentId);
+    formData.append('exerciseId', exerciseId);
+    formData.append('classId', classId);
 
     console.log('🔍 DEBUG - Student upload data:', {
       fileName: file.name,
       fileSize: file.size,
       fileType: file.type,
       folder,
-      preset: uploadPreset,
       studentId,
       exerciseId,
-      classId,
-      predictableFileName
+      classId
     });
 
-    // 🌐 DIRECT CLOUDINARY UPLOAD
-    const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+    // 🌐 USE YOUR BACKEND API INSTEAD OF DIRECT CLOUDINARY
+    const response = await fetch('/api/upload', {
       method: 'POST',
       body: formData,
     });
 
-    console.log('🔍 DEBUG - Cloudinary Response status:', response.status);
+    console.log('🔍 DEBUG - Backend Response status:', response.status);
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.log('🔍 DEBUG - Cloudinary Error:', errorData);
-      throw new Error(errorData.error?.message || 'Cloudinary upload failed');
+      console.log('🔍 DEBUG - Backend Error:', errorData);
+      throw new Error(errorData.error || 'Backend upload failed');
     }
 
     const result = await response.json();
-    console.log('✅ Student upload successful:', result.secure_url);
+    console.log('✅ Student upload successful:', result.url);
 
     return {
-      url: result.secure_url,
-      publicId: result.public_id,
-      originalName: file.name,
-      fileType: file.type,
-      fileSize: file.size,
+      url: result.url,
+      publicId: result.publicId,
+      originalName: result.originalName,
+      fileType: result.fileType,
+      fileSize: result.fileSize,
       width: result.width,
       height: result.height,
       format: result.format,
-      resourceType: result.resource_type,
-      createdAt: result.created_at,
-      predictableFileName,
-      isOverwrite: true, // Since we're using the same public_id
-      cloudinaryFolder: folder,
-      bytesToMB: (file.size / (1024 * 1024)).toFixed(2),
+      resourceType: result.resourceType,
+      createdAt: result.createdAt,
+      predictableFileName: result.predictableFileName,
+      isOverwrite: result.isOverwrite,
+      cloudinaryFolder: result.cloudinaryFolder,
+      bytesToMB: result.bytesToMB,
     };
 
   } catch (error) {
@@ -218,16 +184,15 @@ export const uploadToCloudinaryStudent = async (file, folder = 'student-submissi
 };
 
 /**
- * 🔄 MAIN UPLOAD FUNCTION - AUTO-ROUTES TO CORRECT PRESET
- * This is the function you call from your components
+ * 🔄 MAIN UPLOAD FUNCTION - AUTO-ROUTES TO CORRECT API
  */
 export const uploadToCloudinary = async (file, folder = 'exercises', metadata = {}) => {
-  // If metadata has student info, use student upload preset
+  // If metadata has student info, use student upload API
   if (metadata.studentId && metadata.exerciseId && metadata.classId) {
-    console.log('🎓 Routing to STUDENT upload (student-submission preset)');
+    console.log('🎓 Routing to STUDENT upload via /api/upload');
     return uploadToCloudinaryStudent(file, folder, metadata);
   } else {
-    console.log('🎓 Routing to LECTURER upload (create_exercise_upload preset)');
+    console.log('🎓 Routing to LECTURER upload via /api/lecturer-upload');
     return uploadToCloudinaryLecturer(file, folder, metadata);
   }
 };

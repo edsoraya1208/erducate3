@@ -32,8 +32,7 @@ export default async function handler(req, res) {
     
     // 🔄 DIFFERENT: Get lecturer-specific fields instead of student fields
     const filename = fields.filename?.[0] || 'exercise-file';
-    const folder = fields.folder?.[0] || 'exercises';
-    const uploadType = fields.uploadType?.[0]; // Just for logging
+    const folder = fields.folder?.[0] || 'lecturer_exercise';    const uploadType = fields.uploadType?.[0]; // Just for logging
     
     const uploadedFile = files.file?.[0];
     

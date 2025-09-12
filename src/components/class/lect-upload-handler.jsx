@@ -47,7 +47,7 @@ export const useUploadHandler = () => {
 
     try {
       // 🗂️ PROPER FOLDER STRUCTURE: exercises/classId/exerciseId/
-      const baseFolder = `exercises/${classId}/${exerciseId}`;
+      const baseFolder = `lecturer_exercise/${classId}/${exerciseId}`;
       
       if (formData.answerSchemeFile) {
         console.log('🌤️ Uploading answer scheme to:', `${baseFolder}/answer-scheme`);

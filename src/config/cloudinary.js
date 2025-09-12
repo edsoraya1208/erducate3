@@ -3,7 +3,7 @@
 /**
  * 🎓 LECTURER UPLOAD - Uses your /api/lecturer-upload endpoint
  */
-export const uploadToCloudinaryLecturer = async (file, folder = 'exercises', metadata = {}) => {
+export const uploadToCloudinaryLecturer = async (file, folder = 'lecturer_exercise', metadata = {}) => {
   // 🛡️ SECURITY VALIDATIONS
   if (!file) {
     throw new Error('No file provided');
@@ -186,8 +186,7 @@ export const uploadToCloudinaryStudent = async (file, folder = 'student-submissi
 /**
  * 🔄 MAIN UPLOAD FUNCTION - AUTO-ROUTES TO CORRECT API
  */
-export const uploadToCloudinary = async (file, folder = 'exercises', metadata = {}) => {
-  // If metadata has student info, use student upload API
+export const uploadToCloudinary = async (file, folder = 'lecturer_exercise', metadata = {}) => {  // If metadata has student info, use student upload API
   if (metadata.studentId && metadata.exerciseId && metadata.classId) {
     console.log('🎓 Routing to STUDENT upload via /api/upload');
     return uploadToCloudinaryStudent(file, folder, metadata);

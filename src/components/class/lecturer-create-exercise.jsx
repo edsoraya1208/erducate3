@@ -276,32 +276,33 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
   };
 
   const handleModalSaveDraft = async () => {
-    setShowCancelModal(false);
-    setIsLoading(true);
+  setShowCancelModal(false);
+  setIsLoading(true);
+  
+  try {
+    const result = await saveDraft(
+      formData, 
+      classId, 
+      user, 
+      getUserDisplayName, 
+      uploadFiles, 
+      formatFirebaseStorageData, 
+      draftId
+    );
     
-    try {
-      const saved = await saveDraft(
-        formData, 
-        classId, 
-        user, 
-        getUserDisplayName, 
-        uploadFiles, 
-        formatFirebaseStorageData, 
-        draftId
-      );
-      
-      if (saved) {
-        alert('Exercise saved as draft! You can continue editing it later.');
-      }
+    if (result.success) {
+      alert('Exercise saved as draft! You can continue editing it later.');
       setHasUnsavedChanges(false);
       onCancel();
-    } catch (error) {
-      alert('Failed to save draft. Changes will be lost.');
-    } finally {
-      setIsLoading(false);
+    } else {
+      alert(`Failed to save draft: ${result.message || 'Unknown error'}`);
     }
-  };
-
+  } catch (error) {
+    alert('Failed to save draft. Changes will be lost.');
+  } finally {
+    setIsLoading(false);
+  }
+};
   const handleModalDiscardChanges = () => {
     setShowCancelModal(false);
     setHasUnsavedChanges(false);
@@ -312,43 +313,44 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
     setShowCancelModal(false);
   };
   
-  // 🚀 SUBMIT FORM: Uses custom hooks for upload and submission
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!classId) {
-      alert('No class selected. Please access this page from a specific class.');
-      return;
-    }
+  if (!classId) {
+    alert('No class selected. Please access this page from a specific class.');
+    return;
+  }
 
-    // ⚠️ VALIDATION: Use custom validation from hook
-    const errors = validateForm(formData, isPublishedExercise);
-    if (Object.keys(errors).length > 0) {
-      setValidationErrors(errors);
-      return;
-    }
+  // ⚠️ VALIDATION: Use custom validation from hook
+  const isDraft = Boolean(draftId);
+  const errors = validateForm(formData, isPublishedExercise, isDraft);
+  if (Object.keys(errors).length > 0) {
+    setValidationErrors(errors);
+    return;
+  }
 
-    // ✅ VALIDATION: Ensure user is authenticated
-    if (!user || !user.uid) {
-      alert('You must be logged in to create exercises');
-      return;
-    }
+  // ✅ VALIDATION: Ensure user is authenticated
+  if (!user || !user.uid) {
+    alert('You must be logged in to create exercises');
+    return;
+  }
 
-    setIsLoading(true);
+  setIsLoading(true);
 
-    try {
-      // 🚀 SUBMIT USING CUSTOM HOOK
-      await submitExercise(
-        formData, 
-        classId, 
-        user, 
-        getUserDisplayName, 
-        uploadFiles, 
-        formatFirebaseStorageData, 
-        draftId,
-         isPublishedExercise
-      );
-      
+  try {
+    // 🚀 SUBMIT USING CUSTOM HOOK - NOW HANDLES RESULT PROPERLY
+    const result = await submitExercise(
+      formData, 
+      classId, 
+      user, 
+      getUserDisplayName, 
+      uploadFiles, 
+      formatFirebaseStorageData, 
+      draftId
+    );
+    
+    // 🆕 CHECK RESULT STATUS
+    if (result.success) {
       alert('Exercise created successfully! Files uploaded to cloudinary.');
       
       // 🔄 RESET FORM
@@ -370,35 +372,23 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
       if (rubricInput) rubricInput.value = '';
 
       onCancel();
-      
-    } catch (error) {
-      console.error('❌ Error creating exercise:', error);
-      
-      // 🚨 BETTER ERROR HANDLING
-      if (error.message.includes('Upload failed')) {
-        alert(`File upload error: ${error.message}`);
-      } else if (error.message.includes('Firestore')) {
-        alert('Database error. Files uploaded but exercise not saved. Please contact support.');
+    } else {
+      // Handle validation errors or other failures
+      if (result.errors) {
+        setValidationErrors(result.errors);
+        alert('Please check the form for errors.');
       } else {
-        alert(`Error creating exercise: ${error.message}`);
+        alert(`Error: ${result.message || 'Unknown error occurred'}`);
       }
-    } finally {
-      setIsLoading(false);
     }
-  };
-
-  if (isLoading && draftId) {
-    return (
-      <div className="page-container">
-        <main className="ce-main-content">
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p>Loading draft exercise...</p>
-          </div>
-        </main>
-      </div>
-    );
+    
+  } catch (error) {
+    console.error('❌ Error creating exercise:', error);
+    alert(`Error creating exercise: ${error.message}`);
+  } finally {
+    setIsLoading(false);
   }
+};
 
   // 🎨 RENDER: The form UI components
   return (

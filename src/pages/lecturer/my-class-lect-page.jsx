@@ -11,8 +11,7 @@ import {
   getDoc,
   deleteDoc
 } from 'firebase/firestore';
-import { ref, deleteObject } from 'firebase/storage';
-import { db, auth, storage } from '../../config/firebase';
+import { db, auth } from '../../config/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import LecturerMyClass from '../../components/class/lecturer-my-class';
 import DashboardHeader from '../../components/dashboard/dashboard-header';
@@ -232,95 +231,152 @@ const MyClassLectPage = () => {
   };
 
   const handleDeleteExercise = async (exerciseId) => {
-    setDeletingExerciseId(exerciseId);
+  setDeletingExerciseId(exerciseId);
+  
+  // 🌐 API URL setup (matching your cloudinary config pattern)
+  const isDevelopment = import.meta.env.DEV;
+  const API_BASE_URL = isDevelopment 
+    ? 'https://erducate3.vercel.app'  // Your deployed API
+    : '';
+  
+  try {
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Visual feedback delay
     
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Visual feedback delay
-      
-      // STEP 1: GET EXERCISE DATA FIRST
-      const exerciseRef = doc(db, 'classes', classId, 'exercises', exerciseId);
-      const exerciseSnap = await getDoc(exerciseRef);
-      const exerciseData = exerciseSnap.data();
-      
-      // STEP 2: DELETE EXERCISE FILES
-      if (exerciseData) {
-        // Delete answer scheme file
-        if (exerciseData.answerScheme?.storageName) {
-          try {
-            const answerSchemeRef = ref(storage, `answer-schemes/${exerciseData.answerScheme.storageName}`);
-            await deleteObject(answerSchemeRef);
-          } catch (error) {
-            console.log('Answer scheme delete failed:', error);
+    // STEP 1: GET EXERCISE DATA FIRST
+    const exerciseRef = doc(db, 'classes', classId, 'exercises', exerciseId);
+    const exerciseSnap = await getDoc(exerciseRef);
+    const exerciseData = exerciseSnap.data();
+    
+    // STEP 2: DELETE EXERCISE FILES FROM CLOUDINARY
+    if (exerciseData) {
+      // Delete answer scheme file
+      if (exerciseData.answerScheme?.publicId) {
+        try {
+          console.log('🗑️ Deleting answer scheme from Cloudinary:', exerciseData.answerScheme.publicId);
+          const response = await fetch(`${API_BASE_URL}/api/delete-exercise`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              publicId: exerciseData.answerScheme.publicId
+            }),
+            mode: 'cors',
+            credentials: 'omit'
+          });
+          
+          const result = await response.json();
+          if (!result.success && !result.wasNotFound) {
+            console.error('Answer scheme delete failed:', result.error);
           }
-        }
-        
-        // Delete rubric file  
-        if (exerciseData.rubric?.storageName) {
-          try {
-            const rubricRef = ref(storage, `rubrics/${exerciseData.rubric.storageName}`);
-            await deleteObject(rubricRef);
-          } catch (error) {
-            console.log('Rubric delete failed:', error);
-          }
-        }
-      }
-      
-      // STEP 3: DELETE STUDENT SUBMISSION FILES
-      const submissionsQuery = query(
-        collection(db, 'submissions'),
-        where('classId', '==', classId),
-        where('exerciseId', '==', exerciseId)
-      );
-      const submissionsSnapshot = await getDocs(submissionsQuery);
-      
-      for (const submissionDoc of submissionsSnapshot.docs) {
-        const submissionData = submissionDoc.data();
-        
-        if (submissionData.firebasePublicId) {
-          try {
-            const filePath = submissionData.firebasePublicId;
-            const fileRef = ref(storage, filePath);
-            await deleteObject(fileRef);
-          } catch (error) {
-            console.log('Student submission file delete failed:', error);
-          }
+        } catch (error) {
+          console.log('Answer scheme delete failed:', error);
         }
       }
       
-      // STEP 4: DELETE THE EXERCISE DOCUMENT
-      await deleteDoc(exerciseRef);
-      
-      // STEP 5: DELETE STUDENT PROGRESS RECORDS
-      const progressQuery = query(
-        collection(db, 'studentProgress'),
-        where('classId', '==', classId),
-        where('exerciseId', '==', exerciseId)
-      );
-      const progressSnapshot = await getDocs(progressQuery);
-      const deleteProgressPromises = [];
-      progressSnapshot.forEach((doc) => {
-        deleteProgressPromises.push(deleteDoc(doc.ref));
-      });
-      await Promise.all(deleteProgressPromises);
-      
-      // STEP 6: DELETE SUBMISSION RECORDS
-      const deleteSubmissionPromises = [];
-      submissionsSnapshot.forEach((submissionDoc) => {
-        deleteSubmissionPromises.push(deleteDoc(submissionDoc.ref));
-      });
-      await Promise.all(deleteSubmissionPromises);
-      
-      // Refresh data
-      await fetchExercises();
-      await fetchStudents();
-      
-    } catch (error) {
-      console.error('Error deleting exercise:', error);
-      throw error;
-    } finally {
-      setDeletingExerciseId(null);
+      // Delete rubric file  
+      if (exerciseData.rubric?.publicId) {
+        try {
+          console.log('🗑️ Deleting rubric from Cloudinary:', exerciseData.rubric.publicId);
+          const response = await fetch(`${API_BASE_URL}/api/delete-exercise`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              publicId: exerciseData.rubric.publicId
+            }),
+            mode: 'cors',
+            credentials: 'omit'
+          });
+          
+          const result = await response.json();
+          if (!result.success && !result.wasNotFound) {
+            console.error('Rubric delete failed:', result.error);
+          }
+        } catch (error) {
+          console.log('Rubric delete failed:', error);
+        }
+      }
     }
-  };
+    
+    // STEP 3: DELETE STUDENT SUBMISSION FILES FROM CLOUDINARY
+    const submissionsQuery = query(
+      collection(db, 'submissions'),
+      where('classId', '==', classId),
+      where('exerciseId', '==', exerciseId)
+    );
+    const submissionsSnapshot = await getDocs(submissionsQuery);
+    
+    for (const submissionDoc of submissionsSnapshot.docs) {
+      const submissionData = submissionDoc.data();
+      
+      // Check for Cloudinary publicId (new format)
+      if (submissionData.publicId) {
+        try {
+          console.log('🗑️ Deleting student submission from Cloudinary:', submissionData.publicId);
+          const response = await fetch(`${API_BASE_URL}/api/delete-exercise`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              publicId: submissionData.publicId
+            }),
+            mode: 'cors',
+            credentials: 'omit'
+          });
+          
+          const result = await response.json();
+          if (!result.success && !result.wasNotFound) {
+            console.error('Student submission delete failed:', result.error);
+          }
+        } catch (error) {
+          console.log('Student submission file delete failed:', error);
+        }
+      }
+      // Legacy: Handle old Firebase storage files (if any still exist)
+      else if (submissionData.firebasePublicId) {
+        console.log('⚠️ Found legacy Firebase file, skipping deletion:', submissionData.firebasePublicId);
+      }
+    }
+    
+    // STEP 4: DELETE THE EXERCISE DOCUMENT
+    await deleteDoc(exerciseRef);
+    
+    // STEP 5: DELETE STUDENT PROGRESS RECORDS
+    const progressQuery = query(
+      collection(db, 'studentProgress'),
+      where('classId', '==', classId),
+      where('exerciseId', '==', exerciseId)
+    );
+    const progressSnapshot = await getDocs(progressQuery);
+    const deleteProgressPromises = [];
+    progressSnapshot.forEach((doc) => {
+      deleteProgressPromises.push(deleteDoc(doc.ref));
+    });
+    await Promise.all(deleteProgressPromises);
+    
+    // STEP 6: DELETE SUBMISSION RECORDS
+    const deleteSubmissionPromises = [];
+    submissionsSnapshot.forEach((submissionDoc) => {
+      deleteSubmissionPromises.push(deleteDoc(submissionDoc.ref));
+    });
+    await Promise.all(deleteSubmissionPromises);
+    
+    // Refresh data
+    await fetchExercises();
+    await fetchStudents();
+    
+    console.log('✅ Exercise deleted successfully');
+    
+  } catch (error) {
+    console.error('Error deleting exercise:', error);
+    throw error;
+  } finally {
+    setDeletingExerciseId(null);
+  }
+};
 
   const handleDraftExerciseClick = (exerciseId) => {
     handleEditExercise(exerciseId);

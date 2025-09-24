@@ -1,7 +1,15 @@
-// src/config/cloudinary.js - FIXED TO USE YOUR BACKEND APIs
+// src/config/cloudinary.js - FIXED CORS + URL ISSUE
+
+// 🔧 Development mode detection
+const isDevelopment = import.meta.env.DEV;
+
+// 🌐 API Base URL - FIXED: Remove trailing slash to avoid double slash
+const API_BASE_URL = isDevelopment 
+  ? 'https://erducate3.vercel.app'  // NO trailing slash!
+  : '';
 
 /**
- * 🎓 LECTURER UPLOAD - Uses your /api/lecturer-upload endpoint
+ * 🎓 LECTURER UPLOAD - Uses your /api/upload-lecturer endpoint
  */
 export const uploadToCloudinaryLecturer = async (file, folder = 'lecturer_exercise', metadata = {}) => {
   // 🛡️ SECURITY VALIDATIONS
@@ -41,18 +49,24 @@ export const uploadToCloudinaryLecturer = async (file, folder = 'lecturer_exerci
       filename: metadata.filename
     });
 
-    // 🌐 USE YOUR BACKEND API INSTEAD OF DIRECT CLOUDINARY
-    const response = await fetch('/api/upload-lecturer', {
+    // 🌐 FIXED URL - No double slash
+    const uploadUrl = `${API_BASE_URL}/api/upload-lecturer`;
+    console.log('🔍 DEBUG - Upload URL:', uploadUrl);
+
+    const response = await fetch(uploadUrl, {
       method: 'POST',
       body: formData,
+      // 🔧 ADD CORS HEADERS FOR CROSS-ORIGIN REQUESTS
+      mode: 'cors',
+      credentials: 'omit', // Don't send cookies for CORS
     });
 
     console.log('🔍 DEBUG - Backend Response status:', response.status);
 
     if (!response.ok) {
-      const errorData = await response.json();
-      console.log('🔍 DEBUG - Backend Error:', errorData);
-      throw new Error(errorData.error || 'Backend upload failed');
+      const errorText = await response.text();
+      console.log('🔍 DEBUG - Backend Error:', errorText);
+      throw new Error(errorText || 'Backend upload failed');
     }
 
     const result = await response.json();
@@ -76,8 +90,8 @@ export const uploadToCloudinaryLecturer = async (file, folder = 'lecturer_exerci
   } catch (error) {
     console.error('❌ Lecturer upload error:', error);
     
-    if (error.message.includes('Failed to fetch')) {
-      throw new Error('Network error. Please check your connection and try again.');
+    if (error.message.includes('Failed to fetch') || error.message.includes('CORS')) {
+      throw new Error('CORS error: Your deployed API needs to allow localhost requests. Check your API CORS settings.');
     } else if (error.message.includes('File too large')) {
       throw new Error('File size exceeds 2MB limit. Please compress your image.');
     } else {
@@ -136,18 +150,24 @@ export const uploadToCloudinaryStudent = async (file, folder = 'student-submissi
       classId
     });
 
-    // 🌐 USE YOUR BACKEND API INSTEAD OF DIRECT CLOUDINARY
-    const response = await fetch('/api/upload', {
+    // 🌐 FIXED URL - No double slash
+    const uploadUrl = `${API_BASE_URL}/api/upload`;
+    console.log('🔍 DEBUG - Upload URL:', uploadUrl);
+
+    const response = await fetch(uploadUrl, {
       method: 'POST',
       body: formData,
+      // 🔧 ADD CORS HEADERS FOR CROSS-ORIGIN REQUESTS
+      mode: 'cors',
+      credentials: 'omit',
     });
 
     console.log('🔍 DEBUG - Backend Response status:', response.status);
 
     if (!response.ok) {
-      const errorData = await response.json();
-      console.log('🔍 DEBUG - Backend Error:', errorData);
-      throw new Error(errorData.error || 'Backend upload failed');
+      const errorText = await response.text();
+      console.log('🔍 DEBUG - Backend Error:', errorText);
+      throw new Error(errorText || 'Backend upload failed');
     }
 
     const result = await response.json();
@@ -173,8 +193,8 @@ export const uploadToCloudinaryStudent = async (file, folder = 'student-submissi
   } catch (error) {
     console.error('❌ Student upload error:', error);
     
-    if (error.message.includes('Failed to fetch')) {
-      throw new Error('Network error. Please check your connection and try again.');
+    if (error.message.includes('Failed to fetch') || error.message.includes('CORS')) {
+      throw new Error('CORS error: Your deployed API needs to allow localhost requests. Check your API CORS settings.');
     } else if (error.message.includes('File too large')) {
       throw new Error('File size exceeds 2MB limit. Please compress your image.');
     } else {
@@ -186,12 +206,13 @@ export const uploadToCloudinaryStudent = async (file, folder = 'student-submissi
 /**
  * 🔄 MAIN UPLOAD FUNCTION - AUTO-ROUTES TO CORRECT API
  */
-export const uploadToCloudinary = async (file, folder = 'lecturer_exercise', metadata = {}) => {  // If metadata has student info, use student upload API
+export const uploadToCloudinary = async (file, folder = 'lecturer_exercise', metadata = {}) => {
+  // If metadata has student info, use student upload API
   if (metadata.studentId && metadata.exerciseId && metadata.classId) {
     console.log('🎓 Routing to STUDENT upload via /api/upload');
     return uploadToCloudinaryStudent(file, folder, metadata);
   } else {
-    console.log('🎓 Routing to LECTURER upload via /api/lecturer-upload');
+    console.log('🎓 Routing to LECTURER upload via /api/upload-lecturer');
     return uploadToCloudinaryLecturer(file, folder, metadata);
   }
 };

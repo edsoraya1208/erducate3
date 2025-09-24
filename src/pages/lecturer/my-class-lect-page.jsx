@@ -231,6 +231,7 @@ const MyClassLectPage = () => {
   };
 
   const handleDeleteExercise = async (exerciseId) => {
+
   setDeletingExerciseId(exerciseId);
   
   // 🌐 API URL setup (matching your cloudinary config pattern)
@@ -301,45 +302,57 @@ const MyClassLectPage = () => {
     }
     
     // STEP 3: DELETE STUDENT SUBMISSION FILES FROM CLOUDINARY
-    const submissionsQuery = query(
-      collection(db, 'submissions'),
-      where('classId', '==', classId),
-      where('exerciseId', '==', exerciseId)
-    );
-    const submissionsSnapshot = await getDocs(submissionsQuery);
-    
-    for (const submissionDoc of submissionsSnapshot.docs) {
-      const submissionData = submissionDoc.data();
+const submissionsQuery = query(
+  collection(db, 'submissions'),
+  where('classId', '==', classId),
+  where('exerciseId', '==', exerciseId)
+);
+const submissionsSnapshot = await getDocs(submissionsQuery);
+
+console.log(`🔍 Found ${submissionsSnapshot.size} submissions to process`);
+
+for (const submissionDoc of submissionsSnapshot.docs) {
+  const submissionData = submissionDoc.data();
+  
+  // 🔧 FIX: Use the correct field name from your submission code
+  const publicId = submissionData.cloudinaryPublicId; // ← This is the correct field name!
+  
+  console.log('📄 Processing submission:', {
+    docId: submissionDoc.id,
+    cloudinaryPublicId: publicId,
+    fileName: submissionData.fileName
+  });
+  
+  if (publicId) {
+    try {
+      console.log('🗑️ Deleting student submission from Cloudinary:', publicId);
+      const response = await fetch(`${API_BASE_URL}/api/delete-exercise`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          publicId: publicId  // This will now have the correct value
+        }),
+        mode: 'cors',
+        credentials: 'omit'
+      });
       
-      // Check for Cloudinary publicId (new format)
-      if (submissionData.publicId) {
-        try {
-          console.log('🗑️ Deleting student submission from Cloudinary:', submissionData.publicId);
-          const response = await fetch(`${API_BASE_URL}/api/delete-exercise`, {
-            method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              publicId: submissionData.publicId
-            }),
-            mode: 'cors',
-            credentials: 'omit'
-          });
-          
-          const result = await response.json();
-          if (!result.success && !result.wasNotFound) {
-            console.error('Student submission delete failed:', result.error);
-          }
-        } catch (error) {
-          console.log('Student submission file delete failed:', error);
-        }
+      const result = await response.json();
+      console.log('📤 Delete response:', result);
+      
+      if (!result.success && !result.wasNotFound) {
+        console.error('❌ Student submission delete failed:', result.error);
+      } else {
+        console.log('✅ Student submission deleted successfully');
       }
-      // Legacy: Handle old Firebase storage files (if any still exist)
-      else if (submissionData.firebasePublicId) {
-        console.log('⚠️ Found legacy Firebase file, skipping deletion:', submissionData.firebasePublicId);
-      }
+    } catch (error) {
+      console.log('❌ Student submission file delete failed:', error);
     }
+  } else {
+    console.log('⚠️ No cloudinaryPublicId found for submission:', submissionDoc.id);
+  }
+}
     
     // STEP 4: DELETE THE EXERCISE DOCUMENT
     await deleteDoc(exerciseRef);

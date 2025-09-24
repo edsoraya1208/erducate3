@@ -5,38 +5,46 @@ import { db } from '../../config/firebase';
 // 🆕 FORM SUBMISSION HANDLER: Manages all form submission logic
 export const useFormSubmission = () => {
 
-  // 🆕 CUSTOM VALIDATION FUNCTION (UNCHANGED)
-  const validateForm = (formData, isPublishedExercise) => {
+  // 🆕 BULLETPROOF VALIDATION - Handles all edge cases
+  const validateForm = (formData, existingData = null, isDraftSave = false) => {
     const errors = {};
 
-    if (!formData.title.trim()) {
-      errors.title = 'Please fill out this field.';
-    }
-    if (!formData.description.trim()) {
-      errors.description = 'Please fill out this field.';
-    }
-    if (!formData.totalMarks || formData.totalMarks <= 0) {
-      errors.totalMarks = 'Please fill out this field.';
-    }
-    if (!formData.answerSchemeFile && !isPublishedExercise) {
-      errors.answerSchemeFile = 'Please fill out this field.';
-    }
-    if (!formData.rubricFile && !isPublishedExercise) {
-      errors.rubricFile = 'Please fill out this field.';
-    }
-    if (!formData.dueDate || !formData.dueDate.trim()) {
-      errors.dueDate = 'Please fill out this field.';
+    // Always require basic fields (even for drafts when publishing)
+    if (!isDraftSave) {
+      if (!formData.title?.trim()) {
+        errors.title = 'Please fill out this field.';
+      }
+      if (!formData.description?.trim()) {
+        errors.description = 'Please fill out this field.';
+      }
+      if (!formData.totalMarks || formData.totalMarks <= 0) {
+        errors.totalMarks = 'Please fill out this field.';
+      }
+      if (!formData.dueDate?.trim()) {
+        errors.dueDate = 'Please fill out this field.';
+      }
+
+      // 🔧 SMART FILE VALIDATION: Check if we have files (existing OR new)
+      const hasAnswerScheme = formData.answerSchemeFile || existingData?.answerScheme;
+      const hasRubric = formData.rubricFile || existingData?.rubric;
+      
+      if (!hasAnswerScheme) {
+        errors.answerSchemeFile = 'Please upload an answer scheme file.';
+      }
+      if (!hasRubric) {
+        errors.rubricFile = 'Please upload a rubric file.';
+      }
     }
 
     return errors;
   };
 
-  // 🔄 UPDATED: Create document reference first to get ID
+  // 🔄 Create document reference
   const createDocumentReference = (classId) => {
     return doc(collection(db, 'classes', classId, 'exercises'));
   };
 
-  // 💾 SAVE EXERCISE TO FIRESTORE (UPDATED for single ID approach)
+  // 💾 SAVE EXERCISE TO FIRESTORE
   const saveExerciseToFirestore = async (exerciseData, classId, exerciseRef = null) => {
     try {
       console.log('Saving exercise to Firestore...');
@@ -45,11 +53,9 @@ export const useFormSubmission = () => {
       
       let docRef;
       if (exerciseRef) {
-        // Use existing document reference (for new exercises)
         await setDoc(exerciseRef, exerciseData);
         docRef = exerciseRef;
       } else {
-        // Legacy support: Create new exercise with addDoc (for existing drafts)
         exerciseData.createdAt = serverTimestamp();
         docRef = await addDoc(collection(db, 'classes', classId, 'exercises'), exerciseData);
       }
@@ -62,147 +68,188 @@ export const useFormSubmission = () => {
     }
   };
 
-  // 💾 SAVE AS DRAFT FUNCTION - UPDATED with single ID approach
+  // 🛡️ FETCH EXISTING DATA HELPER
+  const fetchExistingData = async (docRef) => {
+    try {
+      const currentDoc = await getDoc(docRef);
+      if (currentDoc.exists()) {
+        console.log('✅ Found existing document');
+        return currentDoc.data();
+      }
+      console.log('ℹ️ No existing document found');
+      return null;
+    } catch (error) {
+      console.error('⚠️ Error fetching existing document:', error);
+      return null;
+    }
+  };
+
+  // 📁 SMART FILE HANDLER - Preserves existing files
+  const handleFileUploads = async (formData, classId, exerciseId, existingData = null, uploadFiles, formatFirebaseStorageData) => {
+    console.log('📁 Processing file uploads...');
+    
+    try {
+      // Upload new files (only if provided)
+      const { answerSchemeData, rubricData } = await uploadFiles(formData, classId, exerciseId);
+      const newFileData = formatFirebaseStorageData(answerSchemeData, rubricData);
+
+      // 🔥 SMART MERGE: Preserve existing files, add new ones
+      const finalFileData = {};
+      
+      // Handle answer scheme
+      if (newFileData.answerScheme) {
+        finalFileData.answerScheme = newFileData.answerScheme;
+        console.log('✅ New answer scheme uploaded');
+      } else if (existingData?.answerScheme) {
+        finalFileData.answerScheme = existingData.answerScheme;
+        console.log('✅ Preserved existing answer scheme');
+      }
+
+      // Handle rubric
+      if (newFileData.rubric) {
+        finalFileData.rubric = newFileData.rubric;
+        console.log('✅ New rubric uploaded');
+      } else if (existingData?.rubric) {
+        finalFileData.rubric = existingData.rubric;
+        console.log('✅ Preserved existing rubric');
+      }
+
+      console.log('📁 Final file status:');
+      console.log('  - Answer scheme:', finalFileData.answerScheme ? '✅ Present' : '❌ Missing');
+      console.log('  - Rubric:', finalFileData.rubric ? '✅ Present' : '❌ Missing');
+
+      return finalFileData;
+    } catch (error) {
+      console.error('❌ Error handling file uploads:', error);
+      throw new Error(`File upload failed: ${error.message}`);
+    }
+  };
+
+  // 💾 SAVE AS DRAFT - IMPROVED with better error handling
   const saveDraft = async (formData, classId, user, getUserDisplayName, uploadFiles, formatFirebaseStorageData, existingDraftRef = null) => {
-    // Only save if there's meaningful content
-    if (!formData.title.trim() && !formData.description.trim()) {
+    // More lenient check for drafts - save if ANY content exists
+    const hasContent = formData.title?.trim() || 
+                      formData.description?.trim() || 
+                      formData.answerSchemeFile || 
+                      formData.rubricFile ||
+                      formData.dueDate?.trim() ||
+                      formData.totalMarks;
+
+    if (!hasContent) {
       console.log('No content to save as draft');
-      return false;
+      return { success: false, message: 'No content to save' };
     }
 
     if (!classId || !user?.uid) {
       console.warn('Cannot save draft: missing classId or user');
-      return false;
+      return { success: false, message: 'Missing required data' };
     }
 
     try {
       console.log('Saving draft exercise...');
 
-      // 🆕 NEW APPROACH: Get document reference first to obtain exerciseId
       let docRef = existingDraftRef;
+      let existingData = null;
+
       if (!docRef) {
         docRef = createDocumentReference(classId);
+      } else {
+        // Fetch existing data to preserve files
+        existingData = await fetchExistingData(docRef);
       }
-      const exerciseId = docRef.id; // 🔑 This is our single source of truth ID!
       
-      console.log('📋 Using Firestore-generated exercise ID:', exerciseId);
+      const exerciseId = docRef.id;
+      console.log('📋 Using exercise ID:', exerciseId);
 
-      // 🌤️ Upload files with proper folder structure: exercises/classId/exerciseId/
-      const { answerSchemeData, rubricData } = await uploadFiles(formData, classId, exerciseId);
-      const FirebaseStorageUpload = formatFirebaseStorageData(answerSchemeData, rubricData);
+      // Handle files with preservation
+      const fileData = await handleFileUploads(formData, classId, exerciseId, existingData, uploadFiles, formatFirebaseStorageData);
 
-      // 📝 Create draft exercise data (no separate exerciseId field needed!)
+      // 📝 Create draft data
       const draftData = {
-        title: formData.title.trim() || 'Untitled Exercise',
-        description: formData.description.trim() || '',
+        title: formData.title?.trim() || 'Untitled Exercise',
+        description: formData.description?.trim() || '',
         dueDate: formData.dueDate || null,
         totalMarks: formData.totalMarks ? parseInt(formData.totalMarks) : null,
         
-        ...FirebaseStorageUpload,
+        ...fileData, // Add preserved + new files
         
         createdBy: getUserDisplayName(),
         createdById: user.uid,
-        createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-        status: 'draft' // 🆕 KEY DIFFERENCE: Mark as draft
+        status: 'draft'
       };
 
-      // Save to Firestore using the document reference
+      // Add createdAt only for new drafts
+      if (!existingData) {
+        draftData.createdAt = serverTimestamp();
+      }
+
       await saveExerciseToFirestore(draftData, classId, docRef);
       console.log('✅ Draft saved successfully with ID:', exerciseId);
       
-      return { success: true, exerciseId, docRef }; // Return both for future reference
+      return { success: true, exerciseId, docRef };
       
     } catch (error) {
       console.error('❌ Error saving draft:', error);
-      throw error;
+      return { success: false, message: error.message };
     }
   };
 
-  // 🚀 SUBMIT EXERCISE FUNCTION - FIXED with preserved file data
-  const submitExercise = async (formData, classId, user, getUserDisplayName, uploadFiles, formatFirebaseStorageData, existingDraftId = null, isPublishedExercise = false) => {
+  // 🚀 SUBMIT EXERCISE - BULLETPROOF version
+  const submitExercise = async (formData, classId, user, getUserDisplayName, uploadFiles, formatFirebaseStorageData, existingDraftId = null) => {
     try {
       let docRef;
+      let existingData = null;
+
       if (existingDraftId) {
-        // Create proper document reference from the ID string
         docRef = doc(db, 'classes', classId, 'exercises', existingDraftId);
+        existingData = await fetchExistingData(docRef);
       } else {
-        // Create new document reference
         docRef = createDocumentReference(classId);
       }
-      const exerciseId = docRef.id;
       
-      console.log('📋 Using Firestore-generated exercise ID:', exerciseId);
+      const exerciseId = docRef.id;
+      console.log('📋 Using exercise ID:', exerciseId);
 
+      // 🛡️ VALIDATE BEFORE PROCESSING
+      const validationErrors = validateForm(formData, existingData, false);
+      if (Object.keys(validationErrors).length > 0) {
+        console.error('❌ Validation failed:', validationErrors);
+        return { success: false, errors: validationErrors };
+      }
+
+      // Handle files with preservation
+      const fileData = await handleFileUploads(formData, classId, exerciseId, existingData, uploadFiles, formatFirebaseStorageData);
+
+      // 📝 Create exercise data
       const exerciseData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
-        dueDate: formData.dueDate || null,
-        totalMarks: formData.totalMarks ? parseInt(formData.totalMarks) : null,
+        dueDate: formData.dueDate,
+        totalMarks: parseInt(formData.totalMarks),
         
-        // ✅ User and metadata
+        ...fileData, // Add preserved + new files
+        
         createdBy: getUserDisplayName(),
         createdById: user.uid,
         updatedAt: serverTimestamp(),
-        status: 'active' // Keep as active for regular submit
+        status: 'active'
       };
 
-      // Add createdAt only for new documents
-      if (!existingDraftId) {
+      // Add createdAt only for new exercises
+      if (!existingData) {
         exerciseData.createdAt = serverTimestamp();
       }
 
-      // 🔧 FIXED: Handle file uploads and preservation
-      if (!isPublishedExercise) {
-        // New exercise or draft - upload new files
-        console.log('📁 Uploading new files to folder: exercises/', classId, '/', exerciseId);
-        const { answerSchemeData, rubricData } = await uploadFiles(formData, classId, exerciseId);
-        const FirebaseStorageUpload = formatFirebaseStorageData(answerSchemeData, rubricData);
-        
-        // Add file data to exercise data
-        Object.assign(exerciseData, FirebaseStorageUpload);
-      } else {
-        // Published exercise - preserve existing file data
-        console.log('📁 Preserving existing file data for published exercise...');
-        
-        try {
-          // Fetch existing document to get current file data
-          const currentDoc = await getDoc(docRef);
-          if (currentDoc.exists()) {
-            const currentData = currentDoc.data();
-            
-            // Preserve existing file data
-            if (currentData.answerScheme) {
-              exerciseData.answerScheme = currentData.answerScheme;
-              console.log('✅ Preserved answer scheme data');
-            }
-            if (currentData.rubric) {
-              exerciseData.rubric = currentData.rubric;
-              console.log('✅ Preserved rubric data');
-            }
-          } else {
-            console.warn('⚠️ Could not find existing document to preserve file data');
-          }
-        } catch (error) {
-          console.error('❌ Error fetching existing document:', error);
-          // Continue with save even if we can't preserve files
-        }
-      }
-
-      // 🗄️ STEP 3: Save to Firestore
+      // 🗄️ Save to Firestore
       const savedDocRef = await saveExerciseToFirestore(exerciseData, classId, docRef);
       
-      console.log('✅ Exercise created/updated with ID:', savedDocRef.id);
-      if (!isPublishedExercise) {
-        console.log('📁 Files uploaded to folder:', `exercises/${classId}/${exerciseId}/`);
-      } else {
-        console.log('📁 File data preserved for published exercise');
-      }
-      return savedDocRef;
+      console.log('✅ Exercise published successfully with ID:', savedDocRef.id);
+      return { success: true, docRef: savedDocRef };
       
     } catch (error) {
-      console.error('❌ Error creating/updating exercise:', error);
-      throw error;
+      console.error('❌ Error publishing exercise:', error);
+      return { success: false, message: error.message };
     }
   };
 
@@ -210,6 +257,7 @@ export const useFormSubmission = () => {
     validateForm,
     saveDraft,
     submitExercise,
-    createDocumentReference // 🆕 NEW: Export for external use
+    createDocumentReference,
+    fetchExistingData // 🆕 NEW: Export for checking existing files
   };
 };

@@ -51,12 +51,17 @@ const LectFileUploadSection = ({
               Supported formats: PNG, JPG (Max 2MB)
             </small>
             
-            {(formData.answerSchemeFile || (isPublishedExercise && originalFileNames.answerScheme)) && (
+            {/* Show newly selected file */}
+            {formData.answerSchemeFile && (
               <p className="file-selected">
-                {formData.answerSchemeFile ? 
-                  `✅ Selected: ${formData.answerSchemeFile.name} (${(formData.answerSchemeFile.size / 1024 / 1024).toFixed(2)} MB)` :
-                  `📁 Current file: ${originalFileNames.answerScheme}`
-                }
+                ✅ Selected: {formData.answerSchemeFile.name} ({(formData.answerSchemeFile.size / 1024 / 1024).toFixed(2)} MB)
+              </p>
+            )}
+
+            {/* Show original file if no new file is selected */}
+            {!formData.answerSchemeFile && originalFileNames?.answerScheme && (
+              <p className="file-selected">
+                📁 Current file: {originalFileNames.answerScheme}
               </p>
             )}
 
@@ -107,12 +112,17 @@ const LectFileUploadSection = ({
               Supported format: PDF (Max 2MB)
             </small>
             
-            {(formData.rubricFile || (isPublishedExercise && originalFileNames.rubric)) && (
+            {/* Show newly selected file */}
+            {formData.rubricFile && (
               <p className="file-selected">
-                {formData.rubricFile ? 
-                  `✅ Selected: ${formData.rubricFile.name} (${(formData.rubricFile.size / 1024 / 1024).toFixed(2)} MB)` :
-                  `📁 Current file: ${originalFileNames.rubric}`
-                }
+                ✅ Selected: {formData.rubricFile.name} ({(formData.rubricFile.size / 1024 / 1024).toFixed(2)} MB)
+              </p>
+            )}
+
+            {/* Show original file if no new file is selected */}
+            {!formData.rubricFile && originalFileNames?.rubric && (
+              <p className="file-selected">
+                📁 Current file: {originalFileNames.rubric}
               </p>
             )}
             

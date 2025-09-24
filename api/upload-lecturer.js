@@ -1,4 +1,4 @@
-// api/lecturer-upload.js - SAME AS STUDENT BUT FOR LECTURERS
+// api/lecturer-upload.js - FIXED WITH CORS HEADERS
 import { v2 as cloudinary } from 'cloudinary';
 import formidable from 'formidable';
 import fs from 'fs';
@@ -16,6 +16,18 @@ export const config = {
 };
 
 export default async function handler(req, res) {
+  // 🔧 ADD CORS HEADERS - Allow localhost requests
+  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:5173');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Handle preflight OPTIONS request
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
+  
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -32,7 +44,8 @@ export default async function handler(req, res) {
     
     // 🔄 DIFFERENT: Get lecturer-specific fields instead of student fields
     const filename = fields.filename?.[0] || 'exercise-file';
-    const folder = fields.folder?.[0] || 'lecturer_exercise';    const uploadType = fields.uploadType?.[0]; // Just for logging
+    const folder = fields.folder?.[0] || 'lecturer_exercise';
+    const uploadType = fields.uploadType?.[0]; // Just for logging
     
     const uploadedFile = files.file?.[0];
     

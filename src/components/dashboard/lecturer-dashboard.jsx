@@ -61,8 +61,9 @@ const LecturerDashboard = ({
         </div>
         
         <div className="modal-buttons">
-          <button
+         <button
             onClick={onCloseCreateModal}
+            disabled={creating}
             className="cancel-btn"
           >
             Cancel
@@ -109,7 +110,7 @@ const LecturerDashboard = ({
   );
 
   //make class card colorful edge
-    const getRandomColorClass = (index) => {
+  const getRandomColorClass = (classId) => {
     const colors = [
       'color-pink-light',
       'color-blue', 
@@ -123,9 +124,14 @@ const LecturerDashboard = ({
       'color-yellow'
     ];
     
-    // Use index to ensure consistent colors for each class position
-    // This way the same class will always have the same color
-    return colors[index % colors.length];
+    // Convert classId to a number for consistent ordering
+    let hash = 0;
+    for (let i = 0; i < classId.length; i++) {
+      hash += classId.charCodeAt(i);
+    }
+    
+    const colorIndex = hash % colors.length;
+    return colors[colorIndex];
   };
 
   return (
@@ -183,10 +189,9 @@ const LecturerDashboard = ({
                 </div>
               ) : (
                 /* Class Cards Grid */
-                 classes.map((classItem, index) => (
-                  <div 
+                [...classes].sort((a, b) => b.createdAt.seconds - a.createdAt.seconds).map((classItem, index) => (                  <div 
                     key={classItem.id} 
-                    className={`class-card clickable-card ${getRandomColorClass(index)}`} // ADD the color class here
+                    className={`class-card clickable-card ${getRandomColorClass(classItem.id)}`} // ADD the color class here
                     onClick={() => onClassClick(classItem)}
                     style={{ cursor: 'pointer' }}
                   >

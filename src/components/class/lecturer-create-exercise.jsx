@@ -56,6 +56,16 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
   // 🔙 NEW: Browser back button detection
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
+  // 🔧 HELPER FUNCTION: Check if form has content (eliminates duplication)
+  const checkHasContent = (data = formData) => {
+    return data.title.trim() || 
+           data.description.trim() || 
+           data.answerSchemeFile || 
+           data.rubricFile ||
+           data.dueDate ||
+           data.totalMarks;
+  };
+
   // 📁 DRAG AND DROP HANDLERS
   const handleDragOver = (e) => {
     if (isPublishedExercise || isLoading) {
@@ -143,17 +153,18 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
 
   // 🔙 NEW: Browser back button and page refresh detection
   useEffect(() => {
-    const checkUnsavedChanges = () => {
-      const hasContent = formData.title.trim() || 
-                        formData.description.trim() || 
-                        formData.answerSchemeFile || 
-                        formData.rubricFile ||
-                        formData.dueDate;
-      setHasUnsavedChanges(hasContent);
-    };
-
-    checkUnsavedChanges();
+    const hasContent = checkHasContent();
+    setHasUnsavedChanges(hasContent);
   }, [formData]);
+
+  // 🚨 DEBUG: Watch formData changes
+  useEffect(() => {
+    console.log('🎯 FORMDATA CHANGED:', {
+      totalMarks: formData.totalMarks,
+      hasUnsavedChanges: hasUnsavedChanges,
+      timestamp: new Date().toISOString()
+    });
+  }, [formData, hasUnsavedChanges]);
 
   // 🔙 NEW: Handle browser back/refresh/close
   useEffect(() => {
@@ -201,10 +212,53 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
   // 🎯 HANDLE INPUT CHANGES: Updates state when user types
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    // 🚨 EMERGENCY DEBUG - Log everything for totalMarks
+    if (name === 'totalMarks') {
+      console.log('🔥 TOTALMARKS DEBUG:', {
+        timestamp: new Date().toISOString(),
+        originalValue: value,
+        valueType: typeof value,
+        valueLength: value.length,
+        currentFormData: formData.totalMarks,
+        event: e,
+        target: e.target,
+        targetValue: e.target.value
+      });
+    }
+    
+    // 🚨 CRITICAL: Check if value is being modified somewhere
+    const originalValue = value;
+    
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [name]: value
+      };
+      
+      // Debug the state update
+      if (name === 'totalMarks') {
+        console.log('🔥 STATE UPDATE:', {
+          before: prev.totalMarks,
+          after: newData.totalMarks,
+          inputValue: originalValue,
+          matches: newData.totalMarks === originalValue
+        });
+      }
+      
+      return newData;
+    });
+    
+    // 🚨 Check if React batching is causing issues
+    setTimeout(() => {
+      if (name === 'totalMarks') {
+        console.log('🔥 AFTER TIMEOUT:', {
+          formDataValue: formData.totalMarks,
+          inputElementValue: document.getElementById('totalMarks')?.value,
+          match: formData.totalMarks === document.getElementById('totalMarks')?.value
+        });
+      }
+    }, 10);
     
     // Clear validation error when user starts typing
     if (validationErrors[name]) {
@@ -257,11 +311,7 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
 
   // 🆕 NEW: Modal handlers
   const handleCancelClick = () => {
-    const hasContent = formData.title.trim() || 
-                      formData.description.trim() || 
-                      formData.answerSchemeFile || 
-                      formData.rubricFile ||
-                      formData.dueDate;
+    const hasContent = checkHasContent();
 
     if (hasContent && !isEditingDraft) {
       setModalType('save-draft');
@@ -303,6 +353,7 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
     setIsLoading(false);
   }
 };
+
   const handleModalDiscardChanges = () => {
     setShowCancelModal(false);
     setHasUnsavedChanges(false);

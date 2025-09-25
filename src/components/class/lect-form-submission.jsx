@@ -226,7 +226,7 @@ export const useFormSubmission = () => {
         title: formData.title.trim(),
         description: formData.description.trim(),
         dueDate: formData.dueDate,
-        totalMarks: parseInt(formData.totalMarks),
+        totalMarks:Number(formData.totalMarks),
         
         ...fileData, // Add preserved + new files
         

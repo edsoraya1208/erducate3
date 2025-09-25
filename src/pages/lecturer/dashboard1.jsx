@@ -168,9 +168,15 @@ const Dashboard1 = () => {
     });
   };
 
-// FIXED: Complete delete function that removes class and ALL associated data
+// UPDATED: Complete delete function that removes class and ALL associated data from Cloudinary
 const handleDeleteClass = async () => {
   setDeleteModal(prev => ({ ...prev, isDeleting: true }));
+  
+  // 🌐 API URL setup (matching your cloudinary config pattern)
+  const isDevelopment = import.meta.env.DEV;
+  const API_BASE_URL = isDevelopment 
+    ? 'https://erducate3.vercel.app'  // Your deployed API
+    : '';
   
   try {
     const classId = deleteModal.classId;
@@ -191,28 +197,70 @@ const handleDeleteClass = async () => {
       
       console.log('Deleting exercise:', exerciseId);
       
-      // Delete exercise files (answer scheme & rubric) from storage
-      if (exerciseData.answerScheme?.storageName) {
+      // 🔥 NEW: Delete exercise files from CLOUDINARY (not Firebase Storage)
+      // Delete answer scheme file
+      if (exerciseData.answerScheme?.publicId) {
         try {
-          const answerSchemeRef = ref(storage, `answer-schemes/${exerciseData.answerScheme.storageName}`);
-          await deleteObject(answerSchemeRef);
-          console.log('✅ Deleted answer scheme:', exerciseData.answerScheme.storageName);
+          console.log('🗑️ Deleting answer scheme from Cloudinary:', exerciseData.answerScheme.publicId);
+          const response = await fetch(`${API_BASE_URL}/api/delete-exercise`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              publicId: exerciseData.answerScheme.publicId
+            }),
+            mode: 'cors',
+            credentials: 'omit'
+          });
+          
+          const result = await response.json();
+          if (result.success) {
+            console.log('✅ Deleted answer scheme successfully');
+          } else if (!result.wasNotFound) {
+            console.error('❌ Answer scheme delete failed:', result.error);
+          }
         } catch (error) {
           console.log('⚠️ Answer scheme delete failed:', error);
         }
       }
+      // 🛡️ BACKWARDS COMPATIBILITY: Handle old Firebase Storage format
+      else if (exerciseData.answerScheme?.storageName) {
+        console.log('⚠️ Found old Firebase Storage format for answer scheme - skipping Cloudinary deletion');
+      }
       
-      if (exerciseData.rubric?.storageName) {
+      // Delete rubric file  
+      if (exerciseData.rubric?.publicId) {
         try {
-          const rubricRef = ref(storage, `rubrics/${exerciseData.rubric.storageName}`);
-          await deleteObject(rubricRef);
-          console.log('✅ Deleted rubric:', exerciseData.rubric.storageName);
+          console.log('🗑️ Deleting rubric from Cloudinary:', exerciseData.rubric.publicId);
+          const response = await fetch(`${API_BASE_URL}/api/delete-exercise`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              publicId: exerciseData.rubric.publicId
+            }),
+            mode: 'cors',
+            credentials: 'omit'
+          });
+          
+          const result = await response.json();
+          if (result.success) {
+            console.log('✅ Deleted rubric successfully');
+          } else if (!result.wasNotFound) {
+            console.error('❌ Rubric delete failed:', result.error);
+          }
         } catch (error) {
           console.log('⚠️ Rubric delete failed:', error);
         }
       }
+      // 🛡️ BACKWARDS COMPATIBILITY: Handle old Firebase Storage format
+      else if (exerciseData.rubric?.storageName) {
+        console.log('⚠️ Found old Firebase Storage format for rubric - skipping Cloudinary deletion');
+      }
       
-      // Delete student submission files from storage
+      // 🔥 NEW: Delete student submission files from CLOUDINARY
       const submissionsQuery = query(
         collection(db, 'submissions'),
         where('classId', '==', classId),
@@ -220,18 +268,50 @@ const handleDeleteClass = async () => {
       );
       const submissionsSnapshot = await getDocs(submissionsQuery);
       
+      console.log(`🔍 Found ${submissionsSnapshot.size} submissions to process`);
+      
       for (const submissionDoc of submissionsSnapshot.docs) {
         const submissionData = submissionDoc.data();
         
-        if (submissionData.firebasePublicId) {
+        // 🔧 Use the correct Cloudinary field name
+        const publicId = submissionData.cloudinaryPublicId;
+        
+        console.log('📄 Processing submission:', {
+          docId: submissionDoc.id,
+          cloudinaryPublicId: publicId,
+          fileName: submissionData.fileName
+        });
+        
+        if (publicId) {
           try {
-            const filePath = submissionData.firebasePublicId;
-            const fileRef = ref(storage, filePath);
-            await deleteObject(fileRef);
-            console.log('✅ Deleted student submission file:', filePath);
+            console.log('🗑️ Deleting student submission from Cloudinary:', publicId);
+            const response = await fetch(`${API_BASE_URL}/api/delete-exercise`, {
+              method: 'DELETE',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                publicId: publicId
+              }),
+              mode: 'cors',
+              credentials: 'omit'
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+              console.log('✅ Student submission deleted successfully');
+            } else if (!result.wasNotFound) {
+              console.error('❌ Student submission delete failed:', result.error);
+            }
           } catch (error) {
-            console.log('⚠️ Student submission file delete failed:', error);
+            console.log('❌ Student submission file delete failed:', error);
           }
+        }
+        // 🛡️ BACKWARDS COMPATIBILITY: Handle old Firebase Storage format
+        else if (submissionData.firebasePublicId) {
+          console.log('⚠️ Found old Firebase Storage format for submission - skipping Cloudinary deletion');
+        } else {
+          console.log('⚠️ No publicId found for submission:', submissionDoc.id);
         }
       }
       
@@ -262,7 +342,7 @@ const handleDeleteClass = async () => {
     }
     
     // STEP 3: DELETE ANY REMAINING CLASS-LEVEL DATA
-    // Delete any student classes (enrollement) for this class
+    // Delete any student classes (enrollment) for this class
     const enrollmentsQuery = query(
       collection(db, 'studentClasses'), // or whatever collection you use for student-class relationships
       where('classId', '==', classId)
@@ -296,7 +376,6 @@ const handleDeleteClass = async () => {
     setDeleteModal(prev => ({ ...prev, isDeleting: false }));
   }
 };
-
   // Close delete modal if not currently deleting
   const closeDeleteModal = () => {
     if (!deleteModal.isDeleting) {

@@ -16,7 +16,7 @@ import { db, auth, storage } from '../../config/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useUser } from '../../contexts/UserContext';
 import LecturerDashboard from '../../components/dashboard/lecturer-dashboard';
-import DashboardHeader from '../../components/dashboard/dashboard-header'; // Import the new component
+import DashboardHeader from '../../components/dashboard/dashboard-header';
 
 const Dashboard1 = () => {
   // State management for classes and UI
@@ -91,9 +91,40 @@ const Dashboard1 = () => {
     }
   }, [user]);
 
-  // Create new class with generated code
+  // ✅✅✅ THIS IS THE UPDATED FUNCTION WITH VALIDATION ✅✅✅
   const handleCreateClass = async () => {
-    if (!newClassName.trim()) return;
+    console.log('🔍 VALIDATION CHECK - maxStudents value:', maxStudents);
+    console.log('🔍 VALIDATION CHECK - maxStudents type:', typeof maxStudents);
+    
+    // ✅ VALIDATION 1: Check if class name is filled
+    if (!newClassName.trim()) {
+      alert('Please enter a class name.');
+      return; // ⬅️ STOP HERE
+    }
+    
+    // ✅ VALIDATION 2: Check if max students is filled
+    if (!maxStudents || maxStudents.trim() === '') {
+      alert('Please enter the maximum number of students.');
+      return; // ⬅️ STOP HERE
+    }
+    
+    // ✅ VALIDATION 3: Convert to number and check if valid
+    const studentCount = parseInt(maxStudents, 10);
+    console.log('🔍 VALIDATION CHECK - studentCount after parseInt:', studentCount);
+    
+    if (isNaN(studentCount)) {
+      alert('Please enter a valid number for maximum students.');
+      return; // ⬅️ STOP HERE
+    }
+    
+    // ✅✅✅ VALIDATION 4: Must be between 1 and 45 ✅✅✅
+    if (studentCount < 1 || studentCount > 45) {
+      console.log('❌ VALIDATION FAILED - studentCount out of range:', studentCount);
+      alert('Maximum number of students must be between 1 and 45.');
+      return; // ⬅️ STOP HERE - DON'T CREATE CLASS
+    }
+    
+    console.log('✅ All validations passed! Creating class...');
     
     try {
       setCreating(true);
@@ -114,7 +145,7 @@ const Dashboard1 = () => {
         title: newClassName.trim(),
         classCode: classCode,
         description: "Share this code with students to join your class",
-        maxStudents: maxStudents ? parseInt(maxStudents) : null,
+        maxStudents: studentCount, // ✅ This will be 1-45 only
         currentStudents: 0,
         createdAt: new Date(),
         instructorId: user?.uid || "unknown",
@@ -168,130 +199,42 @@ const Dashboard1 = () => {
     });
   };
 
-// UPDATED: Complete delete function that removes class and ALL associated data from Cloudinary
-const handleDeleteClass = async () => {
-  setDeleteModal(prev => ({ ...prev, isDeleting: true }));
-  
-  // 🌐 API URL setup (matching your cloudinary config pattern)
-  const isDevelopment = import.meta.env.DEV;
-  const API_BASE_URL = isDevelopment 
-    ? 'https://erducate3.vercel.app'  // Your deployed API
-    : '';
-  
-  try {
-    const classId = deleteModal.classId;
-    const className = deleteModal.className;
+  // Complete delete function that removes class and ALL associated data from Cloudinary
+  const handleDeleteClass = async () => {
+    setDeleteModal(prev => ({ ...prev, isDeleting: true }));
     
-    console.log('🗑️ Starting complete class deletion for:', classId);
+    const isDevelopment = import.meta.env.DEV;
+    const API_BASE_URL = isDevelopment 
+      ? 'https://erducate3.vercel.app'
+      : '';
     
-    // STEP 1: GET ALL EXERCISES IN THIS CLASS
-    const exercisesRef = collection(db, 'classes', classId, 'exercises');
-    const exercisesSnapshot = await getDocs(exercisesRef);
-    
-    console.log(`Found ${exercisesSnapshot.size} exercises to delete`);
-    
-    // STEP 2: DELETE EACH EXERCISE AND ITS ASSOCIATED DATA
-    for (const exerciseDoc of exercisesSnapshot.docs) {
-      const exerciseId = exerciseDoc.id;
-      const exerciseData = exerciseDoc.data();
+    try {
+      const classId = deleteModal.classId;
+      const className = deleteModal.className;
       
-      console.log('Deleting exercise:', exerciseId);
+      console.log('🗑️ Starting complete class deletion for:', classId);
       
-      // 🔥 NEW: Delete exercise files from CLOUDINARY (not Firebase Storage)
-      // Delete answer scheme file
-      if (exerciseData.answerScheme?.publicId) {
-        try {
-          console.log('🗑️ Deleting answer scheme from Cloudinary:', exerciseData.answerScheme.publicId);
-          const response = await fetch(`${API_BASE_URL}/api/delete-exercise`, {
-            method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              publicId: exerciseData.answerScheme.publicId
-            }),
-            mode: 'cors',
-            credentials: 'omit'
-          });
-          
-          const result = await response.json();
-          if (result.success) {
-            console.log('✅ Deleted answer scheme successfully');
-          } else if (!result.wasNotFound) {
-            console.error('❌ Answer scheme delete failed:', result.error);
-          }
-        } catch (error) {
-          console.log('⚠️ Answer scheme delete failed:', error);
-        }
-      }
-      // 🛡️ BACKWARDS COMPATIBILITY: Handle old Firebase Storage format
-      else if (exerciseData.answerScheme?.storageName) {
-        console.log('⚠️ Found old Firebase Storage format for answer scheme - skipping Cloudinary deletion');
-      }
+      const exercisesRef = collection(db, 'classes', classId, 'exercises');
+      const exercisesSnapshot = await getDocs(exercisesRef);
       
-      // Delete rubric file  
-      if (exerciseData.rubric?.publicId) {
-        try {
-          console.log('🗑️ Deleting rubric from Cloudinary:', exerciseData.rubric.publicId);
-          const response = await fetch(`${API_BASE_URL}/api/delete-exercise`, {
-            method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              publicId: exerciseData.rubric.publicId
-            }),
-            mode: 'cors',
-            credentials: 'omit'
-          });
-          
-          const result = await response.json();
-          if (result.success) {
-            console.log('✅ Deleted rubric successfully');
-          } else if (!result.wasNotFound) {
-            console.error('❌ Rubric delete failed:', result.error);
-          }
-        } catch (error) {
-          console.log('⚠️ Rubric delete failed:', error);
-        }
-      }
-      // 🛡️ BACKWARDS COMPATIBILITY: Handle old Firebase Storage format
-      else if (exerciseData.rubric?.storageName) {
-        console.log('⚠️ Found old Firebase Storage format for rubric - skipping Cloudinary deletion');
-      }
+      console.log(`Found ${exercisesSnapshot.size} exercises to delete`);
       
-      // 🔥 NEW: Delete student submission files from CLOUDINARY
-      const submissionsQuery = query(
-        collection(db, 'submissions'),
-        where('classId', '==', classId),
-        where('exerciseId', '==', exerciseId)
-      );
-      const submissionsSnapshot = await getDocs(submissionsQuery);
-      
-      console.log(`🔍 Found ${submissionsSnapshot.size} submissions to process`);
-      
-      for (const submissionDoc of submissionsSnapshot.docs) {
-        const submissionData = submissionDoc.data();
+      for (const exerciseDoc of exercisesSnapshot.docs) {
+        const exerciseId = exerciseDoc.id;
+        const exerciseData = exerciseDoc.data();
         
-        // 🔧 Use the correct Cloudinary field name
-        const publicId = submissionData.cloudinaryPublicId;
+        console.log('Deleting exercise:', exerciseId);
         
-        console.log('📄 Processing submission:', {
-          docId: submissionDoc.id,
-          cloudinaryPublicId: publicId,
-          fileName: submissionData.fileName
-        });
-        
-        if (publicId) {
+        if (exerciseData.answerScheme?.publicId) {
           try {
-            console.log('🗑️ Deleting student submission from Cloudinary:', publicId);
+            console.log('🗑️ Deleting answer scheme from Cloudinary:', exerciseData.answerScheme.publicId);
             const response = await fetch(`${API_BASE_URL}/api/delete-exercise`, {
               method: 'DELETE',
               headers: {
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({
-                publicId: publicId
+                publicId: exerciseData.answerScheme.publicId
               }),
               mode: 'cors',
               credentials: 'omit'
@@ -299,98 +242,166 @@ const handleDeleteClass = async () => {
             
             const result = await response.json();
             if (result.success) {
-              console.log('✅ Student submission deleted successfully');
+              console.log('✅ Deleted answer scheme successfully');
             } else if (!result.wasNotFound) {
-              console.error('❌ Student submission delete failed:', result.error);
+              console.error('❌ Answer scheme delete failed:', result.error);
             }
           } catch (error) {
-            console.log('❌ Student submission file delete failed:', error);
+            console.log('⚠️ Answer scheme delete failed:', error);
           }
         }
-        // 🛡️ BACKWARDS COMPATIBILITY: Handle old Firebase Storage format
-        else if (submissionData.firebasePublicId) {
-          console.log('⚠️ Found old Firebase Storage format for submission - skipping Cloudinary deletion');
-        } else {
-          console.log('⚠️ No publicId found for submission:', submissionDoc.id);
+        else if (exerciseData.answerScheme?.storageName) {
+          console.log('⚠️ Found old Firebase Storage format for answer scheme - skipping Cloudinary deletion');
         }
+        
+        if (exerciseData.rubric?.publicId) {
+          try {
+            console.log('🗑️ Deleting rubric from Cloudinary:', exerciseData.rubric.publicId);
+            const response = await fetch(`${API_BASE_URL}/api/delete-exercise`, {
+              method: 'DELETE',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                publicId: exerciseData.rubric.publicId
+              }),
+              mode: 'cors',
+              credentials: 'omit'
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+              console.log('✅ Deleted rubric successfully');
+            } else if (!result.wasNotFound) {
+              console.error('❌ Rubric delete failed:', result.error);
+            }
+          } catch (error) {
+            console.log('⚠️ Rubric delete failed:', error);
+          }
+        }
+        else if (exerciseData.rubric?.storageName) {
+          console.log('⚠️ Found old Firebase Storage format for rubric - skipping Cloudinary deletion');
+        }
+        
+        const submissionsQuery = query(
+          collection(db, 'submissions'),
+          where('classId', '==', classId),
+          where('exerciseId', '==', exerciseId)
+        );
+        const submissionsSnapshot = await getDocs(submissionsQuery);
+        
+        console.log(`🔍 Found ${submissionsSnapshot.size} submissions to process`);
+        
+        for (const submissionDoc of submissionsSnapshot.docs) {
+          const submissionData = submissionDoc.data();
+          
+          const publicId = submissionData.cloudinaryPublicId;
+          
+          console.log('📄 Processing submission:', {
+            docId: submissionDoc.id,
+            cloudinaryPublicId: publicId,
+            fileName: submissionData.fileName
+          });
+          
+          if (publicId) {
+            try {
+              console.log('🗑️ Deleting student submission from Cloudinary:', publicId);
+              const response = await fetch(`${API_BASE_URL}/api/delete-exercise`, {
+                method: 'DELETE',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  publicId: publicId
+                }),
+                mode: 'cors',
+                credentials: 'omit'
+              });
+              
+              const result = await response.json();
+              if (result.success) {
+                console.log('✅ Student submission deleted successfully');
+              } else if (!result.wasNotFound) {
+                console.error('❌ Student submission delete failed:', result.error);
+              }
+            } catch (error) {
+              console.log('❌ Student submission file delete failed:', error);
+            }
+          }
+          else if (submissionData.firebasePublicId) {
+            console.log('⚠️ Found old Firebase Storage format for submission - skipping Cloudinary deletion');
+          } else {
+            console.log('⚠️ No publicId found for submission:', submissionDoc.id);
+          }
+        }
+        
+        const deleteSubmissionPromises = [];
+        submissionsSnapshot.forEach((submissionDoc) => {
+          deleteSubmissionPromises.push(deleteDoc(submissionDoc.ref));
+        });
+        await Promise.all(deleteSubmissionPromises);
+        
+        const progressQuery = query(
+          collection(db, 'studentProgress'),
+          where('classId', '==', classId),
+          where('exerciseId', '==', exerciseId)
+        );
+        const progressSnapshot = await getDocs(progressQuery);
+        const deleteProgressPromises = [];
+        progressSnapshot.forEach((doc) => {
+          deleteProgressPromises.push(deleteDoc(doc.ref));
+        });
+        await Promise.all(deleteProgressPromises);
+        
+        await deleteDoc(exerciseDoc.ref);
+        
+        console.log(`✅ Exercise ${exerciseId} completely deleted`);
       }
       
-      // Delete submission records from Firestore
-      const deleteSubmissionPromises = [];
-      submissionsSnapshot.forEach((submissionDoc) => {
-        deleteSubmissionPromises.push(deleteDoc(submissionDoc.ref));
-      });
-      await Promise.all(deleteSubmissionPromises);
-      
-      // Delete student progress records
-      const progressQuery = query(
-        collection(db, 'studentProgress'),
-        where('classId', '==', classId),
-        where('exerciseId', '==', exerciseId)
+      const enrollmentsQuery = query(
+        collection(db, 'studentClasses'),
+        where('classId', '==', classId)
       );
-      const progressSnapshot = await getDocs(progressQuery);
-      const deleteProgressPromises = [];
-      progressSnapshot.forEach((doc) => {
-        deleteProgressPromises.push(deleteDoc(doc.ref));
-      });
-      await Promise.all(deleteProgressPromises);
+      try {
+        const enrollmentsSnapshot = await getDocs(enrollmentsQuery);
+        const deleteEnrollmentPromises = [];
+        enrollmentsSnapshot.forEach((doc) => {
+          deleteEnrollmentPromises.push(deleteDoc(doc.ref));
+        });
+        await Promise.all(deleteEnrollmentPromises);
+        console.log('✅ Deleted class enrollments');
+      } catch (error) {
+        console.log('⚠️ No enrollments to delete or error:', error);
+      }
       
-      // Delete the exercise document itself
-      await deleteDoc(exerciseDoc.ref);
+      await deleteDoc(doc(db, 'classes', classId));
       
-      console.log(`✅ Exercise ${exerciseId} completely deleted`);
-    }
-    
-    // STEP 3: DELETE ANY REMAINING CLASS-LEVEL DATA
-    // Delete any student classes (enrollment) for this class
-    const enrollmentsQuery = query(
-      collection(db, 'studentClasses'), // or whatever collection you use for student-class relationships
-      where('classId', '==', classId)
-    );
-    try {
-      const enrollmentsSnapshot = await getDocs(enrollmentsQuery);
-      const deleteEnrollmentPromises = [];
-      enrollmentsSnapshot.forEach((doc) => {
-        deleteEnrollmentPromises.push(deleteDoc(doc.ref));
-      });
-      await Promise.all(deleteEnrollmentPromises);
-      console.log('✅ Deleted class enrollments');
+      setClasses(classes.filter(cls => cls.id !== classId));
+      
+      console.log('🎉 Class and all associated data deleted completely!');
+      
+      setDeleteModal({ isOpen: false, classId: null, className: '', isDeleting: false });
+      alert(`Class "${className}" and all its data deleted successfully.`);
+      
     } catch (error) {
-      console.log('⚠️ No enrollments to delete or error:', error);
+      console.error('❌ Error deleting class:', error);
+      alert('Error deleting class. Please try again.');
+      setDeleteModal(prev => ({ ...prev, isDeleting: false }));
     }
-    
-    // STEP 4: FINALLY DELETE THE CLASS DOCUMENT
-    await deleteDoc(doc(db, 'classes', classId));
-    
-    // Update local state
-    setClasses(classes.filter(cls => cls.id !== classId));
-    
-    console.log('🎉 Class and all associated data deleted completely!');
-    
-    setDeleteModal({ isOpen: false, classId: null, className: '', isDeleting: false });
-    alert(`Class "${className}" and all its data deleted successfully.`);
-    
-  } catch (error) {
-    console.error('❌ Error deleting class:', error);
-    alert('Error deleting class. Please try again.');
-    setDeleteModal(prev => ({ ...prev, isDeleting: false }));
-  }
-};
-  // Close delete modal if not currently deleting
+  };
+
   const closeDeleteModal = () => {
     if (!deleteModal.isDeleting) {
       setDeleteModal({ isOpen: false, classId: null, className: '', isDeleting: false });
     }
   };
 
-  // Navigate to specific class page
   const handleClassClick = (classItem) => {
     navigate(`/lecturer/class/${classItem.id}`, {
       state: { classData: classItem }
     });
   };
 
-  // Reset create modal state
   const handleCloseCreateModal = () => {
     setShowCreateModal(false);
     setNewClassName('');
@@ -399,7 +410,6 @@ const handleDeleteClass = async () => {
 
   return (
     <div className="dashboard-page">
-      {/* REPLACED: Old header with shared component */}
       <DashboardHeader 
         userType="lecturer"
         currentPage="dashboard"
@@ -407,7 +417,6 @@ const handleDeleteClass = async () => {
       />
       
       <LecturerDashboard 
-        // State props
         classes={classes}
         loading={loading}
         creating={creating}
@@ -415,11 +424,7 @@ const handleDeleteClass = async () => {
         newClassName={newClassName}
         maxStudents={maxStudents}
         deleteModal={deleteModal}
-        
-        // User data
         getUserDisplayName={getUserDisplayName}
-        
-        // Event handlers
         onCreateClass={() => setShowCreateModal(true)}
         onCloseCreateModal={handleCloseCreateModal}
         onClassNameChange={setNewClassName}

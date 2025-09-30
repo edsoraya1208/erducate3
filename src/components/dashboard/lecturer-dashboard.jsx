@@ -3,6 +3,149 @@ import React, { useState } from 'react';
 import '../../styles/lecturer-shared-header.css';
 import '../../styles/lecturer-dashboard.css';
 
+// ✅ MOVED OUTSIDE - This fixes the focus loss issue!
+const CreateClassModal = ({ 
+  newClassName, 
+  maxStudents, 
+  creating, 
+  onClassNameChange, 
+  onMaxStudentsChange, 
+  onSubmitCreateClass, 
+  onCloseCreateModal 
+}) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <h2 className="modal-title">Create New Class</h2>
+        
+        <div className="form-group">
+          <label className="form-label">
+            Class Name <span style={{ color: 'red' }}>*</span>
+          </label>
+          <input
+            type="text"
+            value={newClassName}
+            onChange={(e) => onClassNameChange(e.target.value)}
+            placeholder="e.g., Database Principles - CS301-G1"
+            className="form-input"
+            autoFocus
+          />
+        </div>
+        
+        <div className="form-group">
+          <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            Max Students <span style={{ color: 'red' }}>*</span>
+            <div 
+              style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}
+              onMouseEnter={() => setShowTooltip(true)}
+              onMouseLeave={() => setShowTooltip(false)}
+            >
+              {/* ✅ BETTER BLUE INFO ICON */}
+              <svg 
+                width="16" 
+                height="16" 
+                viewBox="0 0 16 16" 
+                fill="none" 
+                style={{ cursor: 'help' }}
+              >
+                <circle cx="8" cy="8" r="7" fill="#3b82f6" stroke="#2563eb" strokeWidth="1"/>
+                <text x="8" y="11.5" fontSize="11" fontWeight="bold" fill="white" textAnchor="middle" fontFamily="Arial">i</text>
+              </svg>
+              
+              {showTooltip && (
+                <div style={{
+                  position: 'absolute',
+                  top: '25px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  backgroundColor: '#1f2937',
+                  color: 'white',
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  whiteSpace: 'nowrap',
+                  zIndex: 1000,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                }}>
+                  Enter your actual number of students to prevent duplicate submissions
+                  <div style={{
+                    position: 'absolute',
+                    top: '-4px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: '0',
+                    height: '0',
+                    borderLeft: '5px solid transparent',
+                    borderRight: '5px solid transparent',
+                    borderBottom: '5px solid #1f2937'
+                  }}></div>
+                </div>
+              )}
+            </div>
+          </label>
+          <input
+            type="number"
+            value={maxStudents}
+            onChange={(e) => onMaxStudentsChange(e.target.value)}
+            placeholder="Enter number (Max: 45)"
+            min="1"
+            max="45"
+            className="form-input"
+          />
+        </div>
+        
+        <div className="modal-buttons">
+         <button
+            onClick={onCloseCreateModal}
+            disabled={creating}
+            className="cancel-btn"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onSubmitCreateClass}
+            disabled={!newClassName.trim() || !maxStudents || creating}
+            className="create-class-button"
+          >
+            {creating ? 'Creating...' : 'Create Class'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ✅ MOVED OUTSIDE - For consistency
+const DeleteConfirmationModal = ({ deleteModal, onConfirmDelete, onCloseDeleteModal }) => (
+  <div className="modal-overlay">
+    <div className="modal-content">
+      <h2 className="modal-title">Delete Class</h2>
+      <p className="modal-text">
+        Are you sure you want to delete "<strong>{deleteModal.className}</strong>"? 
+        This action cannot be undone.
+      </p>
+      <div className="modal-buttons">
+        <button
+          onClick={onCloseDeleteModal}
+          disabled={deleteModal.isDeleting}
+          className="cancel-btn"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={onConfirmDelete}
+          disabled={deleteModal.isDeleting}
+          className="delete-btn"
+        >
+          {deleteModal.isDeleting ? 'Deleting...' : 'Delete Class'}
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
 const LecturerDashboard = ({
   // State props
   classes,
@@ -29,85 +172,6 @@ const LecturerDashboard = ({
   onLogout,
   onClassClick
 }) => {
-
-  // Create Class Modal UI Component
-  const CreateClassModal = () => (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <h2 className="modal-title">Create New Class</h2>
-        
-        <div className="form-group">
-          <label className="form-label">Class Name</label>
-          <input
-            type="text"
-            value={newClassName}
-            onChange={(e) => onClassNameChange(e.target.value)}
-            placeholder="e.g., Database Principles - CS301-G1"
-            className="form-input"
-            autoFocus
-          />
-        </div>
-        
-        <div className="form-group">
-          <label className="form-label">Max Students (Optional)</label>
-          <input
-            type="number"
-            value={maxStudents}
-            onChange={(e) => onMaxStudentsChange(e.target.value)}
-            placeholder="Leave empty for unlimited"
-            min="1"
-            className="form-input"
-          />
-        </div>
-        
-        <div className="modal-buttons">
-         <button
-            onClick={onCloseCreateModal}
-            disabled={creating}
-            className="cancel-btn"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onSubmitCreateClass}
-            disabled={!newClassName.trim() || creating}
-            className="create-class-button"
-          >
-            {creating ? 'Creating...' : 'Create Class'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
-  // Delete Confirmation Modal UI Component
-  const DeleteConfirmationModal = () => (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <h2 className="modal-title">Delete Class</h2>
-        <p className="modal-text">
-          Are you sure you want to delete "<strong>{deleteModal.className}</strong>"? 
-          This action cannot be undone.
-        </p>
-        <div className="modal-buttons">
-          <button
-            onClick={onCloseDeleteModal}
-            disabled={deleteModal.isDeleting}
-            className="cancel-btn"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onConfirmDelete}
-            disabled={deleteModal.isDeleting}
-            className="delete-btn"
-          >
-            {deleteModal.isDeleting ? 'Deleting...' : 'Delete Class'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
 
   //make class card colorful edge
   const getRandomColorClass = (classId) => {
@@ -191,7 +255,7 @@ const LecturerDashboard = ({
                 /* Class Cards Grid */
                 [...classes].sort((a, b) => b.createdAt.seconds - a.createdAt.seconds).map((classItem, index) => (                  <div 
                     key={classItem.id} 
-                    className={`class-card clickable-card ${getRandomColorClass(classItem.id)}`} // ADD the color class here
+                    className={`class-card clickable-card ${getRandomColorClass(classItem.id)}`}
                     onClick={() => onClassClick(classItem)}
                     style={{ cursor: 'pointer' }}
                   >
@@ -237,8 +301,24 @@ const LecturerDashboard = ({
       </main>
 
       {/* Modal Components */}
-      {showCreateModal && <CreateClassModal />}
-      {deleteModal.isOpen && <DeleteConfirmationModal />}
+      {showCreateModal && (
+        <CreateClassModal
+          newClassName={newClassName}
+          maxStudents={maxStudents}
+          creating={creating}
+          onClassNameChange={onClassNameChange}
+          onMaxStudentsChange={onMaxStudentsChange}
+          onSubmitCreateClass={onSubmitCreateClass}
+          onCloseCreateModal={onCloseCreateModal}
+        />
+      )}
+      {deleteModal.isOpen && (
+        <DeleteConfirmationModal
+          deleteModal={deleteModal}
+          onConfirmDelete={onConfirmDelete}
+          onCloseDeleteModal={onCloseDeleteModal}
+        />
+      )}
     </div>
   );
 };

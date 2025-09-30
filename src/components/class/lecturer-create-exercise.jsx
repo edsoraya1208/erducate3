@@ -402,7 +402,6 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
     
     // 🆕 CHECK RESULT STATUS
     if (result.success) {
-      alert('Exercise created successfully! Files uploaded to cloudinary.');
       
       // 🔄 RESET FORM
       setFormData({

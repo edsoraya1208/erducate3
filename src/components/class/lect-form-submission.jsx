@@ -17,8 +17,10 @@ export const useFormSubmission = () => {
       if (!formData.description?.trim()) {
         errors.description = 'Please fill out this field.';
       }
-      if (!formData.totalMarks || formData.totalMarks <= 0) {
+     if (!formData.totalMarks || formData.totalMarks <= 0) {
         errors.totalMarks = 'Please fill out this field.';
+      } else if (formData.totalMarks < 1 || formData.totalMarks > 100) {
+        errors.totalMarks = 'Total marks must be between 1 and 100.';
       }
       if (!formData.dueDate?.trim()) {
         errors.dueDate = 'Please fill out this field.';

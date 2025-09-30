@@ -1,5 +1,5 @@
 // 🔥 FIREBASE IMPORTS
-import { collection, addDoc, serverTimestamp, doc, updateDoc, setDoc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, updateDoc, setDoc, getDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 
 // 🆕 FORM SUBMISSION HANDLER: Manages all form submission logic
@@ -17,13 +17,17 @@ export const useFormSubmission = () => {
       if (!formData.description?.trim()) {
         errors.description = 'Please fill out this field.';
       }
-     if (!formData.totalMarks || formData.totalMarks <= 0) {
+      if (!formData.totalMarks || formData.totalMarks <= 0) {
         errors.totalMarks = 'Please fill out this field.';
       } else if (formData.totalMarks < 1 || formData.totalMarks > 100) {
         errors.totalMarks = 'Total marks must be between 1 and 100.';
       }
       if (!formData.dueDate?.trim()) {
         errors.dueDate = 'Please fill out this field.';
+      }
+      // 🆕 NEW: Validate time field
+      if (!formData.dueTime?.trim()) {
+        errors.dueTime = 'Please fill out this field.';
       }
 
       // 🔧 SMART FILE VALIDATION: Check if we have files (existing OR new)
@@ -39,6 +43,31 @@ export const useFormSubmission = () => {
     }
 
     return errors;
+  };
+
+  // 🆕 NEW: Convert date + time strings to Firebase Timestamp
+  const createDueDateTimestamp = (dateString, timeString) => {
+    if (!dateString || !timeString) {
+      return null;
+    }
+
+    try {
+      // Combine date and time: "2025-01-10" + "23:59" = "2025-01-10T23:59:00"
+      const dateTimeString = `${dateString}T${timeString}:00`;
+      const dateObject = new Date(dateTimeString);
+      
+      // Check if date is valid
+      if (isNaN(dateObject.getTime())) {
+        console.error('Invalid date/time:', dateString, timeString);
+        return null;
+      }
+
+      // Convert to Firebase Timestamp
+      return Timestamp.fromDate(dateObject);
+    } catch (error) {
+      console.error('Error creating timestamp:', error);
+      return null;
+    }
   };
 
   // 🔄 Create document reference
@@ -127,7 +156,7 @@ export const useFormSubmission = () => {
     }
   };
 
-  // 💾 SAVE AS DRAFT - IMPROVED with better error handling
+  // 💾 SAVE AS DRAFT - IMPROVED with datetime handling
   const saveDraft = async (formData, classId, user, getUserDisplayName, uploadFiles, formatFirebaseStorageData, existingDraftRef = null) => {
     // More lenient check for drafts - save if ANY content exists
     const hasContent = formData.title?.trim() || 
@@ -166,11 +195,14 @@ export const useFormSubmission = () => {
       // Handle files with preservation
       const fileData = await handleFileUploads(formData, classId, exerciseId, existingData, uploadFiles, formatFirebaseStorageData);
 
+      // 🆕 CHANGE: Convert date + time to Firebase Timestamp
+      const dueDateTime = createDueDateTimestamp(formData.dueDate, formData.dueTime);
+
       // 📝 Create draft data
       const draftData = {
         title: formData.title?.trim() || 'Untitled Exercise',
         description: formData.description?.trim() || '',
-        dueDate: formData.dueDate || null,
+        dueDate: dueDateTime, // 🆕 CHANGED: Now stores Timestamp instead of string
         totalMarks: formData.totalMarks ? parseInt(formData.totalMarks) : null,
         
         ...fileData, // Add preserved + new files
@@ -197,7 +229,7 @@ export const useFormSubmission = () => {
     }
   };
 
-  // 🚀 SUBMIT EXERCISE - BULLETPROOF version
+  // 🚀 SUBMIT EXERCISE - BULLETPROOF version with datetime
   const submitExercise = async (formData, classId, user, getUserDisplayName, uploadFiles, formatFirebaseStorageData, existingDraftId = null) => {
     try {
       let docRef;
@@ -223,12 +255,23 @@ export const useFormSubmission = () => {
       // Handle files with preservation
       const fileData = await handleFileUploads(formData, classId, exerciseId, existingData, uploadFiles, formatFirebaseStorageData);
 
+      // 🆕 CHANGE: Convert date + time to Firebase Timestamp
+      const dueDateTime = createDueDateTimestamp(formData.dueDate, formData.dueTime);
+
+      if (!dueDateTime) {
+        console.error('❌ Failed to create due date timestamp');
+        return { 
+          success: false, 
+          errors: { dueDate: 'Invalid date or time format' }
+        };
+      }
+
       // 📝 Create exercise data
       const exerciseData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
-        dueDate: formData.dueDate,
-        totalMarks:Number(formData.totalMarks),
+        dueDate: dueDateTime, // 🆕 CHANGED: Now stores Timestamp instead of string
+        totalMarks: Number(formData.totalMarks),
         
         ...fileData, // Add preserved + new files
         

@@ -2,6 +2,52 @@ import React, { useState } from 'react';
 import '../../styles/my-class-lect.css';
 import '../../styles/lecturer-shared-header.css';
 
+// 🆕 NEW: Helper function to format Firebase Timestamp
+const formatDueDate = (timestamp) => {
+  if (!timestamp) return 'No due date';
+  
+  try {
+    // Check if it's a Firebase Timestamp
+    if (timestamp.toDate) {
+      const date = timestamp.toDate();
+      return date.toLocaleString('en-MY', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+    }
+    
+    // If it's already a Date object
+    if (timestamp instanceof Date) {
+      return timestamp.toLocaleString('en-MY', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+    }
+    
+    // If it's a string (old format)
+    if (typeof timestamp === 'string') {
+      return new Date(timestamp).toLocaleDateString('en-MY', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    }
+    
+    return 'No due date';
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return 'Invalid date';
+  }
+};
+
 // Confirmation Modal Component
 const ConfirmationModal = ({ 
   isOpen, 
@@ -256,7 +302,8 @@ return (
                     </div>
                     
                     <div className="exercise-meta">
-                      <p>Due: {exercise.dueDate || 'No due date'}</p>
+                      {/* 🆕 FIXED: Now properly formats Firebase Timestamp */}
+                      <p>Due: {formatDueDate(exercise.dueDate)}</p>
                       {exercise.submissionCount !== undefined && (
                         <p>{exercise.submissionCount} submission{exercise.submissionCount !== 1 ? 's' : ''}</p>
                       )}

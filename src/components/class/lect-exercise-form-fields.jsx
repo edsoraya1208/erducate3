@@ -1,6 +1,6 @@
+// 🆕 CHANGE: Added time picker functionality to due date section
 import React from 'react';
 
-// 📝 FORM FIELDS COMPONENT: Basic form inputs (title, description, due date, marks)
 const LectExerciseFormFields = ({ 
   formData, 
   validationErrors, 
@@ -51,26 +51,46 @@ const LectExerciseFormFields = ({
         )}
       </div>
 
-      {/* 📅 DUE DATE & MARKS ROW */}
+      {/* 📅 DUE DATE & TIME + MARKS ROW */}
+      {/* 🆕 CHANGE: Date & Time grouped together on left, Total Marks on right */}
       <div className="form-row">
+        {/* 🎯 LEFT SIDE: Date and Time together */}
         <div className="form-group half-width">
-          <label htmlFor="dueDate" className="ce-form-label">Due Date *</label>
-          <input
-            type="date"
-            id="dueDate"
-            name="dueDate"
-            value={formData.dueDate}
-            onChange={handleInputChange}
-            className={`form-input ${validationErrors.dueDate ? 'error' : ''}`}
-            disabled={isLoading}
-          />
-          {validationErrors.dueDate && (
+          <label className="ce-form-label">Due Date & Time *</label>
+          <div className="datetime-inputs">
+            <input
+              type="date"
+              id="dueDate"
+              name="dueDate"
+              value={formData.dueDate}
+              onChange={handleInputChange}
+              className={`form-input ${validationErrors.dueDate ? 'error' : ''}`}
+              disabled={isLoading}
+            />
+            <input
+              type="time"
+              id="dueTime"
+              name="dueTime"
+              value={formData.dueTime}
+              onChange={handleInputChange}
+              className={`form-input ${validationErrors.dueTime ? 'error' : ''}`}
+              disabled={isLoading}
+            />
+          </div>
+          {(validationErrors.dueDate || validationErrors.dueTime) && (
             <div className="validation-error">
               <span className="error-icon">⚠️</span>
-              <span className="error-message">{validationErrors.dueDate}</span>
+              <span className="error-message">
+                {validationErrors.dueDate || validationErrors.dueTime}
+              </span>
             </div>
           )}
+          <p className="field-info" style={{ marginTop: '4px', fontSize: '0.85rem', color: '#666' }}>
+            ⏰ Default time: 11:59 PM (end of day)
+          </p>
         </div>
+
+        {/* 🎯 RIGHT SIDE: Total Marks (matches Rubric width) */}
         <div className="form-group half-width">
           <label htmlFor="totalMarks" className="ce-form-label">Total Marks *</label>
           <input

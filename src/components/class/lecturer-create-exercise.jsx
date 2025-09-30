@@ -28,10 +28,12 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
   const { validateForm, saveDraft, submitExercise } = useFormSubmission();
 
   // 📝 STATE MANAGEMENT: These store all form data
+  // 🆕 CHANGE #1: Added dueTime field to formData
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     dueDate: '',
+    dueTime: '23:59', // 🆕 NEW: Default time is 11:59 PM
     totalMarks: '',
     answerSchemeFile: null,
     rubricFile: null
@@ -117,10 +119,28 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
           const draftData = draftSnap.data();
           console.log('Draft data loaded:', draftData);
           
+          // 🆕 CHANGE #2: Parse dueDate to extract date and time
+          let dateValue = '';
+          let timeValue = '23:59'; // default
+          
+          if (draftData.dueDate) {
+            // If it's a Firestore Timestamp, convert to Date
+            const dueDateObj = draftData.dueDate.toDate ? draftData.dueDate.toDate() : new Date(draftData.dueDate);
+            
+            // Extract date in YYYY-MM-DD format
+            dateValue = dueDateObj.toISOString().split('T')[0];
+            
+            // Extract time in HH:MM format
+            const hours = dueDateObj.getHours().toString().padStart(2, '0');
+            const minutes = dueDateObj.getMinutes().toString().padStart(2, '0');
+            timeValue = `${hours}:${minutes}`;
+          }
+          
           setFormData({
             title: draftData.title || '',
             description: draftData.description || '',
-            dueDate: draftData.dueDate || '',
+            dueDate: dateValue,
+            dueTime: timeValue, // 🆕 NEW: Load the time value
             totalMarks: draftData.totalMarks?.toString() || '',
             answerSchemeFile: null,
             rubricFile: null,
@@ -156,15 +176,6 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
     const hasContent = checkHasContent();
     setHasUnsavedChanges(hasContent);
   }, [formData]);
-
-  // 🚨 DEBUG: Watch formData changes
-  useEffect(() => {
-    console.log('🎯 FORMDATA CHANGED:', {
-      totalMarks: formData.totalMarks,
-      hasUnsavedChanges: hasUnsavedChanges,
-      timestamp: new Date().toISOString()
-    });
-  }, [formData, hasUnsavedChanges]);
 
   // 🔙 NEW: Handle browser back/refresh/close
   useEffect(() => {
@@ -210,55 +221,14 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
   }, [validationErrors]);
 
   // 🎯 HANDLE INPUT CHANGES: Updates state when user types
+  // 🗑️ DELETED: All the console.log debugging code for totalMarks (lines 191-231)
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     
-    // 🚨 EMERGENCY DEBUG - Log everything for totalMarks
-    if (name === 'totalMarks') {
-      console.log('🔥 TOTALMARKS DEBUG:', {
-        timestamp: new Date().toISOString(),
-        originalValue: value,
-        valueType: typeof value,
-        valueLength: value.length,
-        currentFormData: formData.totalMarks,
-        event: e,
-        target: e.target,
-        targetValue: e.target.value
-      });
-    }
-    
-    // 🚨 CRITICAL: Check if value is being modified somewhere
-    const originalValue = value;
-    
-    setFormData(prev => {
-      const newData = {
-        ...prev,
-        [name]: value
-      };
-      
-      // Debug the state update
-      if (name === 'totalMarks') {
-        console.log('🔥 STATE UPDATE:', {
-          before: prev.totalMarks,
-          after: newData.totalMarks,
-          inputValue: originalValue,
-          matches: newData.totalMarks === originalValue
-        });
-      }
-      
-      return newData;
-    });
-    
-    // 🚨 Check if React batching is causing issues
-    setTimeout(() => {
-      if (name === 'totalMarks') {
-        console.log('🔥 AFTER TIMEOUT:', {
-          formDataValue: formData.totalMarks,
-          inputElementValue: document.getElementById('totalMarks')?.value,
-          match: formData.totalMarks === document.getElementById('totalMarks')?.value
-        });
-      }
-    }, 10);
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
     
     // Clear validation error when user starts typing
     if (validationErrors[name]) {
@@ -326,33 +296,33 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
   };
 
   const handleModalSaveDraft = async () => {
-  setShowCancelModal(false);
-  setIsLoading(true);
-  
-  try {
-    const result = await saveDraft(
-      formData, 
-      classId, 
-      user, 
-      getUserDisplayName, 
-      uploadFiles, 
-      formatFirebaseStorageData, 
-      draftId
-    );
+    setShowCancelModal(false);
+    setIsLoading(true);
     
-    if (result.success) {
-      alert('Exercise saved as draft! You can continue editing it later.');
-      setHasUnsavedChanges(false);
-      onCancel();
-    } else {
-      alert(`Failed to save draft: ${result.message || 'Unknown error'}`);
+    try {
+      const result = await saveDraft(
+        formData, 
+        classId, 
+        user, 
+        getUserDisplayName, 
+        uploadFiles, 
+        formatFirebaseStorageData, 
+        draftId
+      );
+      
+      if (result.success) {
+        alert('Exercise saved as draft! You can continue editing it later.');
+        setHasUnsavedChanges(false);
+        onCancel();
+      } else {
+        alert(`Failed to save draft: ${result.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      alert('Failed to save draft. Changes will be lost.');
+    } finally {
+      setIsLoading(false);
     }
-  } catch (error) {
-    alert('Failed to save draft. Changes will be lost.');
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   const handleModalDiscardChanges = () => {
     setShowCancelModal(false);
@@ -365,80 +335,82 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
   };
   
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!classId) {
-    alert('No class selected. Please access this page from a specific class.');
-    return;
-  }
-
-  // ⚠️ VALIDATION: Use custom validation from hook
-  const isDraft = Boolean(draftId);
-  const errors = validateForm(formData, isPublishedExercise, isDraft);
-  if (Object.keys(errors).length > 0) {
-    setValidationErrors(errors);
-    return;
-  }
-
-  // ✅ VALIDATION: Ensure user is authenticated
-  if (!user || !user.uid) {
-    alert('You must be logged in to create exercises');
-    return;
-  }
-
-  setIsLoading(true);
-
-  try {
-    // 🚀 SUBMIT USING CUSTOM HOOK - NOW HANDLES RESULT PROPERLY
-    const result = await submitExercise(
-      formData, 
-      classId, 
-      user, 
-      getUserDisplayName, 
-      uploadFiles, 
-      formatFirebaseStorageData, 
-      draftId
-    );
-    
-    // 🆕 CHECK RESULT STATUS
-    if (result.success) {
-      
-      // 🔄 RESET FORM
-      setFormData({
-        title: '',
-        description: '',
-        dueDate: '',
-        totalMarks: '',
-        answerSchemeFile: null,
-        rubricFile: null
-      });
-      
-      setHasUnsavedChanges(false);
-      
-      // Clear file inputs
-      const answerSchemeInput = document.getElementById('answerScheme');
-      const rubricInput = document.getElementById('rubric');
-      if (answerSchemeInput) answerSchemeInput.value = '';
-      if (rubricInput) rubricInput.value = '';
-
-      onCancel();
-    } else {
-      // Handle validation errors or other failures
-      if (result.errors) {
-        setValidationErrors(result.errors);
-        alert('Please check the form for errors.');
-      } else {
-        alert(`Error: ${result.message || 'Unknown error occurred'}`);
-      }
+    if (!classId) {
+      alert('No class selected. Please access this page from a specific class.');
+      return;
     }
-    
-  } catch (error) {
-    console.error('❌ Error creating exercise:', error);
-    alert(`Error creating exercise: ${error.message}`);
-  } finally {
-    setIsLoading(false);
-  }
-};
+
+    // ⚠️ VALIDATION: Use custom validation from hook
+    const isDraft = Boolean(draftId);
+    const errors = validateForm(formData, isPublishedExercise, isDraft);
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      return;
+    }
+
+    // ✅ VALIDATION: Ensure user is authenticated
+    if (!user || !user.uid) {
+      alert('You must be logged in to create exercises');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // 🚀 SUBMIT USING CUSTOM HOOK - NOW HANDLES RESULT PROPERLY
+      const result = await submitExercise(
+        formData, 
+        classId, 
+        user, 
+        getUserDisplayName, 
+        uploadFiles, 
+        formatFirebaseStorageData, 
+        draftId
+      );
+      
+      // 🆕 CHECK RESULT STATUS
+      if (result.success) {
+        
+        // 🔄 RESET FORM
+        // 🆕 CHANGE #3: Reset dueTime to default when form is reset
+        setFormData({
+          title: '',
+          description: '',
+          dueDate: '',
+          dueTime: '23:59', // 🆕 NEW: Reset time to default
+          totalMarks: '',
+          answerSchemeFile: null,
+          rubricFile: null
+        });
+        
+        setHasUnsavedChanges(false);
+        
+        // Clear file inputs
+        const answerSchemeInput = document.getElementById('answerScheme');
+        const rubricInput = document.getElementById('rubric');
+        if (answerSchemeInput) answerSchemeInput.value = '';
+        if (rubricInput) rubricInput.value = '';
+
+        onCancel();
+      } else {
+        // Handle validation errors or other failures
+        if (result.errors) {
+          setValidationErrors(result.errors);
+          alert('Please check the form for errors.');
+        } else {
+          alert(`Error: ${result.message || 'Unknown error occurred'}`);
+        }
+      }
+      
+    } catch (error) {
+      console.error('❌ Error creating exercise:', error);
+      alert(`Error creating exercise: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // 🎨 RENDER: The form UI components
   return (

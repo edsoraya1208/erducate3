@@ -218,6 +218,22 @@
   font-size: 16px;
 }
 
+/* 🆕 Date and Time inputs side by side */
+.datetime-inputs {
+  display: flex;
+  gap: 10px; /* Space between date and time */
+  align-items: center;
+}
+
+.datetime-inputs input {
+  flex: 1; /* Equal width for both inputs */
+}
+
+/* Make sure the half-width containers stay 50% */
+.form-row .form-group.half-width {
+  flex: 0 0 calc(50% - 10px);
+}
+
 /* ================================
    📁 FORM SECTIONS
    ================================ */
@@ -436,6 +452,20 @@
 .ce-cancel-btn:hover {
   border-color: #d1d5db;
   background-color: #f9fafb;
+}
+
+.ce-cancel-btn:disabled,
+.ce-create-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+}
+
+.ce-cancel-btn:disabled:hover,
+.ce-create-btn:disabled:hover {
+  cursor: not-allowed !important;
+  /* Remove any hover effects */
+  transform: none;
+  box-shadow: none;
 }
 
 .ce-create-btn {

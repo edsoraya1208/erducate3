@@ -8,6 +8,7 @@ const CreateClassModal = ({
   newClassName, 
   maxStudents, 
   creating, 
+  validationError,
   onClassNameChange, 
   onMaxStudentsChange, 
   onSubmitCreateClass, 
@@ -19,6 +20,21 @@ const CreateClassModal = ({
     <div className="modal-overlay">
       <div className="modal-content">
         <h2 className="modal-title">Create New Class</h2>
+
+           {/*ERROR DISPLAY -*/}
+        {validationError && (
+          <div style={{
+            color: '#dc2626',
+            backgroundColor: '#fee2e2',
+            padding: '12px',
+            borderRadius: '6px',
+            marginBottom: '16px',
+            fontSize: '14px',
+            border: '1px solid #fecaca'
+          }}>
+            {validationError}
+          </div>
+        )}
         
         <div className="form-group">
           <label className="form-label">
@@ -154,6 +170,7 @@ const LecturerDashboard = ({
   showCreateModal,
   newClassName,
   maxStudents,
+  validationError,
   deleteModal,
   
   // User data
@@ -306,6 +323,7 @@ const LecturerDashboard = ({
           newClassName={newClassName}
           maxStudents={maxStudents}
           creating={creating}
+          validationError={validationError}
           onClassNameChange={onClassNameChange}
           onMaxStudentsChange={onMaxStudentsChange}
           onSubmitCreateClass={onSubmitCreateClass}

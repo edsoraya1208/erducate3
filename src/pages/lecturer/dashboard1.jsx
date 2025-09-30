@@ -28,6 +28,10 @@ const Dashboard1 = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newClassName, setNewClassName] = useState('');
   const [maxStudents, setMaxStudents] = useState('');
+  
+  // ✅ NEW: Validation error state
+  const [validationError, setValidationError] = useState('');
+  
   const [deleteModal, setDeleteModal] = useState({
     isOpen: false,
     classId: null,
@@ -91,21 +95,24 @@ const Dashboard1 = () => {
     }
   }, [user]);
 
-  // ✅✅✅ THIS IS THE UPDATED FUNCTION WITH VALIDATION ✅✅✅
+  // ✅✅✅ UPDATED FUNCTION WITH INLINE VALIDATION ✅✅✅
   const handleCreateClass = async () => {
     console.log('🔍 VALIDATION CHECK - maxStudents value:', maxStudents);
     console.log('🔍 VALIDATION CHECK - maxStudents type:', typeof maxStudents);
     
+    // Clear previous errors
+    setValidationError('');
+    
     // ✅ VALIDATION 1: Check if class name is filled
     if (!newClassName.trim()) {
-      alert('Please enter a class name.');
-      return; // ⬅️ STOP HERE
+      setValidationError('Please enter a class name.');
+      return;
     }
     
     // ✅ VALIDATION 2: Check if max students is filled
     if (!maxStudents || maxStudents.trim() === '') {
-      alert('Please enter the maximum number of students.');
-      return; // ⬅️ STOP HERE
+      setValidationError('Please enter the maximum number of students.');
+      return;
     }
     
     // ✅ VALIDATION 3: Convert to number and check if valid
@@ -113,15 +120,15 @@ const Dashboard1 = () => {
     console.log('🔍 VALIDATION CHECK - studentCount after parseInt:', studentCount);
     
     if (isNaN(studentCount)) {
-      alert('Please enter a valid number for maximum students.');
-      return; // ⬅️ STOP HERE
+      setValidationError('Please enter a valid number for maximum students.');
+      return;
     }
     
     // ✅✅✅ VALIDATION 4: Must be between 1 and 45 ✅✅✅
     if (studentCount < 1 || studentCount > 45) {
       console.log('❌ VALIDATION FAILED - studentCount out of range:', studentCount);
-      alert('Maximum number of students must be between 1 and 45.');
-      return; // ⬅️ STOP HERE - DON'T CREATE CLASS
+      setValidationError('Maximum number of students must be between 1 and 45.');
+      return;
     }
     
     console.log('✅ All validations passed! Creating class...');
@@ -145,7 +152,7 @@ const Dashboard1 = () => {
         title: newClassName.trim(),
         classCode: classCode,
         description: "Share this code with students to join your class",
-        maxStudents: studentCount, // ✅ This will be 1-45 only
+        maxStudents: studentCount,
         currentStudents: 0,
         createdAt: new Date(),
         instructorId: user?.uid || "unknown",
@@ -164,8 +171,11 @@ const Dashboard1 = () => {
       setShowCreateModal(false);
       setNewClassName('');
       setMaxStudents('');
+      setValidationError('');
       
-      alert(`Class "${newClassName}" created successfully with code: ${classCode}`);
+      // ❌ REMOVED: alert(`Class "${newClassName}" created successfully with code: ${classCode}`);
+      // You can see the new class appear in your dashboard immediately
+      
     } catch (error) {
       console.error('❌ Error creating class:');
       console.error('Error code:', error.code);
@@ -182,7 +192,9 @@ const Dashboard1 = () => {
   const handleCopyCode = async (classCode) => {
     try {
       await navigator.clipboard.writeText(classCode);
-      alert(`Class code ${classCode} copied to clipboard!`);
+      // ❌ REMOVED: alert(`Class code ${classCode} copied to clipboard!`);
+      // The copy action is instant and doesn't need confirmation
+      console.log('✅ Class code copied:', classCode);
     } catch (error) {
       console.error('Error copying to clipboard:', error);
       alert('Error copying code to clipboard');
@@ -381,6 +393,8 @@ const Dashboard1 = () => {
       console.log('🎉 Class and all associated data deleted completely!');
       
       setDeleteModal({ isOpen: false, classId: null, className: '', isDeleting: false });
+      
+      // ✅ KEPT: This alert is important - deletion is irreversible
       alert(`Class "${className}" and all its data deleted successfully.`);
       
     } catch (error) {
@@ -406,6 +420,7 @@ const Dashboard1 = () => {
     setShowCreateModal(false);
     setNewClassName('');
     setMaxStudents('');
+    setValidationError(''); // ✅ Clear validation error when closing
   };
 
   return (
@@ -423,6 +438,7 @@ const Dashboard1 = () => {
         showCreateModal={showCreateModal}
         newClassName={newClassName}
         maxStudents={maxStudents}
+        validationError={validationError} // ✅ NEW: Pass validation error
         deleteModal={deleteModal}
         getUserDisplayName={getUserDisplayName}
         onCreateClass={() => setShowCreateModal(true)}

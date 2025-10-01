@@ -419,6 +419,48 @@ STATE DISPLAYS
   margin-top: 2rem;
 }
 
+.error-message-box {
+  background-color: #fee;
+  border: 1px solid #fcc;
+  border-left: 4px solid #e53e3e;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: slideDown 0.3s ease-out;
+}
+
+.error-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.error-text {
+  color: #c53030;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+/* Smooth slide down animation */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Make the error more visible on dark backgrounds */
+.stud-modal-content .error-message-box {
+  box-shadow: 0 2px 4px rgba(229, 62, 62, 0.1);
+}
+
 /* 
 ==============================================
 MODAL
@@ -564,6 +606,37 @@ MODAL
   font-size: 13px;
   margin: 0;
   line-height: 1.4;
+}
+
+/* Add these styles to your CSS file */
+
+/* Disabled button styles - prevents interaction and shows visual feedback */
+.stud-modal-buttons button:disabled,
+.join-class-button:disabled,
+.join-class-button-dashboard:disabled,
+.stud-cancel-btn:disabled,
+.stud-delete-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+  pointer-events: none; /* Completely blocks click events */
+  background-color: #cccccc !important;
+  color: #666666 !important;
+  border-color: #cccccc !important;
+}
+
+/* Optional: Add a "no entry" cursor when hovering over disabled button container */
+.stud-modal-buttons:has(button:disabled) {
+  cursor: not-allowed;
+}
+
+/* Ensure disabled state works even during transitions */
+button:disabled:hover,
+button:disabled:active,
+button:disabled:focus {
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 /* 

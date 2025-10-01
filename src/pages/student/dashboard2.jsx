@@ -7,16 +7,19 @@ import {
   getDocs, 
   deleteDoc, 
   doc, 
-  getDoc,  
+  getDoc,
+  setDoc,  // NEW
   query, 
   where,
-  orderBy 
+  orderBy,
+  runTransaction,  // NEW
+  increment  // NEW
 } from 'firebase/firestore';
 import { db, auth } from '../../config/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useUser } from '../../contexts/UserContext';
 import StudentDashboard from '../../components/dashboard/student-dashboard';
-import DashboardHeader from '../../components/dashboard/dashboard-header'; // Import the new component
+import DashboardHeader from '../../components/dashboard/dashboard-header';
 
 const studentDashboard = () => {
   // State management for joined classes and UI
@@ -27,6 +30,7 @@ const studentDashboard = () => {
   // Modal states
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [classCode, setClassCode] = useState('');
+  const [joinError, setJoinError] = useState('');
   const [leaveModal, setLeaveModal] = useState({
     isOpen: false,
     classId: null,
@@ -39,7 +43,6 @@ const studentDashboard = () => {
   const { getUserDisplayName } = useUser();
   const navigate = useNavigate();
 
-  // All your existing Firebase functions remain the same...
   const loadJoinedClasses = async () => {
     try {
       setLoading(true);
@@ -97,60 +100,39 @@ const studentDashboard = () => {
           }
         }
         setJoinedClasses(joinedClassesData);
-      } else {
-        alert('Error loading classes. Please try again.');
       }
     } finally {
       setLoading(false);
     }
   };
 
-  // Load joined classes when user is authenticated
   useEffect(() => {
     if (user) {
       loadJoinedClasses();
     }
   }, [user]);
 
-  // All your other functions (handleJoinClass, openLeaveModal, handleLeaveClass, etc.) 
-  // remain exactly the same...
+  // ✅✅✅ REPLACED FUNCTION - NOW USES TRANSACTION (ATOMIC) ✅✅✅
   const handleJoinClass = async () => {
     if (!classCode.trim()) {
-      alert('Please enter a class code');
+      setJoinError('Please enter a class code');
       return;
     }
     
     try {
       setJoining(true);
+      setJoinError('');
       
-      console.log('🔥 === CLASS JOIN DEBUG START ===');
+      console.log('🔥 === CLASS JOIN DEBUG START (TRANSACTION VERSION) ===');
       console.log('🔐 Auth check:', {
         currentUser: !!auth.currentUser,
         uid: auth.currentUser?.uid,
-        email: auth.currentUser?.email,
-        displayName: auth.currentUser?.displayName
+        email: auth.currentUser?.email
       });
-      
-      console.log('📋 STEP 0: Verifying user document...');
-      try {
-        const userDocRef = doc(db, 'users', user?.uid);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-          console.log('✅ User document found:', userDoc.data());
-        } else {
-          console.log('⚠️ User document missing - will create one');
-          await ensureUserDocument(user);
-        }
-      } catch (userError) {
-        console.error('❌ User document check failed:', userError);
-      }
       
       console.log('📝 Class code:', classCode.trim().toUpperCase());
-      console.log('🏗️ Firebase config check:', {
-        projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-        hasDb: !!db
-      });
       
+      // STEP 1: Find the class (outside transaction)
       console.log('📋 STEP 1: Searching for class...');
       const classesRef = collection(db, 'classes');
       const classQuery = query(classesRef, where("classCode", "==", classCode.trim().toUpperCase()));
@@ -170,7 +152,7 @@ const studentDashboard = () => {
       
       if (classSnapshot.empty) {
         console.log('❌ No class found with code:', classCode.trim().toUpperCase());
-        alert('Invalid class code. Please check and try again.');
+        setJoinError('Invalid class code. Please check and try again.');
         return;
       }
       
@@ -183,6 +165,7 @@ const studentDashboard = () => {
         instructorId: classInfo.instructorId
       });
       
+      // STEP 2: Check if already enrolled (outside transaction)
       console.log('📋 STEP 2: Checking existing enrollment...');
       const studentClassesRef = collection(db, 'studentClasses');
       const enrollmentQuery = query(
@@ -195,10 +178,6 @@ const studentDashboard = () => {
       try {
         enrollmentSnapshot = await getDocs(enrollmentQuery);
         console.log('✅ Enrollment query executed successfully');
-        console.log('📊 Enrollment check result:', {
-          empty: enrollmentSnapshot.empty,
-          size: enrollmentSnapshot.size
-        });
       } catch (enrollmentError) {
         console.error('❌ Enrollment query failed:', enrollmentError);
         throw new Error(`Enrollment check failed: ${enrollmentError.message}`);
@@ -206,32 +185,73 @@ const studentDashboard = () => {
       
       if (!enrollmentSnapshot.empty) {
         console.log('⚠️ Already enrolled in class');
-        alert('You are already enrolled in this class.');
+        setJoinError('You are already enrolled in this class.');
         return;
       }
       
-      console.log('📋 STEP 3: Creating enrollment...');
-      const enrollmentData = {
-        studentId: user?.uid || "unknown",
-        studentName: user?.displayName || user?.email || "Unknown Student",
-        studentEmail: user?.email || "",
-        classId: classInfo.id,
-        classCode: classInfo.classCode,
-        className: classInfo.title,
-        joinedAt: new Date(),
-        status: "active"
-      };
-
-      console.log('📋 Enrollment data:', enrollmentData);
-
-      try {
-        const docRef = await addDoc(collection(db, 'studentClasses'), enrollmentData);
-        console.log('✅ Enrollment created with ID:', docRef.id);
-      } catch (createError) {
-        console.error('❌ Enrollment creation failed:', createError);
-        throw new Error(`Failed to join class: ${createError.message}`);
-      }
+      // ✅✅✅ STEP 3: USE TRANSACTION FOR ATOMIC CAPACITY CHECK + ENROLLMENT ✅✅✅
+      console.log('📋 STEP 3: Starting atomic transaction...');
       
+      await runTransaction(db, async (transaction) => {
+        // Get class metrics reference
+        const metricsRef = doc(db, 'classMetrics', classInfo.id);
+        const metricsDoc = await transaction.get(metricsRef);
+        
+        // Initialize metrics if doesn't exist (for old classes)
+        if (!metricsDoc.exists()) {
+          console.log('⚠️ No metrics found - initializing for legacy class');
+          transaction.set(metricsRef, {
+            studentCount: 0,
+            lastUpdated: new Date()
+          });
+        }
+        
+        // Get current count from metrics
+        const currentCount = metricsDoc.exists() ? (metricsDoc.data().studentCount || 0) : 0;
+        const maxStudents = parseInt(classInfo.maxStudents) || 0;
+        
+        console.log('📊 🚨 TRANSACTION CAPACITY CHECK 🚨');
+        console.log('Current students (from metrics):', currentCount);
+        console.log('Max students allowed:', maxStudents);
+        console.log('Has limit?:', maxStudents > 0);
+        console.log('Is full?:', maxStudents > 0 && currentCount >= maxStudents);
+        
+        // ✅ ATOMIC CHECK: If full, abort transaction
+        if (maxStudents > 0 && currentCount >= maxStudents) {
+          console.log('🚫 CLASS IS FULL - TRANSACTION ABORTED');
+          throw new Error(`CLASS_FULL:${currentCount}:${maxStudents}`);
+        }
+        
+        console.log(`✅ Space available! Proceeding with enrollment...`);
+        
+        // Create enrollment data
+        const enrollmentData = {
+          studentId: user?.uid || "unknown",
+          studentName: user?.displayName || user?.email || "Unknown Student",
+          studentEmail: user?.email || "",
+          classId: classInfo.id,
+          classCode: classInfo.classCode,
+          className: classInfo.title,
+          joinedAt: new Date(),
+          status: "active"
+        };
+        
+        // Add enrollment document
+        const enrollmentRef = doc(collection(db, 'studentClasses'));
+        transaction.set(enrollmentRef, enrollmentData);
+        
+        // Increment student count atomically
+        transaction.update(metricsRef, {
+          studentCount: increment(1),
+          lastUpdated: new Date()
+        });
+        
+        console.log('✅ Transaction operations queued successfully');
+      });
+      
+      console.log('🎉 Transaction committed successfully!');
+      
+      // STEP 4: Reload classes
       console.log('📋 STEP 4: Reloading classes...');
       try {
         await loadJoinedClasses();
@@ -240,30 +260,30 @@ const studentDashboard = () => {
         console.error('❌ Class reload failed:', reloadError);
       }
       
+      // Close modal and clear state
       setShowJoinModal(false);
       setClassCode('');
+      setJoinError('');
       
       console.log('🎉 === CLASS JOIN SUCCESS ===');
-      alert(`Successfully joined "${classInfo.title}"!`);
       
     } catch (error) {
       console.error('❌ === CLASS JOIN ERROR ===');
       console.error('Error type:', error.constructor.name);
-      console.error('Error code:', error.code);
       console.error('Error message:', error.message);
-      console.error('Full error:', error);
-      console.error('Error stack:', error.stack);
       
-      if (error.code === 'permission-denied') {
-        alert('Permission denied. Please check your account permissions and try again.');
+      // Handle custom CLASS_FULL error
+      if (error.message && error.message.startsWith('CLASS_FULL:')) {
+        const [, current, max] = error.message.split(':');
+        setJoinError(`This class is full (${current}/${max} students). Please contact your lecturer.`);
+      } else if (error.code === 'permission-denied') {
+        setJoinError('Permission denied. Please check your account permissions.');
       } else if (error.code === 'unavailable') {
-        alert('Service temporarily unavailable. Please try again in a moment.');
+        setJoinError('Service temporarily unavailable. Please try again in a moment.');
       } else if (error.message.includes('Class lookup failed')) {
-        alert('Could not search for class. Please check your internet connection.');
-      } else if (error.message.includes('Failed to join class')) {
-        alert('Could not join class. Please check your permissions.');
+        setJoinError('Could not search for class. Please check your internet connection.');
       } else {
-        alert(`Error joining class: ${error.message}`);
+        setJoinError(`Error: ${error.message}`);
       }
     } finally {
       setJoining(false);
@@ -279,6 +299,7 @@ const studentDashboard = () => {
     });
   };
 
+  // ✅ UPDATED: Now decrements classMetrics count
   const handleLeaveClass = async () => {
     setLeaveModal(prev => ({ ...prev, isLeaving: true }));
     
@@ -293,18 +314,35 @@ const studentDashboard = () => {
       
       if (!enrollmentSnapshot.empty) {
         const enrollmentDoc = enrollmentSnapshot.docs[0];
+        
+        // Delete enrollment
         await deleteDoc(doc(db, 'studentClasses', enrollmentDoc.id));
+        
+        // ✅ NEW: Decrement class metrics count
+        try {
+          const metricsRef = doc(db, 'classMetrics', leaveModal.classId);
+          const metricsDoc = await getDoc(metricsRef);
+          
+          if (metricsDoc.exists()) {
+            await setDoc(metricsRef, {
+              studentCount: Math.max(0, (metricsDoc.data().studentCount || 1) - 1),
+              lastUpdated: new Date()
+            }, { merge: true });
+            console.log('✅ Class metrics decremented');
+          }
+        } catch (metricsError) {
+          console.log('⚠️ Could not update metrics (non-critical):', metricsError);
+        }
         
         setJoinedClasses(joinedClasses.filter(cls => cls.id !== leaveModal.classId));
         
         setLeaveModal({ isOpen: false, classId: null, className: '', isLeaving: false });
-        alert(`Left "${leaveModal.className}" successfully.`);
       } else {
-        alert('Enrollment record not found.');
+        setJoinError('Enrollment record not found.');
       }
     } catch (error) {
       console.error('Error leaving class:', error);
-      alert('Error leaving class. Please try again.');
+      setJoinError('Error leaving class. Please try again.');
       setLeaveModal(prev => ({ ...prev, isLeaving: false }));
     }
   };
@@ -324,30 +362,31 @@ const studentDashboard = () => {
   const handleCloseJoinModal = () => {
     setShowJoinModal(false);
     setClassCode('');
+    setJoinError('');
   };
 
   return (
     <div className="dashboard-page">
-      {/* SIMPLIFIED: Just use the reusable header component */}
       <DashboardHeader 
         userType="student"
         currentPage="dashboard"
-        additionalNavItems={[]} // Add any student-specific nav items here if needed
+        additionalNavItems={[]}
       />
       
       <StudentDashboard 
-        // All your existing props remain the same
         joinedClasses={joinedClasses}
         loading={loading}
         joining={joining}
         showJoinModal={showJoinModal}
         classCode={classCode}
+        joinError={joinError}
         leaveModal={leaveModal}
         getUserDisplayName={getUserDisplayName}
         onJoinClass={() => setShowJoinModal(true)}
         onCloseJoinModal={handleCloseJoinModal}
         onClassCodeChange={setClassCode}
-        onSubmitJoinClass={handleJoinClass}
+        onSubmitJoinClass={handleJoinClass}  // ← CHECK THIS LINE
+        onSubmitCreateClass={handleJoinClass}
         onLeaveClass={openLeaveModal}
         onConfirmLeave={handleLeaveClass}
         onCloseLeaveModal={closeLeaveModal}

@@ -38,8 +38,8 @@ service cloud.firestore {
     match /users/{userId} {
       allow create: if isAuthenticated() && isOwner(userId);
       allow update: if isAuthenticated() && isOwner(userId);
-      allow read: if isAuthenticated();  // Any authenticated user can read user profiles
-      allow delete: if false; // Users shouldn't delete their own accounts via app
+      allow read: if isAuthenticated();
+      allow delete: if false;
     }
 
     // Classes collection rules
@@ -53,12 +53,27 @@ service cloud.firestore {
                               resource.data.instructorId == request.auth.uid;
     }
     
-    // 🔧 FIXED: Student-Class enrollment collection - proper cascade delete support
+    // ✅✅✅ NEW: Class Metrics Collection (for capacity tracking) ✅✅✅
+    match /classMetrics/{classId} {
+      // Anyone authenticated can read metrics (only contains count)
+      allow read: if isAuthenticated();
+      
+      // Only system (via transactions) and lecturers can write
+      allow create, update: if isAuthenticated() && (
+        isLecturer() ||
+        isStudent()  // Students update via transaction during join
+      );
+      
+      allow delete: if isLecturer() && ownsClass(classId);
+    }
+    
+    // ✅ REVERTED: Student-Class enrollment collection (back to secure)
     match /studentClasses/{enrollmentId} {
       allow create: if isAuthenticated() && 
                        isStudent() && 
                        request.resource.data.studentId == request.auth.uid;
       
+      // FIXED: Only read own enrollments + lecturers can read their class enrollments
       allow read: if isAuthenticated() && (
         (isStudent() && resource.data.studentId == request.auth.uid) ||
         (isLecturer() && ownsClass(resource.data.classId))
@@ -68,14 +83,13 @@ service cloud.firestore {
                        isLecturer() && 
                        ownsClass(resource.data.classId);
       
-      // 🔧 FIXED: Allow students to leave class AND lecturers to remove students
       allow delete: if isAuthenticated() && (
         (isStudent() && resource.data.studentId == request.auth.uid) ||
         (isLecturer() && ownsClass(resource.data.classId))
       );
     }
     
-    // Exercise rules - same as before
+    // Exercise rules
     match /classes/{classId}/exercises/{exerciseId} {
       allow create, update, delete: if isAuthenticated() && ownsClass(classId);
       allow read: if isAuthenticated() && (
@@ -84,56 +98,47 @@ service cloud.firestore {
       );
     }
     
-    // 🔧 FIXED: Student progress - allow proper cleanup
+    // Student progress
     match /studentProgress/{progressId} {
-      // Students can create their own progress
       allow create: if isAuthenticated() && 
                       isStudent() && 
                       request.resource.data.studentId == request.auth.uid;
       
-      // Students can read/update their own progress
       allow read, update: if isAuthenticated() && 
                             isStudent() && 
                             resource.data.studentId == request.auth.uid;
       
-      // Lecturers can read student progress for their classes  
       allow read: if isAuthenticated() && 
                     isLecturer() && 
                     exists(/databases/$(database)/documents/classes/$(resource.data.classId)) &&
                     get(/databases/$(database)/documents/classes/$(resource.data.classId)).data.instructorId == request.auth.uid;
       
-      // 🔧 FIXED: Allow lecturers to delete progress when cleaning up exercises/classes
       allow delete: if isAuthenticated() && 
                       isLecturer() && 
                       exists(/databases/$(database)/documents/classes/$(resource.data.classId)) &&
                       get(/databases/$(database)/documents/classes/$(resource.data.classId)).data.instructorId == request.auth.uid;
     }
     
-    // 🔧 FIXED: Submissions collection - allow proper cleanup  
+    // Submissions collection
     match /submissions/{submissionId} {
-      // Students can create/update their own submissions
       allow create, update: if isAuthenticated() && 
                               isStudent() && 
                               request.resource.data.studentId == request.auth.uid;
       
-      // Students can read their own submissions
       allow read: if isAuthenticated() && 
                     isStudent() && 
                     resource.data.studentId == request.auth.uid;
       
-      // Lecturers can read submissions for their classes
       allow read: if isAuthenticated() && 
                     isLecturer() && 
                     exists(/databases/$(database)/documents/classes/$(resource.data.classId)) &&
                     get(/databases/$(database)/documents/classes/$(resource.data.classId)).data.instructorId == request.auth.uid;
       
-      // Lecturers can update submissions for grading
       allow update: if isAuthenticated() && 
                       isLecturer() && 
                       exists(/databases/$(database)/documents/classes/$(resource.data.classId)) &&
                       get(/databases/$(database)/documents/classes/$(resource.data.classId)).data.instructorId == request.auth.uid;
       
-      // 🔧 FIXED: Allow lecturers to delete submissions when cleaning up exercises/classes
       allow delete: if isAuthenticated() && 
                       isLecturer() && 
                       exists(/databases/$(database)/documents/classes/$(resource.data.classId)) &&

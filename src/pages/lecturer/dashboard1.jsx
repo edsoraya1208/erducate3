@@ -6,11 +6,13 @@ import {
   addDoc, 
   getDocs, 
   deleteDoc, 
-  doc, 
+  doc,
+  setDoc,  
   query, 
   where,
   orderBy 
 } from 'firebase/firestore';
+
 import { ref, deleteObject } from 'firebase/storage';
 import { db, auth, storage } from '../../config/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -153,7 +155,6 @@ const Dashboard1 = () => {
         classCode: classCode,
         description: "Share this code with students to join your class",
         maxStudents: studentCount,
-        currentStudents: 0,
         createdAt: new Date(),
         instructorId: user?.uid || "unknown",
         instructorName: user?.displayName || user?.email || "Unknown Instructor"
@@ -162,9 +163,16 @@ const Dashboard1 = () => {
       console.log('📋 Class data to be created:', newClass);
       console.log('📂 Collection path: classes');
 
-      await addDoc(collection(db, 'classes'), newClass);
-      
-      console.log('✅ Class creation successful!');
+      // Create class and get the document reference
+      const classDocRef = await addDoc(collection(db, 'classes'), newClass);
+
+      // Initialize class metrics for capacity tracking
+      await setDoc(doc(db, 'classMetrics', classDocRef.id), { 
+        studentCount: 0,
+        lastUpdated: new Date()
+      });
+
+      console.log('✅ Class creation successful with metrics initialized!');
       await loadClasses();
       
       // Reset modal state

@@ -10,6 +10,7 @@ const StudentDashboard = ({
   joining,
   showJoinModal,
   classCode,
+  joinError, // NEW: Error message prop
   leaveModal,
   
   // User data
@@ -31,12 +32,18 @@ const StudentDashboard = ({
   const JoinClassModal = () => (
     <div className="stud-modal-overlay">
       <div className="stud-modal-content">
-        {/* Icon section - similar to your existing join class icon */}
-        
         <h2 className="stud-modal-title">Join Your Class</h2>
         <p className="stud-modal-description">
           Enter the unique class code from your lecturer to get started.
         </p>
+        
+        {/* NEW: Error Message Display */}
+        {joinError && (
+          <div className="error-message-box">
+            <span className="error-icon">⚠️</span>
+            <span className="error-text">{joinError}</span>
+          </div>
+        )}
         
         <div className="form-group">
           <label className="form-label">Class Code</label>
@@ -80,32 +87,32 @@ const StudentDashboard = ({
 
   // Leave Confirmation Modal UI Component
   const LeaveConfirmationModal = () => (
-    <div className="stud-modal-overlay">
-      <div className="stud-modal-content">
-        <h2 className="stud-modal-title">Leave Class</h2>
-        <p className="stud-modal-text">
-          Are you sure you want to leave "<strong>{leaveModal.className}</strong>"? 
-          You will need the class code to rejoin later.
-        </p>
-        <div className="stud-modal-buttons">
-          <button
-            onClick={onCloseLeaveModal}
-            disabled={leaveModal.isLeaving}
-            className="stud-cancel-btn"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onConfirmLeave}
-            disabled={leaveModal.isLeaving}
-            className="stud-delete-btn"
-          >
-            {leaveModal.isLeaving ? 'Leaving...' : 'Leave Class'}
-          </button>
-        </div>
+  <div className="stud-modal-overlay">
+    <div className="stud-modal-content">
+      <h2 className="stud-modal-title">Leave Class</h2>
+      <p className="stud-modal-text">
+        Are you sure you want to leave "<strong>{leaveModal.className}</strong>"? 
+        You will need the class code to rejoin later.
+      </p>
+      <div className="stud-modal-buttons">
+        <button
+          onClick={onCloseLeaveModal}
+          disabled={leaveModal.isLeaving} // ✅ Already had this - good!
+          className="stud-cancel-btn"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={onConfirmLeave}
+          disabled={leaveModal.isLeaving} // ✅ Already had this - good!
+          className="stud-delete-btn"
+        >
+          {leaveModal.isLeaving ? 'Leaving...' : 'Leave Class'}
+        </button>
       </div>
     </div>
-  );
+  </div>
+);
 
   const getRandomColorClass = (index) => {
     const colors = [
@@ -121,19 +128,11 @@ const StudentDashboard = ({
       'color-yellow'
     ];
     
-    // Use index to ensure consistent colors for each class position
-    // This way the same class will always have the same color
     return colors[index % colors.length];
   };
 
   return (
     <div className="student-dashboard">
-      {/* REMOVED: Navigation Header - Now using global dashboard header */}
-      {/* 
-      The header component was removed to prevent duplicate headers.
-      The global dashboard header (with hamburger functionality) will be used instead.
-      */}
-
       {/* Main Dashboard Content */}
       <main className="stud-dashboard-main">
         <div className="stud-dashboard-container">
@@ -198,7 +197,7 @@ const StudentDashboard = ({
                       <button 
                         className="leave-btn"
                         onClick={(e) => {
-                          e.stopPropagation(); // Prevent card click
+                          e.stopPropagation();
                           onLeaveClass(classItem.id, classItem.title);
                         }}
                         title="Leave this class"

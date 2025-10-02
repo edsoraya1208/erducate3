@@ -225,7 +225,7 @@ const Dashboard1 = () => {
     
     const isDevelopment = import.meta.env.DEV;
     const API_BASE_URL = isDevelopment 
-      ? 'https://erducate3.vercel.app'
+      ? 'https://erducate.vercel.app'
       : '';
     
     try {
@@ -392,6 +392,13 @@ const Dashboard1 = () => {
         console.log('✅ Deleted class enrollments');
       } catch (error) {
         console.log('⚠️ No enrollments to delete or error:', error);
+      }
+
+      try {
+        await deleteDoc(doc(db, 'classMetrics', classId));
+        console.log('✅ Deleted class metrics');
+      } catch (error) {
+        console.log('⚠️ No class metrics to delete or error:', error);
       }
       
       await deleteDoc(doc(db, 'classes', classId));

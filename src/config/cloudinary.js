@@ -5,7 +5,7 @@ const isDevelopment = import.meta.env.DEV;
 
 // 🌐 API Base URL - FIXED: Remove trailing slash to avoid double slash
 const API_BASE_URL = isDevelopment 
-  ? 'https://erducate3.vercel.app'  // NO trailing slash!
+  ? 'https://erducate.vercel.app'  // NO trailing slash!
   : '';
 
 /**

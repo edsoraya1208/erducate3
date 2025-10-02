@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:3000',
-    'https://erducate3.vercel.app', // Your actual Vercel URL
+    'https://erducate.vercel.app', // Your actual Vercel URL
   ];
 
   const origin = req.headers.origin;

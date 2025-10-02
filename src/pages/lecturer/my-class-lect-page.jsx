@@ -237,7 +237,7 @@ const MyClassLectPage = () => {
   // 🌐 API URL setup (matching your cloudinary config pattern)
   const isDevelopment = import.meta.env.DEV;
   const API_BASE_URL = isDevelopment 
-    ? 'https://erducate3.vercel.app'  // Your deployed API
+    ? 'https://erducate.vercel.app'  // Your deployed API
     : '';
   
   try {

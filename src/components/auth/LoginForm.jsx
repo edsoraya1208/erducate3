@@ -136,7 +136,7 @@ const LoginForm = ({ onSwitchToSignup }) => {
           errorMessage = 'Please enter a valid email address.';
           break;
         case 'auth/invalid-credential':
-          errorMessage = 'Invalid email or password. Please check your credentials.';
+          errorMessage = 'Invalid email or password. Please check your credentials. If you signed up with Google, try "Continue with Google" instead.';
           break;
         case 'auth/too-many-requests':
           errorMessage = 'Too many failed login attempts. Please try again later.';
@@ -265,7 +265,7 @@ const LoginForm = ({ onSwitchToSignup }) => {
 
     try {
       await sendPasswordResetEmail(auth, resetEmail);
-      showMessage('Password reset email sent! Check your inbox.', 'success');
+      showMessage('Password reset email sent! Check your inbox or spam.', 'success');
       setShowForgotPassword(false);
       setResetEmail('');
     } catch (error) {

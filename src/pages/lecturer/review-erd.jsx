@@ -1,6 +1,6 @@
 // src/pages/lecturer/LecturerReviewERD.jsx
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom'; // ✅ Changed: Use useLocation instead of useSearchParams
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import DashboardHeader from '../../components/dashboard/dashboard-header';
@@ -9,26 +9,33 @@ import '../../styles/create-exercise.css';
 
 const LecturerReviewERD = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const location = useLocation(); // ✅ NEW: Get location state
   const [isLoading, setIsLoading] = useState(false);
 
-  // Get state from URL parameter
-  const stateParam = searchParams.get('state');
-  const stateData = stateParam ? JSON.parse(decodeURIComponent(stateParam)) : null;
-
+  // ✅ FIXED: Get state from location.state (not URL params)
   const { 
     detectedData, 
     exerciseData, 
     classId, 
     exerciseId 
-  } = stateData || {};
+  } = location.state || {};
 
+  // ✅ FIXED: Better validation with logging
   useEffect(() => {
+    console.log('📍 Review page loaded, checking data...');
+    console.log('detectedData:', detectedData);
+    console.log('exerciseData:', exerciseData);
+    console.log('classId:', classId);
+    console.log('exerciseId:', exerciseId);
+
     if (!detectedData || !exerciseData || !classId || !exerciseId) {
+      console.error('❌ Missing required data!');
       alert('Missing data. Redirecting...');
-      navigate('/lecturer/dashboard1');
+      navigate('/lecturer/dashboard1', { replace: true });
+    } else {
+      console.log('✅ All data present, showing review page');
     }
-  }, [detectedData, exerciseData, classId, exerciseId, navigate]);
+  }, []); // ✅ Empty dependency array - only run once on mount
 
   const handlePublish = async (reviewedData) => {
     setIsLoading(true);
@@ -48,7 +55,7 @@ const LecturerReviewERD = () => {
       });
 
       alert('Exercise published successfully!');
-      navigate(`/lecturer/class/${classId}`);
+      navigate(`/lecturer/class/${classId}`, { replace: true });
       
     } catch (error) {
       console.error('Publish error:', error);
@@ -60,11 +67,25 @@ const LecturerReviewERD = () => {
 
   const handleCancel = () => {
     if (window.confirm('Are you sure? This will discard the exercise.')) {
-      navigate(`/lecturer/class/${classId}`);
+      navigate(`/lecturer/class/${classId}`, { replace: true });
     }
   };
 
-  if (!detectedData) return null;
+  // ✅ Show loading while checking data
+  if (!detectedData) {
+    return (
+      <div className="ce-page create-exercise-container">
+        <DashboardHeader 
+          userType="lecturer"
+          currentPage="review-erd"
+          additionalNavItems={[]}
+        />
+        <div style={{ padding: '2rem', textAlign: 'center' }}>
+          <p>Loading review data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="ce-page create-exercise-container">

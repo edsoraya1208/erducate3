@@ -1,6 +1,9 @@
 // src/components/class/LecturerReviewERDComponent.jsx
 import React, { useState } from 'react';
 import '../../styles/review-erd.css';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../config/firebase';
 
 const LecturerReviewERDComponent = ({ 
   detectedData, 
@@ -10,9 +13,22 @@ const LecturerReviewERDComponent = ({
   onCancel,
   isLoading 
 }) => {
-  const [entities, setEntities] = useState(detectedData.entities || []);
-  const [relationships, setRelationships] = useState(detectedData.relationships || []);
-  const [attributes, setAttributes] = useState(detectedData.attributes || []);
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // 🆕 NEW: Get passed data from navigation
+  const passedData = location.state || {};
+  const { classId, exerciseId } = passedData;
+  
+  // Use passed data or props (fallback for existing usage)
+  const initialDetectedData = passedData.detectedData || detectedData;
+  const initialAnswerScheme = passedData.exerciseData?.answerScheme?.url || answerSchemeUrl;
+  const initialRubric = passedData.exerciseData?.rubric?.url || rubricUrl;
+  
+  const [entities, setEntities] = useState(initialDetectedData.entities || []);
+  const [relationships, setRelationships] = useState(initialDetectedData.relationships || []);
+  const [attributes, setAttributes] = useState(initialDetectedData.attributes || []);
+  const [isPublishing, setIsPublishing] = useState(false); // 🆕 NEW: Local loading state
 
   const handleEntityTypeChange = (index, newType) => {
     const updated = [...entities];
@@ -32,8 +48,54 @@ const LecturerReviewERDComponent = ({
     setAttributes(updated);
   };
 
-  const handlePublish = () => {
-    onPublish({ entities, relationships, attributes });
+  // 🆕 NEW: Approve and publish exercise
+  const handlePublish = async () => {
+    // If old way (using props), use the old callback
+    if (onPublish && !classId) {
+      onPublish({ entities, relationships, attributes });
+      return;
+    }
+
+    // 🆕 NEW WAY: Update Firestore directly
+    if (!classId || !exerciseId) {
+      alert('Missing exercise information. Cannot publish.');
+      return;
+    }
+
+    try {
+      setIsPublishing(true);
+      
+      const exerciseRef = doc(db, 'classes', classId, 'exercises', exerciseId);
+      
+      // Update exercise with reviewed AI data and set to active
+      await updateDoc(exerciseRef, {
+        status: 'active',
+        aiDetectedData: {
+          entities,
+          relationships,
+          attributes
+        },
+        approvedAt: serverTimestamp()
+      });
+      
+      alert('Exercise published successfully! Students can now see it.');
+      navigate(-1); // Go back to previous page (create exercise page will handle cleanup)
+      
+    } catch (error) {
+      console.error('Error publishing exercise:', error);
+      alert('Failed to publish exercise. Please try again.');
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  // 🆕 NEW: Handle cancel - just go back
+  const handleCancel = () => {
+    if (onCancel) {
+      onCancel();
+    } else {
+      navigate(-1);
+    }
   };
 
   return (
@@ -45,13 +107,13 @@ const LecturerReviewERDComponent = ({
         <div className="erd-image-section">
           <h2>ERD Answer Scheme</h2>
           <div className="image-display">
-            <img src={answerSchemeUrl} alt="ERD Answer Scheme" />
+            <img src={initialAnswerScheme} alt="ERD Answer Scheme" />
           </div>
-          {rubricUrl && (
+          {initialRubric && (
             <>
               <h2>Rubric</h2>
               <div className="pdf-display">
-                <embed src={rubricUrl} type="application/pdf" width="100%" height="400px" />
+                <embed src={initialRubric} type="application/pdf" width="100%" height="400px" />
               </div>
             </>
           )}
@@ -126,8 +188,8 @@ const LecturerReviewERDComponent = ({
             <button 
               type="button" 
               className="ce-cancel-btn" 
-              onClick={onCancel}
-              disabled={isLoading}
+              onClick={handleCancel}
+              disabled={isPublishing || isLoading}
             >
               Cancel
             </button>
@@ -135,9 +197,9 @@ const LecturerReviewERDComponent = ({
               type="button" 
               className="ce-create-btn" 
               onClick={handlePublish}
-              disabled={isLoading}
+              disabled={isPublishing || isLoading}
             >
-              {isLoading ? 'Publishing...' : 'Confirm & Publish Exercise'}
+              {(isPublishing || isLoading) ? 'Publishing...' : 'Confirm & Publish Exercise'}
             </button>
           </div>
         </div>

@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom'; 
+import React, { useState, useEffect, useRef } from 'react';
 import { useUser } from '../../contexts/UserContext';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+
 
 // 🔥 FIREBASE IMPORTS - Only for loading draft data
 import { doc, getDoc } from 'firebase/firestore';
@@ -18,10 +19,15 @@ import { useFormSubmission } from './lect-form-submission';
 
 // 🎯 MAIN COMPONENT: This handles the create exercise form logic and UI
 const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDashboardClick }) => { 
+  // Inside component:
+  const navigate = useNavigate();
   const { user, getUserDisplayName } = useUser();
   const [searchParams] = useSearchParams(); 
   const classId = propClassId || searchParams.get('classId');
   const draftId = searchParams.get('draftId'); 
+
+  // 🛡️ NEW: Ref to prevent double loading
+  const isNavigatingToReview = useRef(false);
 
   // 🆕 CUSTOM HOOKS
   const { validateFile, uploadFiles, formatFirebaseStorageData } = useUploadHandler();
@@ -41,6 +47,7 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
 
   const [isLoading, setIsLoading] = useState(false);
   const [isEditingDraft, setIsEditingDraft] = useState(Boolean(draftId));
+  const [isDraftLoaded, setIsDraftLoaded] = useState(false);
   
   // 🚨 VALIDATION ERRORS STATE
   const [validationErrors, setValidationErrors] = useState({});
@@ -106,6 +113,18 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
   // 🆕 NEW: Load draft data when draftId exists
   useEffect(() => {
     const loadDraftData = async () => {
+      // 🛡️ FIX: Don't load if we're navigating to review page
+      if (isNavigatingToReview.current) {
+        console.log('🛡️ Skipping draft load - navigating to review');
+        return;
+      }
+
+      // 🛡️ NEW: Don't reload if already loaded
+      if (isDraftLoaded) {
+        console.log('🛡️ Skipping draft load - already loaded');
+        return;
+      }
+
       if (!draftId || !classId) return;
 
       try {
@@ -152,6 +171,7 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
           });
           
           setIsEditingDraft(true);
+          setIsDraftLoaded(true); // 🛡️ NEW: Mark as loaded
           console.log('✅ Draft loaded successfully');
 
           setIsPublishedExercise(draftData.status === 'active');
@@ -169,7 +189,7 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
     };
 
     loadDraftData();
-  }, [draftId, classId]);
+  }, [draftId, classId]); // Don't include isDraftLoaded in dependencies
 
   // 🔙 NEW: Browser back button and page refresh detection
   useEffect(() => {
@@ -342,7 +362,6 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
       return;
     }
 
-    // ⚠️ VALIDATION: Use custom validation from hook
     const isDraft = Boolean(draftId);
     const errors = validateForm(formData, isPublishedExercise, isDraft);
     if (Object.keys(errors).length > 0) {
@@ -350,7 +369,6 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
       return;
     }
 
-    // ✅ VALIDATION: Ensure user is authenticated
     if (!user || !user.uid) {
       alert('You must be logged in to create exercises');
       return;
@@ -359,7 +377,6 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
     setIsLoading(true);
 
     try {
-      // 🚀 SUBMIT USING CUSTOM HOOK - NOW HANDLES RESULT PROPERLY
       const result = await submitExercise(
         formData, 
         classId, 
@@ -370,24 +387,33 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
         draftId
       );
       
-      // 🆕 CHECK RESULT STATUS
       if (result.success) {
         
-        // 🆕 NEW: Navigate to review page if AI detection succeeded
+        // 🆕 AI REVIEW FLOW: Navigate to review page
         if (result.navigateToReview) {
           const { detectedData, exerciseData, classId, exerciseId } = result.reviewData;
           
-          // Navigate with state data
-          window.location.href = `/lecturer/review-erd?state=${encodeURIComponent(JSON.stringify({
-            detectedData,
-            exerciseData,
-            classId,
-            exerciseId
-          }))}`;
+          console.log('🚀 Navigating to review page with data');
+          
+          // 🛡️ FIX: Set ref to prevent double loading
+          isNavigatingToReview.current = true;
+          
+          navigate(`/lecturer/review-erd`, {
+            state: {
+              detectedData,
+              exerciseData,
+              classId,
+              exerciseId
+            },
+            replace: true
+          });
           return;
         }
         
-        // 🔄 RESET FORM (only if not navigating to review)
+        // ✅ REGULAR UPDATE (editing active exercise): Just show success & close
+        alert('Exercise updated successfully!');
+        
+        // Reset form
         setFormData({
           title: '',
           description: '',
@@ -407,7 +433,6 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
 
         onCancel();
       } else {
-        // Handle validation errors or other failures
         if (result.errors) {
           setValidationErrors(result.errors);
           alert('Please check the form for errors.');

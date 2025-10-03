@@ -373,13 +373,26 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
       // 🆕 CHECK RESULT STATUS
       if (result.success) {
         
-        // 🔄 RESET FORM
-        // 🆕 CHANGE #3: Reset dueTime to default when form is reset
+        // 🆕 NEW: Navigate to review page if AI detection succeeded
+        if (result.navigateToReview) {
+          const { detectedData, exerciseData, classId, exerciseId } = result.reviewData;
+          
+          // Navigate with state data
+          window.location.href = `/lecturer/review-erd?state=${encodeURIComponent(JSON.stringify({
+            detectedData,
+            exerciseData,
+            classId,
+            exerciseId
+          }))}`;
+          return;
+        }
+        
+        // 🔄 RESET FORM (only if not navigating to review)
         setFormData({
           title: '',
           description: '',
           dueDate: '',
-          dueTime: '23:59', // 🆕 NEW: Reset time to default
+          dueTime: '23:59',
           totalMarks: '',
           answerSchemeFile: null,
           rubricFile: null
@@ -387,7 +400,6 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
         
         setHasUnsavedChanges(false);
         
-        // Clear file inputs
         const answerSchemeInput = document.getElementById('answerScheme');
         const rubricInput = document.getElementById('rubric');
         if (answerSchemeInput) answerSchemeInput.value = '';

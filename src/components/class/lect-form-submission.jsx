@@ -230,73 +230,123 @@ export const useFormSubmission = () => {
   };
 
   // 🚀 SUBMIT EXERCISE - BULLETPROOF version with datetime
-  const submitExercise = async (formData, classId, user, getUserDisplayName, uploadFiles, formatFirebaseStorageData, existingDraftId = null) => {
-    try {
-      let docRef;
-      let existingData = null;
+  // 🚀 SUBMIT EXERCISE - NOW WITH AI DETECTION
+const submitExercise = async (formData, classId, user, getUserDisplayName, uploadFiles, formatFirebaseStorageData, existingDraftId = null) => {
+  try {
+    let docRef;
+    let existingData = null;
 
-      if (existingDraftId) {
-        docRef = doc(db, 'classes', classId, 'exercises', existingDraftId);
-        existingData = await fetchExistingData(docRef);
-      } else {
-        docRef = createDocumentReference(classId);
-      }
+    if (existingDraftId) {
+      docRef = doc(db, 'classes', classId, 'exercises', existingDraftId);
+      existingData = await fetchExistingData(docRef);
+    } else {
+      docRef = createDocumentReference(classId);
+    }
+    
+    const exerciseId = docRef.id;
+    console.log('📋 Using exercise ID:', exerciseId);
+
+    // 🛡️ VALIDATE BEFORE PROCESSING
+    const validationErrors = validateForm(formData, existingData, false);
+    if (Object.keys(validationErrors).length > 0) {
+      console.error('❌ Validation failed:', validationErrors);
+      return { success: false, errors: validationErrors };
+    }
+
+    // Handle files with preservation
+    const fileData = await handleFileUploads(formData, classId, exerciseId, existingData, uploadFiles, formatFirebaseStorageData);
+
+    // 🆕 Convert date + time to Firebase Timestamp
+    const dueDateTime = createDueDateTimestamp(formData.dueDate, formData.dueTime);
+
+    if (!dueDateTime) {
+      console.error('❌ Failed to create due date timestamp');
+      return { 
+        success: false, 
+        errors: { dueDate: 'Invalid date or time format' }
+      };
+    }
+
+    // 📝 Create exercise data (save as draft first)
+    const exerciseData = {
+      title: formData.title.trim(),
+      description: formData.description.trim(),
+      dueDate: dueDateTime,
+      totalMarks: Number(formData.totalMarks),
       
-      const exerciseId = docRef.id;
-      console.log('📋 Using exercise ID:', exerciseId);
+      ...fileData,
+      
+      createdBy: getUserDisplayName(),
+      createdById: user.uid,
+      updatedAt: serverTimestamp(),
+      status: 'pending_review' // 🆕 CHANGED: Not published yet
+    };
 
-      // 🛡️ VALIDATE BEFORE PROCESSING
-      const validationErrors = validateForm(formData, existingData, false);
-      if (Object.keys(validationErrors).length > 0) {
-        console.error('❌ Validation failed:', validationErrors);
-        return { success: false, errors: validationErrors };
+    if (!existingData) {
+      exerciseData.createdAt = serverTimestamp();
+    }
+
+    // 🗄️ Save draft to Firestore first
+    await saveExerciseToFirestore(exerciseData, classId, docRef);
+    console.log('✅ Draft saved, calling AI detection...');
+
+    // 🤖 CALL AI DETECTION API
+    try {
+      const detectionResponse = await fetch('https://erducate.vercel.app/api/detect-erd', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl: fileData.answerScheme.url })
+      });
+
+      if (!detectionResponse.ok) {
+        throw new Error('AI detection API failed');
       }
 
-      // Handle files with preservation
-      const fileData = await handleFileUploads(formData, classId, exerciseId, existingData, uploadFiles, formatFirebaseStorageData);
+      const detectedData = await detectionResponse.json();
 
-      // 🆕 CHANGE: Convert date + time to Firebase Timestamp
-      const dueDateTime = createDueDateTimestamp(formData.dueDate, formData.dueTime);
-
-      if (!dueDateTime) {
-        console.error('❌ Failed to create due date timestamp');
+      // Check if it's an ERD
+      if (!detectedData.isERD) {
+        // Delete the draft since it's not an ERD
+        await updateDoc(docRef, { status: 'rejected' });
         return { 
           success: false, 
-          errors: { dueDate: 'Invalid date or time format' }
+          message: detectedData.reason || 'This is not an ERD diagram' 
         };
       }
 
-      // 📝 Create exercise data
-      const exerciseData = {
-        title: formData.title.trim(),
-        description: formData.description.trim(),
-        dueDate: dueDateTime, // 🆕 CHANGED: Now stores Timestamp instead of string
-        totalMarks: Number(formData.totalMarks),
-        
-        ...fileData, // Add preserved + new files
-        
-        createdBy: getUserDisplayName(),
-        createdById: user.uid,
-        updatedAt: serverTimestamp(),
-        status: 'active'
+      console.log('✅ AI detection complete, navigating to review page');
+      
+      // 🆕 RETURN with navigation data instead of publishing immediately
+      return { 
+        success: true, 
+        navigateToReview: true,
+        reviewData: {
+          detectedData,
+          exerciseData: {
+            ...exerciseData,
+            answerScheme: fileData.answerScheme,
+            rubric: fileData.rubric
+          },
+          classId,
+          exerciseId: docRef.id
+        }
       };
 
-      // Add createdAt only for new exercises
-      if (!existingData) {
-        exerciseData.createdAt = serverTimestamp();
-      }
-
-      // 🗄️ Save to Firestore
-      const savedDocRef = await saveExerciseToFirestore(exerciseData, classId, docRef);
-      
-      console.log('✅ Exercise published successfully with ID:', savedDocRef.id);
-      return { success: true, docRef: savedDocRef };
-      
-    } catch (error) {
-      console.error('❌ Error publishing exercise:', error);
-      return { success: false, message: error.message };
+    } catch (aiError) {
+      console.error('❌ AI detection failed:', aiError);
+      // Delete the draft
+      await updateDoc(docRef, { status: 'ai_failed' });
+      return { 
+        success: false, 
+        message: `AI detection failed: ${aiError.message}` 
+      };
     }
-  };
+    
+  } catch (error) {
+    console.error('❌ Error in submitExercise:', error);
+    return { success: false, message: error.message };
+  }
+};
 
   return {
     validateForm,

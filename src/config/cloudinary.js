@@ -18,9 +18,9 @@ export const uploadToCloudinaryLecturer = async (file, folder = 'lecturer_exerci
   }
 
   // 📏 File size validation (2MB limit)
-  const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+  const maxSize = 1 * 1024 * 1024; // 2MB in bytes
   if (file.size > maxSize) {
-    throw new Error('File size exceeds 2MB limit. Please compress your image.');
+    throw new Error('File size exceeds 1MB limit. Please compress your image.');
   }
 
   // 📝 FILE TYPE VALIDATION
@@ -93,7 +93,7 @@ export const uploadToCloudinaryLecturer = async (file, folder = 'lecturer_exerci
     if (error.message.includes('Failed to fetch') || error.message.includes('CORS')) {
       throw new Error('CORS error: Your deployed API needs to allow localhost requests. Check your API CORS settings.');
     } else if (error.message.includes('File too large')) {
-      throw new Error('File size exceeds 2MB limit. Please compress your image.');
+      throw new Error('File size exceeds 1MB limit. Please compress your image.');
     } else {
       throw new Error(`Upload failed: ${error.message}`);
     }
@@ -110,9 +110,9 @@ export const uploadToCloudinaryStudent = async (file, folder = 'student-submissi
   }
 
   // 📏 File size validation (2MB limit)
-  const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+  const maxSize = 1 * 1024 * 1024; // 1MB in bytes
   if (file.size > maxSize) {
-    throw new Error('File size exceeds 2MB limit. Please compress your image.');
+    throw new Error('File size exceeds 1MB limit. Please compress your image.');
   }
 
   // 📝 FILE TYPE VALIDATION
@@ -196,7 +196,7 @@ export const uploadToCloudinaryStudent = async (file, folder = 'student-submissi
     if (error.message.includes('Failed to fetch') || error.message.includes('CORS')) {
       throw new Error('CORS error: Your deployed API needs to allow localhost requests. Check your API CORS settings.');
     } else if (error.message.includes('File too large')) {
-      throw new Error('File size exceeds 2MB limit. Please compress your image.');
+      throw new Error('File size exceeds 1MB limit. Please compress your image.');
     } else {
       throw new Error(`Upload failed: ${error.message}`);
     }

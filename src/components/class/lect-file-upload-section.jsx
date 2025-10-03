@@ -48,7 +48,7 @@ const LectFileUploadSection = ({
               Browse Files
             </button>
             <small className="file-info">
-              Supported formats: PNG, JPG (Max 2MB)
+              Supported formats: PNG, JPG (Max 1MB)
             </small>
             
             {/* Show newly selected file */}

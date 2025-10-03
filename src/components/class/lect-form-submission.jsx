@@ -231,6 +231,7 @@ export const useFormSubmission = () => {
 
   // 🚀 SUBMIT EXERCISE - BULLETPROOF version with datetime
   // 🚀 SUBMIT EXERCISE - NOW WITH AI DETECTION
+// 🚀 SUBMIT EXERCISE - WITH AI DETECTION FOR NEW PUBLISHES ONLY
 const submitExercise = async (formData, classId, user, getUserDisplayName, uploadFiles, formatFirebaseStorageData, existingDraftId = null) => {
   try {
     let docRef;
@@ -253,10 +254,13 @@ const submitExercise = async (formData, classId, user, getUserDisplayName, uploa
       return { success: false, errors: validationErrors };
     }
 
+    // 🔍 CHECK: Is this already an active exercise? (editing published exercise)
+    const isEditingActiveExercise = existingData?.status === 'active';
+
     // Handle files with preservation
     const fileData = await handleFileUploads(formData, classId, exerciseId, existingData, uploadFiles, formatFirebaseStorageData);
 
-    // 🆕 Convert date + time to Firebase Timestamp
+    // Convert date + time to Firebase Timestamp
     const dueDateTime = createDueDateTimestamp(formData.dueDate, formData.dueTime);
 
     if (!dueDateTime) {
@@ -267,7 +271,7 @@ const submitExercise = async (formData, classId, user, getUserDisplayName, uploa
       };
     }
 
-    // 📝 Create exercise data (save as draft first)
+    // 📝 Create exercise data
     const exerciseData = {
       title: formData.title.trim(),
       description: formData.description.trim(),
@@ -279,67 +283,73 @@ const submitExercise = async (formData, classId, user, getUserDisplayName, uploa
       createdBy: getUserDisplayName(),
       createdById: user.uid,
       updatedAt: serverTimestamp(),
-      status: 'pending_review' // 🆕 CHANGED: Not published yet
     };
 
     if (!existingData) {
       exerciseData.createdAt = serverTimestamp();
     }
 
-    // 🗄️ Save draft to Firestore first
-    await saveExerciseToFirestore(exerciseData, classId, docRef);
-    console.log('✅ Draft saved, calling AI detection...');
+    // 🎯 DECISION: Active exercise edit OR new publish?
+    if (isEditingActiveExercise) {
+      // ✅ Just update the active exercise (no AI review needed)
+      exerciseData.status = 'active'; // Keep it active
+      await saveExerciseToFirestore(exerciseData, classId, docRef);
+      console.log('✅ Active exercise updated successfully');
+      return { success: true, exerciseId: docRef.id };
+      
+    } else {
+      // 🆕 NEW PUBLISH: Save as draft first, then trigger AI
+      exerciseData.status = 'draft'; // Keep as draft until approved
+      await saveExerciseToFirestore(exerciseData, classId, docRef);
+      console.log('✅ Draft saved, calling AI detection...');
 
-    // 🤖 CALL AI DETECTION API
-    try {
-      const detectionResponse = await fetch('https://erducate.vercel.app/api/detect-erd', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUrl: fileData.answerScheme.url })
-      });
+      // 🤖 CALL AI DETECTION API
+      try {
+        const detectionResponse = await fetch('https://erducate.vercel.app/api/detect-erd', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageUrl: fileData.answerScheme.url })
+        });
 
-      if (!detectionResponse.ok) {
-        throw new Error('AI detection API failed');
-      }
+        if (!detectionResponse.ok) {
+          throw new Error('AI detection API failed');
+        }
 
-      const detectedData = await detectionResponse.json();
+        const detectedData = await detectionResponse.json();
 
-      // Check if it's an ERD
-      if (!detectedData.isERD) {
-        // Delete the draft since it's not an ERD
-        await updateDoc(docRef, { status: 'rejected' });
+        // Check if it's an ERD
+        if (!detectedData.isERD) {
+          return { 
+            success: false, 
+            message: detectedData.reason || 'This is not an ERD diagram' 
+          };
+        }
+
+        console.log('✅ AI detection complete, navigating to review page');
+        
+        // 🆕 RETURN with navigation data to review page
+        return { 
+          success: true, 
+          navigateToReview: true,
+          reviewData: {
+            detectedData,
+            exerciseData: {
+              ...exerciseData,
+              answerScheme: fileData.answerScheme,
+              rubric: fileData.rubric
+            },
+            classId,
+            exerciseId: docRef.id
+          }
+        };
+
+      } catch (aiError) {
+        console.error('❌ AI detection failed:', aiError);
         return { 
           success: false, 
-          message: detectedData.reason || 'This is not an ERD diagram' 
+          message: `AI detection failed: ${aiError.message}` 
         };
       }
-
-      console.log('✅ AI detection complete, navigating to review page');
-      
-      // 🆕 RETURN with navigation data instead of publishing immediately
-      return { 
-        success: true, 
-        navigateToReview: true,
-        reviewData: {
-          detectedData,
-          exerciseData: {
-            ...exerciseData,
-            answerScheme: fileData.answerScheme,
-            rubric: fileData.rubric
-          },
-          classId,
-          exerciseId: docRef.id
-        }
-      };
-
-    } catch (aiError) {
-      console.error('❌ AI detection failed:', aiError);
-      // Delete the draft
-      await updateDoc(docRef, { status: 'ai_failed' });
-      return { 
-        success: false, 
-        message: `AI detection failed: ${aiError.message}` 
-      };
     }
     
   } catch (error) {

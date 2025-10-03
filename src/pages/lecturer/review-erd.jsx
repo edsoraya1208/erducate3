@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import DashboardHeader from '../../components/dashboard/dashboard-header';
-import LecturerReviewERDComponent from '../../components/class/LecturerReviewERDComponent';
+import LecturerReviewERDComponent from '../../components/class/lect-review-erd-components';
 import '../../styles/create-exercise.css';
 
 const LecturerReviewERD = () => {

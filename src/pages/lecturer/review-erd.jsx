@@ -1,6 +1,6 @@
 // src/pages/lecturer/LecturerReviewERD.jsx
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom'; // ✅ Changed: Use useLocation instead of useSearchParams
+import { useNavigate, useLocation } from 'react-router-dom';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import DashboardHeader from '../../components/dashboard/dashboard-header';
@@ -9,10 +9,9 @@ import '../../styles/create-exercise.css';
 
 const LecturerReviewERD = () => {
   const navigate = useNavigate();
-  const location = useLocation(); // ✅ NEW: Get location state
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
 
-  // ✅ FIXED: Get state from location.state (not URL params)
   const { 
     detectedData, 
     exerciseData, 
@@ -20,11 +19,9 @@ const LecturerReviewERD = () => {
     exerciseId 
   } = location.state || {};
 
-  // ✅ FIXED: Better validation with logging
   useEffect(() => {
     console.log('📍 Review page loaded, checking data...');
     console.log('detectedData:', detectedData);
-    console.log('exerciseData:', exerciseData);
     console.log('classId:', classId);
     console.log('exerciseId:', exerciseId);
 
@@ -32,10 +29,14 @@ const LecturerReviewERD = () => {
       console.error('❌ Missing required data!');
       alert('Missing data. Redirecting...');
       navigate('/lecturer/dashboard1', { replace: true });
+    } else if (!detectedData.isERD) {
+      // ✅ Handle non-ERD images
+      alert(`❌ This is not an ERD diagram!\n\nReason: ${detectedData.reason || 'Invalid image format'}\n\nPlease upload a valid ERD diagram.`);
+      navigate(-1, { replace: true });
     } else {
       console.log('✅ All data present, showing review page');
     }
-  }, []); // ✅ Empty dependency array - only run once on mount
+  }, [detectedData, exerciseData, classId, exerciseId, navigate]);
 
   const handlePublish = async (reviewedData) => {
     setIsLoading(true);
@@ -45,21 +46,19 @@ const LecturerReviewERD = () => {
       
       await updateDoc(exerciseRef, {
         correctAnswer: {
-          entities: reviewedData.entities,
-          relationships: reviewedData.relationships,
-          attributes: reviewedData.attributes
+          elements: reviewedData.elements
         },
         status: 'active',
         publishedAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
 
-      alert('Exercise published successfully!');
+      alert('✅ Exercise published successfully!');
       navigate(`/lecturer/class/${classId}`, { replace: true });
       
     } catch (error) {
       console.error('Publish error:', error);
-      alert('Failed to publish exercise');
+      alert('❌ Failed to publish exercise');
     } finally {
       setIsLoading(false);
     }
@@ -71,8 +70,7 @@ const LecturerReviewERD = () => {
     }
   };
 
-  // ✅ Show loading while checking data
-  if (!detectedData) {
+  if (!detectedData || !detectedData.isERD) {
     return (
       <div className="ce-page create-exercise-container">
         <DashboardHeader 

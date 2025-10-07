@@ -232,131 +232,149 @@ export const useFormSubmission = () => {
   // 🚀 SUBMIT EXERCISE - BULLETPROOF version with datetime
   // 🚀 SUBMIT EXERCISE - NOW WITH AI DETECTION
 // 🚀 SUBMIT EXERCISE - WITH AI DETECTION FOR NEW PUBLISHES ONLY
-const submitExercise = async (formData, classId, user, getUserDisplayName, uploadFiles, formatFirebaseStorageData, existingDraftId = null) => {
-  try {
-    let docRef;
-    let existingData = null;
+  const submitExercise = async (formData, classId, user, getUserDisplayName, uploadFiles, formatFirebaseStorageData, existingDraftId = null, setAiLoadingMessage = null) => {
+    try {
+      let docRef;
+      let existingData = null;
 
-    if (existingDraftId) {
-      docRef = doc(db, 'classes', classId, 'exercises', existingDraftId);
-      existingData = await fetchExistingData(docRef);
-    } else {
-      docRef = createDocumentReference(classId);
-    }
-    
-    const exerciseId = docRef.id;
-    console.log('📋 Using exercise ID:', exerciseId);
-
-    // 🛡️ VALIDATE BEFORE PROCESSING
-    const validationErrors = validateForm(formData, existingData, false);
-    if (Object.keys(validationErrors).length > 0) {
-      console.error('❌ Validation failed:', validationErrors);
-      return { success: false, errors: validationErrors };
-    }
-
-    // 🔍 CHECK: Is this already an active exercise? (editing published exercise)
-    const isEditingActiveExercise = existingData?.status === 'active';
-
-    // Handle files with preservation
-    const fileData = await handleFileUploads(formData, classId, exerciseId, existingData, uploadFiles, formatFirebaseStorageData);
-
-    // Convert date + time to Firebase Timestamp
-    const dueDateTime = createDueDateTimestamp(formData.dueDate, formData.dueTime);
-
-    if (!dueDateTime) {
-      console.error('❌ Failed to create due date timestamp');
-      return { 
-        success: false, 
-        errors: { dueDate: 'Invalid date or time format' }
-      };
-    }
-
-    // 📝 Create exercise data
-    const exerciseData = {
-      title: formData.title.trim(),
-      description: formData.description.trim(),
-      dueDate: dueDateTime,
-      totalMarks: Number(formData.totalMarks),
+      if (existingDraftId) {
+        docRef = doc(db, 'classes', classId, 'exercises', existingDraftId);
+        existingData = await fetchExistingData(docRef);
+      } else {
+        docRef = createDocumentReference(classId);
+      }
       
-      ...fileData,
-      
-      createdBy: getUserDisplayName(),
-      createdById: user.uid,
-      updatedAt: serverTimestamp(),
-    };
+      const exerciseId = docRef.id;
+      console.log('📋 Using exercise ID:', exerciseId);
 
-    if (!existingData) {
-      exerciseData.createdAt = serverTimestamp();
-    }
+      // 🛡️ VALIDATE BEFORE PROCESSING
+      const validationErrors = validateForm(formData, existingData, false);
+      if (Object.keys(validationErrors).length > 0) {
+        console.error('❌ Validation failed:', validationErrors);
+        return { success: false, errors: validationErrors };
+      }
 
-    // 🎯 DECISION: Active exercise edit OR new publish?
-    if (isEditingActiveExercise) {
-      // ✅ Just update the active exercise (no AI review needed)
-      exerciseData.status = 'active'; // Keep it active
-      await saveExerciseToFirestore(exerciseData, classId, docRef);
-      console.log('✅ Active exercise updated successfully');
-      return { success: true, exerciseId: docRef.id };
-      
-    } else {
-      // 🆕 NEW PUBLISH: Save as draft first, then trigger AI
-      exerciseData.status = 'draft'; // Keep as draft until approved
-      await saveExerciseToFirestore(exerciseData, classId, docRef);
-      console.log('✅ Draft saved, calling AI detection...');
+      // 🔍 CHECK: Is this already an active exercise with AI results?
+      const hasExistingAIResults = existingData?.status === 'active' && existingData?.correctAnswer?.elements;
 
-      // 🤖 CALL AI DETECTION API
-      try {
-        const detectionResponse = await fetch('https://erducate.vercel.app/api/detect-erd', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageUrl: fileData.answerScheme.url })
-        });
+      // Handle files with preservation
+      const fileData = await handleFileUploads(formData, classId, exerciseId, existingData, uploadFiles, formatFirebaseStorageData);
 
-        if (!detectionResponse.ok) {
-          throw new Error('AI detection API failed');
-        }
+      // Convert date + time to Firebase Timestamp
+      const dueDateTime = createDueDateTimestamp(formData.dueDate, formData.dueTime);
 
-        const detectedData = await detectionResponse.json();
-
-        // Check if it's an ERD
-        if (!detectedData.isERD) {
-          return { 
-            success: false, 
-            message: detectedData.reason || 'This is not an ERD diagram' 
-          };
-        }
-
-        console.log('✅ AI detection complete, navigating to review page');
-        
-        // 🆕 RETURN with navigation data to review page
-        return { 
-          success: true, 
-          navigateToReview: true,
-          reviewData: {
-            detectedData,
-            exerciseData: {
-              ...exerciseData,
-              answerScheme: fileData.answerScheme,
-              rubric: fileData.rubric
-            },
-            classId,
-            exerciseId: docRef.id
-          }
-        };
-
-      } catch (aiError) {
-        console.error('❌ AI detection failed:', aiError);
+      if (!dueDateTime) {
+        console.error('❌ Failed to create due date timestamp');
         return { 
           success: false, 
-          message: `AI detection failed: ${aiError.message}` 
+          errors: { dueDate: 'Invalid date or time format' }
         };
       }
+
+      // 📝 Create exercise data
+      const exerciseData = {
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        dueDate: dueDateTime,
+        totalMarks: Number(formData.totalMarks),
+        
+        ...fileData,
+        
+        createdBy: getUserDisplayName(),
+        createdById: user.uid,
+        updatedAt: serverTimestamp(),
+      };
+
+      if (!existingData) {
+        exerciseData.createdAt = serverTimestamp();
+      }
+
+      // 🎯 DECISION: Active exercise with AI results OR new publish?
+      if (hasExistingAIResults) {
+        // ✅ EDITING PUBLISHED EXERCISE: Keep existing AI results, just update fields
+        console.log('✅ Updating published exercise - preserving AI results');
+        exerciseData.status = 'active';
+        exerciseData.correctAnswer = existingData.correctAnswer; // 🔥 PRESERVE AI RESULTS
+        
+        await saveExerciseToFirestore(exerciseData, classId, docRef);
+        console.log('✅ Published exercise updated successfully');
+        return { success: true, exerciseId: docRef.id, isUpdate: true };
+        
+      } else {
+        // 🆕 NEW PUBLISH: Save as draft first, then trigger AI
+        exerciseData.status = 'draft';
+        await saveExerciseToFirestore(exerciseData, classId, docRef);
+        console.log('✅ Draft saved, calling AI detection...');
+
+        // 🤖 CALL AI DETECTION API
+        try {
+          if (setAiLoadingMessage) {
+            setAiLoadingMessage('🤖 Analyzing ERD with AI... This may take a moment...');
+          }
+          
+          console.log('🤖 Calling AI detection API...');
+          
+          const detectionResponse = await fetch('https://ai-api-server-vmaz.onrender.com/detect-erd', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imageUrl: fileData.answerScheme.url })
+          });
+
+          if (!detectionResponse.ok) {
+            const errorData = await detectionResponse.json();
+            throw new Error(errorData.message || 'AI detection API failed');
+          }
+
+          const detectedData = await detectionResponse.json();
+
+          if (setAiLoadingMessage) {
+            setAiLoadingMessage(null);
+          }
+
+          // ✅ Check if it's an ERD
+          if (!detectedData.isERD) {
+            console.error('❌ Not an ERD:', detectedData.reason);
+            return { 
+              success: false, 
+              message: `This is not an ERD diagram.\n\nReason: ${detectedData.reason || 'Invalid image format'}\n\nPlease upload a valid ERD diagram.`
+            };
+          }
+
+          console.log('✅ AI detection complete:', detectedData);
+          
+          // 🆕 RETURN with navigation data to review page
+          return { 
+            success: true, 
+            navigateToReview: true,
+            reviewData: {
+              detectedData,
+              exerciseData: {
+                ...exerciseData,
+                answerScheme: fileData.answerScheme,
+                rubric: fileData.rubric
+              },
+              classId,
+              exerciseId: docRef.id
+            }
+          };
+
+        } catch (aiError) {
+          if (setAiLoadingMessage) {
+            setAiLoadingMessage(null);
+          }
+          console.error('❌ AI detection failed:', aiError);
+          return { 
+            success: false, 
+            message: `AI detection failed: ${aiError.message}\n\nPlease try again or check your internet connection.`
+          };
+        }
+      }
+      
+    } catch (error) {
+      console.error('❌ Error in submitExercise:', error);
+      return { success: false, message: error.message };
     }
-    
-  } catch (error) {
-    console.error('❌ Error in submitExercise:', error);
-    return { success: false, message: error.message };
-  }
-};
+  };
 
   return {
     validateForm,

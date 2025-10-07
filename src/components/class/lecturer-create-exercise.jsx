@@ -65,6 +65,9 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
   // 🔙 NEW: Browser back button detection
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
+
+  const [aiLoadingMessage, setAiLoadingMessage] = useState(null);
+
   // 🔧 HELPER FUNCTION: Check if form has content (eliminates duplication)
   const checkHasContent = (data = formData) => {
     return data.title.trim() || 
@@ -384,18 +387,18 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
         getUserDisplayName, 
         uploadFiles, 
         formatFirebaseStorageData, 
-        draftId
+        draftId,
+        setAiLoadingMessage // 🆕 Pass the loading state setter
       );
       
       if (result.success) {
-        
+  
         // 🆕 AI REVIEW FLOW: Navigate to review page
         if (result.navigateToReview) {
           const { detectedData, exerciseData, classId, exerciseId } = result.reviewData;
           
           console.log('🚀 Navigating to review page with data');
           
-          // 🛡️ FIX: Set ref to prevent double loading
           isNavigatingToReview.current = true;
           
           navigate(`/lecturer/review-erd`, {
@@ -411,7 +414,11 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
         }
         
         // ✅ REGULAR UPDATE (editing active exercise): Just show success & close
-        alert('Exercise updated successfully!');
+        if (result.isUpdate) { // 🆕 Check if it's an update
+          alert('Exercise updated successfully!');
+        } else {
+          alert('Exercise published successfully!');
+        }
         
         // Reset form
         setFormData({
@@ -519,6 +526,61 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
             onCancel={handleModalCancel}
             isLoading={isLoading}
           />
+
+          {/* 🤖 AI LOADING OVERLAY - Shows when calling AI API */}
+          {aiLoadingMessage && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.85)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 9999,
+              color: 'white',
+              fontSize: '1.2rem',
+              padding: '2rem',
+              textAlign: 'center'
+            }}>
+              <div style={{
+                marginBottom: '1.5rem',
+                fontSize: '3rem',
+                animation: 'pulse 2s ease-in-out infinite'
+              }}>
+                🤖
+              </div>
+              <div style={{ 
+                marginBottom: '1rem',
+                fontWeight: '500',
+                maxWidth: '500px'
+              }}>
+                {aiLoadingMessage}
+              </div>
+              <div style={{
+                width: '50px',
+                height: '50px',
+                border: '4px solid rgba(255, 255, 255, 0.3)',
+                borderTop: '4px solid white',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+                marginTop: '1rem'
+              }} />
+              <style>{`
+                @keyframes spin {
+                  0% { transform: rotate(0deg); }
+                  100% { transform: rotate(360deg); }
+                }
+                @keyframes pulse {
+                  0%, 100% { transform: scale(1); opacity: 1; }
+                  50% { transform: scale(1.1); opacity: 0.8; }
+                }
+              `}</style>
+            </div>
+          )}
         </main>
       </div>
     </div>

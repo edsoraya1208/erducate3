@@ -182,12 +182,37 @@ const LecturerReviewERDComponent = ({
   try {
     setIsPublishing(true);
     
+    // 🔥 CLEAN DATA: Remove undefined fields before saving to Firestore
+    const cleanedElements = allElements.map(element => {
+      const cleaned = {
+        id: element.id,
+        name: element.name,
+        type: element.type,
+        subType: element.subType,
+        confidence: element.confidence
+      };
+
+      // Only add relationship fields if it's a relationship
+      if (element.type === 'relationship') {
+        cleaned.from = element.from;
+        cleaned.to = element.to;
+      }
+
+      // Only add attribute fields if it's an attribute
+      if (element.type === 'attribute') {
+        cleaned.belongsTo = element.belongsTo;
+        cleaned.belongsToType = element.belongsToType;
+      }
+
+      return cleaned;
+    });
+    
     const exerciseRef = doc(db, 'classes', classId, 'exercises', exerciseId);
     
     await updateDoc(exerciseRef, {
       status: 'active',
       correctAnswer: {
-        elements: allElements
+        elements: cleanedElements // Use cleaned data
       },
       approvedAt: serverTimestamp(),
       updatedAt: serverTimestamp()

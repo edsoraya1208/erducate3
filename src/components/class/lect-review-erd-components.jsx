@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import '../../styles/review-erd.css';
+import ValidationErrorModal from '../modals/ValidationErrorModal';
 
 const LecturerReviewERDComponent = ({ 
   detectedData, 
@@ -38,6 +39,9 @@ const LecturerReviewERDComponent = ({
   const [elementToDelete, setElementToDelete] = useState(null);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [notification, setNotification] = useState(null);
+
+  const [validationModalErrors, setValidationModalErrors] = useState([]);
+  const [showValidationModal, setShowValidationModal] = useState(false);
   
   const [isPublishing, setIsPublishing] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -155,11 +159,11 @@ const LecturerReviewERDComponent = ({
     }
   });
 
-  // 🚨 Show errors if any
+  // 🚨 Show custom modal if errors exist
   if (validationErrors.length > 0) {
-    const errorMessage = '⚠️ Please fix these errors:\n\n' + validationErrors.join('\n');
+    setValidationModalErrors(validationErrors);
+    setShowValidationModal(true);
     showNotification('Please complete all required fields', 'error');
-    alert(errorMessage);
     return;
   }
 
@@ -682,6 +686,13 @@ const LecturerReviewERDComponent = ({
           <span>{notification.message}</span>
         </div>
       )}
+
+      {/* 🆕 Validation Error Modal */}
+      <ValidationErrorModal
+        isVisible={showValidationModal}
+        errors={validationModalErrors}
+        onClose={() => setShowValidationModal(false)}
+      />
     </div>
   );
 };

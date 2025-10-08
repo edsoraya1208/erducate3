@@ -219,7 +219,9 @@ const LecturerReviewERDComponent = ({
     });
     
     showNotification('Exercise published successfully!');
-    setTimeout(() => navigate(-1), 1500);
+    setTimeout(() => {
+      navigate(`/lecturer/class/${classId}`, { replace: true });
+    }, 1500);
     
   } catch (error) {
     console.error('Error publishing exercise:', error);

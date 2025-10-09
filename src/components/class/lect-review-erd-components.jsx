@@ -8,7 +8,8 @@ import ValidationErrorModal from '../modals/ValidationErrorModal';
 const LecturerReviewERDComponent = ({ 
   detectedData, 
   answerSchemeUrl, 
-  rubricUrl,
+  rubricText, // 🆕 CHANGED: From rubricUrl to rubricText
+  rubricAnalysis, // 🆕 NEW: Structured rubric from AI
   onPublish, 
   onCancel,
   isLoading 
@@ -21,8 +22,22 @@ const LecturerReviewERDComponent = ({
   
   const initialDetectedData = passedData.detectedData || detectedData;
   const initialAnswerScheme = passedData.exerciseData?.answerScheme?.url || answerSchemeUrl;
-  const initialRubric = passedData.exerciseData?.rubric?.url || rubricUrl;
-  
+  const initialRubricText = passedData.exerciseData?.rubricText || rubricText; // 🆕 CHANGED
+  const initialRubricAnalysis = passedData.rubricAnalysis || rubricAnalysis;
+
+  console.log('🔍 Review Page Data Check:');
+  console.log('  - detectedData:', initialDetectedData ? '✅ Present' : '❌ Missing');
+  console.log('  - rubricText:', initialRubricText ? '✅ Present' : '❌ Missing');
+  console.log('  - rubricAnalysis:', initialRubricAnalysis ? '✅ Present' : '❌ MISSING');
+  if (initialRubricAnalysis) {
+    console.log('    - isERDRubric:', initialRubricAnalysis.isERDRubric);
+    console.log('    - totalPoints:', initialRubricAnalysis.totalPoints);
+    console.log('    - criteria count:', initialRubricAnalysis.criteria?.length);
+  }
+  console.log('  - Full passedData keys:', Object.keys(passedData));
+  console.log('  - passedData.rubricAnalysis:', passedData.rubricAnalysis);
+
+
   // ✅ Store ALL elements with unique IDs
   const [allElements, setAllElements] = useState(
     (initialDetectedData.elements || []).map((el, idx) => ({
@@ -129,9 +144,20 @@ const LecturerReviewERDComponent = ({
   const confirmPublish = async () => {
   setShowPublishModal(false);
 
+  // 🛡️ NEW: Check AI results exist
+  if (!initialDetectedData?.elements || initialDetectedData.elements.length === 0) {
+    showNotification('Cannot publish: No ERD elements detected', 'error');
+    return;
+  }
+
+  if (initialRubricText && !initialRubricAnalysis?.isERDRubric) {
+    showNotification('Cannot publish: Rubric analysis incomplete', 'error');
+    return;
+  }
+
   // 🛡️ VALIDATION: Check for undefined/empty values
   const validationErrors = [];
-  
+    
   allElements.forEach((element, index) => {
     // Check element name
     if (!element.name || !element.name.trim()) {
@@ -209,14 +235,39 @@ const LecturerReviewERDComponent = ({
     
     const exerciseRef = doc(db, 'classes', classId, 'exercises', exerciseId);
     
-    await updateDoc(exerciseRef, {
+    // 🔥 PREPARE DATA TO SAVE
+    const updateData = {
       status: 'active',
       correctAnswer: {
-        elements: cleanedElements // Use cleaned data
+        elements: cleanedElements
       },
       approvedAt: serverTimestamp(),
       updatedAt: serverTimestamp()
-    });
+    };
+
+    // 🆕 ADD: Save AI-parsed rubric if available
+    console.log('🔍 Checking rubric analysis before save:', initialRubricAnalysis);
+
+    if (initialRubricAnalysis) {
+      // ✅ Check if it's a valid ERD rubric response
+      if (initialRubricAnalysis.isERDRubric === true) {
+        console.log('✅ Saving rubricStructured:', initialRubricAnalysis);
+        updateData.rubricStructured = {
+          isERDRubric: initialRubricAnalysis.isERDRubric,
+          totalPoints: initialRubricAnalysis.totalPoints || 0,
+          criteria: initialRubricAnalysis.criteria || [],
+          detectedAt: serverTimestamp()
+        };
+      } else {
+        console.warn('⚠️ Rubric analysis indicates NOT an ERD rubric:', initialRubricAnalysis);
+      }
+    } else {
+      console.warn('⚠️ No rubric analysis data available');
+    }
+
+    console.log('🔥 Final update data:', updateData);
+
+    await updateDoc(exerciseRef, updateData);
     
     showNotification('Exercise published successfully!');
     setTimeout(() => {
@@ -261,11 +312,30 @@ const LecturerReviewERDComponent = ({
           <div className="rev-image-display">
             <img src={initialAnswerScheme} alt="ERD Answer Scheme" />
           </div>
-          {initialRubric && (
+          
+          {/* 🆕 CHANGED: Display rubric text instead of PDF */}
+          {initialRubricText && (
             <>
               <h2>Rubric</h2>
-              <div className="rev-pdf-display">
-                <embed src={initialRubric} type="application/pdf" width="100%" height="400px" />
+              <div className="rev-rubric-display">
+                <pre className="rubric-text">{initialRubricText}</pre>
+                
+                {/* 🆕 NEW: Show AI-analyzed rubric if available */}
+                {initialRubricAnalysis && initialRubricAnalysis.isERDRubric && (
+                  <div className="rubric-analysis">
+                    <h3>📊 AI Analysis</h3>
+                    <p><strong>Total Points:</strong> {initialRubricAnalysis.totalPoints}</p>
+                    {initialRubricAnalysis.criteria && (
+                      <ul>
+                        {initialRubricAnalysis.criteria.map((criterion, idx) => (
+                          <li key={idx}>
+                            <strong>{criterion.category}</strong> ({criterion.maxPoints} pts): {criterion.description}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
               </div>
             </>
           )}

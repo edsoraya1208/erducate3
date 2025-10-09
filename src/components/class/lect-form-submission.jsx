@@ -7,43 +7,48 @@ export const useFormSubmission = () => {
 
   // 🆕 BULLETPROOF VALIDATION - Handles all edge cases
   const validateForm = (formData, existingData = null, isDraftSave = false) => {
-    const errors = {};
+  const errors = {};
 
-    // Always require basic fields (even for drafts when publishing)
-    if (!isDraftSave) {
-      if (!formData.title?.trim()) {
-        errors.title = 'Please fill out this field.';
-      }
-      if (!formData.description?.trim()) {
-        errors.description = 'Please fill out this field.';
-      }
-      if (!formData.totalMarks || formData.totalMarks <= 0) {
-        errors.totalMarks = 'Please fill out this field.';
-      } else if (formData.totalMarks < 1 || formData.totalMarks > 100) {
-        errors.totalMarks = 'Total marks must be between 1 and 100.';
-      }
-      if (!formData.dueDate?.trim()) {
-        errors.dueDate = 'Please fill out this field.';
-      }
-      // 🆕 NEW: Validate time field
-      if (!formData.dueTime?.trim()) {
-        errors.dueTime = 'Please fill out this field.';
-      }
+  // 🛡️ Check if editing a published exercise
+  const isEditingPublished = existingData?.status === 'active';
 
-      // 🔧 SMART FILE VALIDATION: Check if we have files (existing OR new)
-      const hasAnswerScheme = formData.answerSchemeFile || existingData?.answerScheme;
-      const hasRubric = formData.rubricFile || existingData?.rubric;
-      
+  // Always require basic fields (even for drafts when publishing)
+  if (!isDraftSave) {
+    if (!formData.title?.trim()) {
+      errors.title = 'Please fill out this field.';
+    }
+    if (!formData.description?.trim()) {
+      errors.description = 'Please fill out this field.';
+    }
+    if (!formData.totalMarks || formData.totalMarks <= 0) {
+      errors.totalMarks = 'Please fill out this field.';
+    } else if (formData.totalMarks < 1 || formData.totalMarks > 100) {
+      errors.totalMarks = 'Total marks must be between 1 and 100.';
+    }
+    if (!formData.dueDate?.trim()) {
+      errors.dueDate = 'Please fill out this field.';
+    }
+    if (!formData.dueTime?.trim()) {
+      errors.dueTime = 'Please fill out this field.';
+    }
+
+    // 🔧 FILE VALIDATION: Allow published exercises to keep existing files
+    const hasAnswerScheme = formData.answerSchemeFile || existingData?.answerScheme;
+    const hasRubric = formData.rubricText?.trim() || existingData?.rubricText || existingData?.rubricStructured;
+    
+    // ✅ Only require files if NOT editing published exercise
+    if (!isEditingPublished) {
       if (!hasAnswerScheme) {
         errors.answerSchemeFile = 'Please upload an answer scheme file.';
       }
       if (!hasRubric) {
-        errors.rubricFile = 'Please upload a rubric file.';
+        errors.rubricText = 'Please enter rubric grading criteria.';
       }
     }
+  }
 
-    return errors;
-  };
+  return errors;
+};
 
   // 🆕 NEW: Convert date + time strings to Firebase Timestamp
   const createDueDateTimestamp = (dateString, timeString) => {
@@ -76,28 +81,51 @@ export const useFormSubmission = () => {
   };
 
   // 💾 SAVE EXERCISE TO FIRESTORE
-  const saveExerciseToFirestore = async (exerciseData, classId, exerciseRef = null) => {
-    try {
-      console.log('Saving exercise to Firestore...');
-      console.log('About to save to path:', `classes/${classId}/exercises`);
-      console.log('ClassID value:', classId);
+const saveExerciseToFirestore = async (exerciseData, classId, exerciseRef = null) => {
+  try {
+    console.log('💾 Saving exercise to Firestore...');
+    
+    let docRef;
+    if (exerciseRef) {
+      console.log('   - Checking if document exists:', exerciseRef.id);
+      console.log('   - Path:', exerciseRef.path);
       
-      let docRef;
-      if (exerciseRef) {
+      // ✅ CHECK if document exists before updating
+      const docSnap = await getDoc(exerciseRef);
+      
+      if (docSnap.exists()) {
+        // Document exists → UPDATE it
+        console.log('   - Document exists, updating...');
+        await updateDoc(exerciseRef, {
+          ...exerciseData,
+          updatedAt: serverTimestamp()
+        });
+        docRef = exerciseRef;
+        console.log('✅ Updated existing document');
+      } else {
+        // Document doesn't exist → CREATE it
+        console.log('   - Document does not exist, creating...');
+        exerciseData.createdAt = serverTimestamp();
+        exerciseData.updatedAt = serverTimestamp();
         await setDoc(exerciseRef, exerciseData);
         docRef = exerciseRef;
-      } else {
-        exerciseData.createdAt = serverTimestamp();
-        docRef = await addDoc(collection(db, 'classes', classId, 'exercises'), exerciseData);
+        console.log('✅ Created new document');
       }
-      
-      console.log('✅ Exercise saved with ID:', docRef.id);
-      return docRef;
-    } catch (error) {
-      console.error('❌ Firestore error:', error);
-      throw error;
+    } else {
+      console.log('   - Creating new document');
+      exerciseData.createdAt = serverTimestamp();
+      exerciseData.updatedAt = serverTimestamp();
+      docRef = await addDoc(collection(db, 'classes', classId, 'exercises'), exerciseData);
+      console.log('✅ Created new document:', docRef.id);
     }
-  };
+    
+    console.log('✅ Exercise saved with ID:', docRef.id);
+    return docRef;
+  } catch (error) {
+    console.error('❌ Firestore error:', error);
+    throw error;
+  }
+};
 
   // 🛡️ FETCH EXISTING DATA HELPER
   const fetchExistingData = async (docRef) => {
@@ -115,12 +143,12 @@ export const useFormSubmission = () => {
     }
   };
 
-  // 📁 SMART FILE HANDLER - Preserves existing files
+  // 📁 SMART FILE HANDLER - Preserves existing files (ANSWER SCHEME ONLY NOW)
   const handleFileUploads = async (formData, classId, exerciseId, existingData = null, uploadFiles, formatFirebaseStorageData) => {
     console.log('📁 Processing file uploads...');
     
     try {
-      // Upload new files (only if provided)
+      // Upload new files (only answer scheme now)
       const { answerSchemeData, rubricData } = await uploadFiles(formData, classId, exerciseId);
       const newFileData = formatFirebaseStorageData(answerSchemeData, rubricData);
 
@@ -136,18 +164,10 @@ export const useFormSubmission = () => {
         console.log('✅ Preserved existing answer scheme');
       }
 
-      // Handle rubric
-      if (newFileData.rubric) {
-        finalFileData.rubric = newFileData.rubric;
-        console.log('✅ New rubric uploaded');
-      } else if (existingData?.rubric) {
-        finalFileData.rubric = existingData.rubric;
-        console.log('✅ Preserved existing rubric');
-      }
+      // ❌ REMOVED: Rubric file handling - now using text
 
       console.log('📁 Final file status:');
       console.log('  - Answer scheme:', finalFileData.answerScheme ? '✅ Present' : '❌ Missing');
-      console.log('  - Rubric:', finalFileData.rubric ? '✅ Present' : '❌ Missing');
 
       return finalFileData;
     } catch (error) {
@@ -156,13 +176,13 @@ export const useFormSubmission = () => {
     }
   };
 
-  // 💾 SAVE AS DRAFT - IMPROVED with datetime handling
+  // 💾 SAVE AS DRAFT - IMPROVED with datetime handling and rubric text
   const saveDraft = async (formData, classId, user, getUserDisplayName, uploadFiles, formatFirebaseStorageData, existingDraftRef = null) => {
     // More lenient check for drafts - save if ANY content exists
     const hasContent = formData.title?.trim() || 
                       formData.description?.trim() || 
                       formData.answerSchemeFile || 
-                      formData.rubricFile ||
+                      formData.rubricText?.trim() || // 🆕 CHANGED: Check for rubric text instead of file
                       formData.dueDate?.trim() ||
                       formData.totalMarks;
 
@@ -192,7 +212,7 @@ export const useFormSubmission = () => {
       const exerciseId = docRef.id;
       console.log('📋 Using exercise ID:', exerciseId);
 
-      // Handle files with preservation
+      // Handle files with preservation (answer scheme only)
       const fileData = await handleFileUploads(formData, classId, exerciseId, existingData, uploadFiles, formatFirebaseStorageData);
 
       // 🆕 CHANGE: Convert date + time to Firebase Timestamp
@@ -204,8 +224,9 @@ export const useFormSubmission = () => {
         description: formData.description?.trim() || '',
         dueDate: dueDateTime, // 🆕 CHANGED: Now stores Timestamp instead of string
         totalMarks: formData.totalMarks ? parseInt(formData.totalMarks) : null,
+        rubricText: formData.rubricText?.trim() || '', // ✅ Keep this - store raw input for editing
         
-        ...fileData, // Add preserved + new files
+        ...fileData, // Add preserved + new files (answer scheme only)
         
         createdBy: getUserDisplayName(),
         createdById: user.uid,
@@ -229,27 +250,37 @@ export const useFormSubmission = () => {
     }
   };
 
-  // 🚀 SUBMIT EXERCISE - BULLETPROOF version with datetime
-  // 🚀 SUBMIT EXERCISE - NOW WITH AI DETECTION
-// 🚀 SUBMIT EXERCISE - WITH AI DETECTION FOR NEW PUBLISHES ONLY
+  // 🚀 SUBMIT EXERCISE - WITH AI DETECTION AND RUBRIC ANALYSIS
   const submitExercise = async (formData, classId, user, getUserDisplayName, uploadFiles, formatFirebaseStorageData, existingDraftId = null, setAiLoadingMessage = null) => {
     try {
       let docRef;
       let existingData = null;
+      let isEditingExistingExercise = false;
 
+      // 🛡️ CRITICAL: Always use existing document if draftId exists
       if (existingDraftId) {
+        console.log('📝 Editing existing exercise:', existingDraftId);
         docRef = doc(db, 'classes', classId, 'exercises', existingDraftId);
         existingData = await fetchExistingData(docRef);
+        isEditingExistingExercise = true;
+        
+        if (!existingData) {
+          console.error('❌ Exercise not found:', existingDraftId);
+          return { success: false, message: 'Exercise not found' };
+        }
+        
+        console.log('✅ Existing exercise data:', existingData);
       } else {
+        console.log('🆕 Creating new exercise');
         docRef = createDocumentReference(classId);
       }
       
       const exerciseId = docRef.id;
       console.log('📋 Using exercise ID:', exerciseId);
+      console.log('   - Is editing existing?', isEditingExistingExercise);
 
       // 🛡️ VALIDATE BEFORE PROCESSING
-      const validationErrors = validateForm(formData, existingData, false);
-      if (Object.keys(validationErrors).length > 0) {
+        const validationErrors = validateForm(formData, existingData, false);        if (Object.keys(validationErrors).length > 0) {
         console.error('❌ Validation failed:', validationErrors);
         return { success: false, errors: validationErrors };
       }
@@ -257,7 +288,12 @@ export const useFormSubmission = () => {
       // 🔍 CHECK: Is this already an active exercise with AI results?
       const hasExistingAIResults = existingData?.status === 'active' && existingData?.correctAnswer?.elements;
 
-      // Handle files with preservation
+      console.log('🔍 Checking exercise status:');
+      console.log('   - existingData.status:', existingData?.status);
+      console.log('   - Has AI results?', hasExistingAIResults);
+      console.log('   - Will run AI?', !hasExistingAIResults);
+
+      // Handle files with preservation (answer scheme only)
       const fileData = await handleFileUploads(formData, classId, exerciseId, existingData, uploadFiles, formatFirebaseStorageData);
 
       // Convert date + time to Firebase Timestamp
@@ -277,8 +313,9 @@ export const useFormSubmission = () => {
         description: formData.description.trim(),
         dueDate: dueDateTime,
         totalMarks: Number(formData.totalMarks),
+        rubricText: formData.rubricText?.trim() || '', // 🆕 NEW: Save rubric as text
         
-        ...fileData,
+        ...fileData, // Answer scheme only
         
         createdBy: getUserDisplayName(),
         createdById: user.uid,
@@ -290,17 +327,30 @@ export const useFormSubmission = () => {
       }
 
       // 🎯 DECISION: Active exercise with AI results OR new publish?
-      if (hasExistingAIResults) {
-        // ✅ EDITING PUBLISHED EXERCISE: Keep existing AI results, just update fields
-        console.log('✅ Updating published exercise - preserving AI results');
-        exerciseData.status = 'active';
-        exerciseData.correctAnswer = existingData.correctAnswer; // 🔥 PRESERVE AI RESULTS
-        
-        await saveExerciseToFirestore(exerciseData, classId, docRef);
-        console.log('✅ Published exercise updated successfully');
-        return { success: true, exerciseId: docRef.id, isUpdate: true };
-        
-      } else {
+    if (hasExistingAIResults) {
+      // ✅ EDITING PUBLISHED EXERCISE: Keep existing AI results, just update fields
+      console.log('✅ Updating published exercise - preserving AI results');
+      console.log('   - Using docRef ID:', docRef.id);
+      console.log('   - Should match existing:', existingDraftId);
+      
+      exerciseData.status = 'active';
+      exerciseData.correctAnswer = existingData.correctAnswer;
+      
+      if (existingData.rubricStructured) {
+        exerciseData.rubricStructured = existingData.rubricStructured;
+        console.log('   - Preserved rubricStructured');
+      }
+      
+      if (!formData.rubricText?.trim() && existingData.rubricText) {
+        exerciseData.rubricText = existingData.rubricText;
+      }
+      
+      // 🔥 CRITICAL: Use updateDoc instead of setDoc to avoid overwriting
+      console.log('🔥 Updating document at path:', `classes/${classId}/exercises/${docRef.id}`);
+      await updateDoc(docRef, exerciseData);
+      console.log('✅ Published exercise updated successfully');
+      return { success: true, exerciseId: docRef.id, isUpdate: true };
+    } else {
         // 🆕 NEW PUBLISH: Save as draft first, then trigger AI
         exerciseData.status = 'draft';
         await saveExerciseToFirestore(exerciseData, classId, docRef);
@@ -312,7 +362,7 @@ export const useFormSubmission = () => {
             setAiLoadingMessage('🤖 Analyzing ERD with AI... This may take a moment...');
           }
           
-          console.log('🤖 Calling AI detection API...');
+          console.log('🤖 Step 1: Calling ERD detection API...');
           
           const detectionResponse = await fetch('https://ai-api-server-vmaz.onrender.com/detect-erd', {
             method: 'POST',
@@ -326,13 +376,13 @@ export const useFormSubmission = () => {
           }
 
           const detectedData = await detectionResponse.json();
-
-          if (setAiLoadingMessage) {
-            setAiLoadingMessage(null);
-          }
+          console.log('✅ Step 1 complete: ERD detected');
 
           // ✅ Check if it's an ERD
           if (!detectedData.isERD) {
+            if (setAiLoadingMessage) {
+              setAiLoadingMessage(null);
+            }
             console.error('❌ Not an ERD:', detectedData.reason);
             return { 
               success: false, 
@@ -340,29 +390,75 @@ export const useFormSubmission = () => {
             };
           }
 
-          console.log('✅ AI detection complete:', detectedData);
+          // 🆕 Step 2: Call rubric analysis API
+          let rubricAnalysis = null;
+          if (formData.rubricText?.trim()) {
+            if (setAiLoadingMessage) {
+              setAiLoadingMessage('🤖 Analyzing rubric... Almost done...');
+            }
+
+            console.log('🤖 Step 2: Calling rubric analysis API...');
+            console.log('📝 Rubric text:', formData.rubricText.trim().substring(0, 100) + '...');
+            
+            const rubricResponse = await fetch('https://ai-api-server-vmaz.onrender.com/detect-rubric', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ rubricText: formData.rubricText.trim() })
+            });
+
+            console.log('📡 Rubric API response status:', rubricResponse.status);
+
+            if (rubricResponse.ok) {
+              rubricAnalysis = await rubricResponse.json();
+              console.log('✅ Step 2 complete: Rubric analyzed');
+              
+              // ✅ Verify it's actually an ERD rubric
+              if (!rubricAnalysis.isERDRubric) {
+                throw new Error('Rubric analysis failed: Not an ERD rubric');
+              }
+            } else {
+              const errorText = await rubricResponse.text();
+              console.error('❌ Rubric analysis failed:', errorText);
+              throw new Error(`Rubric analysis API failed: ${errorText}`); // ✅ FAIL completely
+            }
+          } else {
+            console.log('ℹ️ No rubric text provided, skipping rubric analysis');
+          }
+
+          // ✅ Clear loading message
+          if (setAiLoadingMessage) {
+            setAiLoadingMessage(null);
+          }
+
+          console.log('✅ All AI processing complete, preparing navigation data...');
+          console.log('🔍 Final rubricAnalysis:', rubricAnalysis);
           
           // 🆕 RETURN with navigation data to review page
+          const reviewData = {
+            detectedData,
+            rubricAnalysis, // This should now be populated
+            exerciseData: {
+              ...exerciseData,
+              answerScheme: fileData.answerScheme,
+              rubricText: formData.rubricText?.trim() || ''
+            },
+            classId,
+            exerciseId: docRef.id
+          };
+
+          console.log('🚀 Navigating with reviewData:', reviewData);
+
           return { 
             success: true, 
             navigateToReview: true,
-            reviewData: {
-              detectedData,
-              exerciseData: {
-                ...exerciseData,
-                answerScheme: fileData.answerScheme,
-                rubric: fileData.rubric
-              },
-              classId,
-              exerciseId: docRef.id
-            }
+            reviewData
           };
 
         } catch (aiError) {
           if (setAiLoadingMessage) {
             setAiLoadingMessage(null);
           }
-          console.error('❌ AI detection failed:', aiError);
+          console.error('❌ AI processing failed:', aiError);
           return { 
             success: false, 
             message: `AI detection failed: ${aiError.message}\n\nPlease try again or check your internet connection.`

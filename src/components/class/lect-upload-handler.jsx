@@ -1,11 +1,11 @@
-// 🌤️ CLOUDINARY UPLOAD LOGIC COMPONENT (UPDATED FOR SINGLE ID APPROACH)
-// 🔄 CHANGED: Now uses single Firestore ID and proper folder structure
+// 🌤️ CLOUDINARY UPLOAD LOGIC COMPONENT (UPDATED - Answer Scheme Only)
+// 🔄 CHANGED: Removed rubric FILE upload, keeping rubric TEXT in form
 import { uploadToCloudinary } from '../../config/cloudinary';
 
 // 🎯 UPLOAD HANDLER: Manages all file upload logic and validation
 export const useUploadHandler = () => {
 
-  // 📁 ENHANCED FILE VALIDATION (UNCHANGED - same validation logic)
+  // 📁 ENHANCED FILE VALIDATION - Only for answer scheme now
   const validateFile = (file, fileType) => {
     try {
       // Size validation (2MB limit - matches Cloudinary config)
@@ -14,21 +14,17 @@ export const useUploadHandler = () => {
         throw new Error('File size must be less than 2MB');
       }
 
-      // 📝 TYPE VALIDATION based on field (UNCHANGED)
+      // 📝 TYPE VALIDATION - Only answer scheme (images)
       if (fileType === 'answerSchemeFile') {
         // Answer scheme should be images only
         const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
         if (!allowedTypes.includes(file.type)) {
           throw new Error('Answer scheme must be an image file (JPG, PNG)');
         }
-      } else if (fileType === 'rubricFile') {
-        // Rubric should be PDF only
-        if (file.type !== 'application/pdf') {
-          throw new Error('Rubric must be a PDF file');
-        }
       }
+      // ❌ REMOVED: rubricFile validation - rubric is now text-based
 
-      // 🔒 FILENAME VALIDATION - Prevent malicious filenames (UNCHANGED)
+      // 🔒 FILENAME VALIDATION - Prevent malicious filenames
       const sanitizedName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
       if (sanitizedName !== file.name) {
         console.warn('Filename was sanitized for security');
@@ -40,13 +36,13 @@ export const useUploadHandler = () => {
     }
   };
 
-  // 🆕 NEW: Single uploadFiles function with proper folder structure
+  // 🆕 UPDATED: uploadFiles function - only handles answer scheme now
   const uploadFiles = async (formData, classId, exerciseId) => {
     let answerSchemeData = null;
-    let rubricData = null;
+    // ❌ REMOVED: rubricData variable - rubric is stored as text in Firestore
 
     try {
-      // 🗂️ PROPER FOLDER STRUCTURE: exercises/classId/exerciseId/
+      // 🗂️ PROPER FOLDER STRUCTURE: lecturer_exercise/classId/exerciseId/
       const baseFolder = `lecturer_exercise/${classId}/${exerciseId}`;
       
       if (formData.answerSchemeFile) {
@@ -55,7 +51,7 @@ export const useUploadHandler = () => {
         // For lecturers: Use direct Cloudinary upload (unsigned preset)
         answerSchemeData = await uploadToCloudinary(
           formData.answerSchemeFile, 
-          baseFolder, // This creates: exercises/class123/exerciseABC123/
+          baseFolder, // This creates: lecturer_exercise/class123/exerciseABC123/
           { 
             filename: 'answer-scheme', // Predictable filename for overwrite
             resourceType: 'image'
@@ -64,32 +60,17 @@ export const useUploadHandler = () => {
         console.log('✅ Answer scheme uploaded:', answerSchemeData.url);
       }
 
-      if (formData.rubricFile) {
-        console.log('🌤️ Uploading rubric to:', `${baseFolder}/rubric`);
-        
-        // For lecturers: Use direct Cloudinary upload (unsigned preset)
-        rubricData = await uploadToCloudinary(
-          formData.rubricFile, 
-          baseFolder, // This creates: exercises/class123/exerciseABC123/
-          { 
-            filename: 'rubric', // Predictable filename for overwrite
-            resourceType: 'raw' // for PDFs
-          }
-        );
-        console.log('✅ Rubric uploaded:', rubricData.url);
-      }
+      // ❌ REMOVED: rubricFile upload block - rubric is now text in the form
 
-      return { answerSchemeData, rubricData };
+      return { answerSchemeData, rubricData: null }; // Return null for rubricData
     } catch (error) {
       console.error('❌ Upload error:', error);
       throw error;
     }
   };
 
-  // ❌ REMOVED: uploadLecturerFiles() - merged into single uploadFiles function above
-
-  // 📋 FORMAT CLOUDINARY DATA FOR FIRESTORE (UPDATED function name but same logic)
-  const formatFirebaseStorageData = (answerSchemeData, rubricData) => {
+  // 📋 FORMAT CLOUDINARY DATA FOR FIRESTORE - Only answer scheme now
+  const formatFirebaseStorageData = (answerSchemeData, rubricData = null) => {
     return {
       answerScheme: answerSchemeData ? {
         url: answerSchemeData.url,           
@@ -105,23 +86,14 @@ export const useUploadHandler = () => {
         resourceType: answerSchemeData.resourceType
       } : null,
       
-      rubric: rubricData ? {
-        url: rubricData.url,
-        publicId: rubricData.publicId,           
-        originalName: rubricData.originalName,
-        fileType: rubricData.fileType,
-        fileSize: rubricData.fileSize,
-        format: rubricData.format,
-        uploadedAt: rubricData.createdAt,        
-        cloudinaryFolder: rubricData.cloudinaryFolder,
-        resourceType: rubricData.resourceType
-      } : null
+      // ❌ REMOVED: rubric file object - rubric is now stored as text field in Firestore
+      // Note: Your form should have a 'rubricText' field that gets saved directly to Firestore
     };
   };
 
   return {
     validateFile,
-    uploadFiles, // 🆕 UPDATED: Single function with proper folder structure
+    uploadFiles, // 🆕 UPDATED: Only handles answer scheme file upload
     formatFirebaseStorageData
   };
 };

@@ -35,14 +35,15 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
 
   // 📝 STATE MANAGEMENT: These store all form data
   // 🆕 CHANGE #1: Added dueTime field to formData
+  // 🔧 CHANGE 1: Update formData state (Line ~45)
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     dueDate: '',
-    dueTime: '23:59', // 🆕 NEW: Default time is 11:59 PM
+    dueTime: '23:59',
     totalMarks: '',
     answerSchemeFile: null,
-    rubricFile: null
+    rubricText: '' // 🆕 CHANGED: From rubricFile to rubricText
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -53,9 +54,10 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
   const [validationErrors, setValidationErrors] = useState({});
 
   const [isPublishedExercise, setIsPublishedExercise] = useState(false);
+  // 🔧 CHANGE 2: Update originalFileNames state (Line ~54)
   const [originalFileNames, setOriginalFileNames] = useState({
-    answerScheme: null,
-    rubric: null
+  answerScheme: null,
+  rubric: null // Keep this for backward compatibility with existing exercises
   });
   
   // 🆕 NEW: Modal state management
@@ -69,13 +71,15 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
   const [aiLoadingMessage, setAiLoadingMessage] = useState(null);
 
   // 🔧 HELPER FUNCTION: Check if form has content (eliminates duplication)
+  // 🔧 CHANGE 3: Update checkHasContent function (Line ~75)
+ // 🔧 HELPER FUNCTION: Check if form has content (eliminates duplication)
   const checkHasContent = (data = formData) => {
-    return data.title.trim() || 
-           data.description.trim() || 
-           data.answerSchemeFile || 
-           data.rubricFile ||
-           data.dueDate ||
-           data.totalMarks;
+    return data.title?.trim() || 
+          data.description?.trim() || 
+          data.answerSchemeFile || 
+          (data.rubricText && data.rubricText.trim()) || // ✅ FIXED
+          data.dueDate ||
+          data.totalMarks;
   };
 
   // 📁 DRAG AND DROP HANDLERS
@@ -158,14 +162,21 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
             timeValue = `${hours}:${minutes}`;
           }
           
+          // 🔧 CHANGE 4: Update loadDraftData useEffect (Line ~145)
+          // Inside the setFormData call:
           setFormData({
             title: draftData.title || '',
             description: draftData.description || '',
             dueDate: dateValue,
-            dueTime: timeValue, // 🆕 NEW: Load the time value
+            dueTime: timeValue,
             totalMarks: draftData.totalMarks?.toString() || '',
             answerSchemeFile: null,
-            rubricFile: null,
+            rubricText: draftData.rubricText || '' // 🆕 CHANGED: Load text instead of file
+          });
+
+          setOriginalFileNames({
+            answerScheme: draftData.answerScheme?.originalName || null,
+            rubric: draftData.rubricText ? 'Text rubric' : null // 🆕 CHANGED: Indicator for existing text
           });
           
           setOriginalFileNames({
@@ -402,12 +413,7 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
           isNavigatingToReview.current = true;
           
           navigate(`/lecturer/review-erd`, {
-            state: {
-              detectedData,
-              exerciseData,
-              classId,
-              exerciseId
-            },
+            state: result.reviewData, // ✅ Pass everything at once
             replace: true
           });
           return;
@@ -482,18 +488,18 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
               handleInputChange={handleInputChange}
             />
 
-            {/* 📁 FILE UPLOAD SECTIONS COMPONENT */}
             <LectFileUploadSection
-              formData={formData}
-              validationErrors={validationErrors}
-              isLoading={isLoading}
-              isPublishedExercise={isPublishedExercise}
-              originalFileNames={originalFileNames}
-              handleFileUpload={handleFileUpload}
-              handleDragOver={handleDragOver}
-              handleDragLeave={handleDragLeave}
-              handleDrop={handleDrop}
-            />
+            formData={formData}
+            validationErrors={validationErrors}
+            isLoading={isLoading}
+            isPublishedExercise={isPublishedExercise}
+            originalFileNames={originalFileNames}
+            handleFileUpload={handleFileUpload}
+            handleDragOver={handleDragOver}
+            handleDragLeave={handleDragLeave}
+            handleDrop={handleDrop}
+            handleInputChange={handleInputChange} // 🆕 NEW: Pass this prop
+          />
 
             {/* 💡 TIPS SECTION COMPONENT */}
             <LectExerciseTips />

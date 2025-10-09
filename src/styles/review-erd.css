@@ -670,6 +670,145 @@
   }
 }
 
+/* Rubric textarea container */
+.rubric-textarea-container {
+  padding: 1.5rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  width: 100%; /* 🆕 FULL WIDTH */
+}
+
+/* Rubric textarea - WIDER */
+.rubric-textarea {
+  width: 100%; /* 🆕 FULL WIDTH */
+  min-height: 200px;
+  padding: 12px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  resize: vertical;
+  transition: all 0.3s ease;
+  background-color: white;
+  color: #333;
+  box-sizing: border-box; /* 🆕 IMPORTANT - Includes padding in width calculation */
+}
+
+/* 🟣 PURPLE FOCUS - Your theme */
+.rubric-textarea:focus {
+  outline: none;
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+}
+
+/* Error state */
+.rubric-textarea.error {
+  border-color: #ef4444;
+}
+
+.rubric-textarea.error:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Disabled state */
+.rubric-textarea:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Field info text */
+.field-info {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+/* 🆕 REVIEW PAGE - Rubric Display */
+.rev-rubric-display {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.rubric-text {
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #374151;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  margin: 0;
+  padding: 0;
+}
+
+/* AI Analysis section */
+.rubric-analysis {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid #e5e7eb;
+}
+
+.rubric-analysis h3 {
+  color: #7c3aed;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.rubric-analysis p {
+  margin: 0.5rem 0;
+  color: #4b5563;
+}
+
+.rubric-analysis ul {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+}
+
+.rubric-analysis li {
+  background: white;
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+  border-radius: 6px;
+  border-left: 3px solid #7c3aed;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.rubric-analysis li strong {
+  color: #7c3aed;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+/* Scrollbar styling for rubric display */
+.rev-rubric-display::-webkit-scrollbar {
+  width: 8px;
+}
+
+.rev-rubric-display::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.rev-rubric-display::-webkit-scrollbar-thumb {
+  background: #7c3aed;
+  border-radius: 4px;
+}
+
+.rev-rubric-display::-webkit-scrollbar-thumb:hover {
+  background: #6d28d9;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .rev-content {

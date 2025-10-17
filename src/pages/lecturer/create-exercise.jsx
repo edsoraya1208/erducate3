@@ -4,7 +4,7 @@ import { useUser } from '../../contexts/UserContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import LecturerCreateExercise from '../../components/class/lecturer-create-exercise.jsx';
 import '../../styles/lecturer-shared-header.css';
-import '../../styles/create-exercise.css';
+import '../../styles/create-exercise.css?v=2';
 import DashboardHeader from '../../components/dashboard/dashboard-header'; // ✅ FIXED: Correct import path
 
 const CreateExercisePage = () => {

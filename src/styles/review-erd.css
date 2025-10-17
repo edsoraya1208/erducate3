@@ -672,28 +672,31 @@
 
 /* Rubric textarea container */
 .rubric-textarea-container {
-  padding: 1.5rem;
-  background: white;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-  width: 100%; /* 🆕 FULL WIDTH */
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
 }
 
-/* Rubric textarea - WIDER */
 .rubric-textarea {
-  width: 100%; /* 🆕 FULL WIDTH */
-  min-height: 200px;
-  padding: 12px;
-  font-family: inherit;
-  font-size: 0.95rem;
-  line-height: 1.6;
-  border: 2px solid #ddd;
-  border-radius: 6px;
-  resize: vertical;
-  transition: all 0.3s ease;
-  background-color: white;
-  color: #333;
-  box-sizing: border-box; /* 🆕 IMPORTANT - Includes padding in width calculation */
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  min-height: 200px !important;
+  padding: 12px !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif !important;
+  font-size: 0.95rem !important;
+  line-height: 1.6 !important;
+  border: 2px solid #ddd !important;
+  border-radius: 6px !important;
+  resize: vertical !important;
+  background-color: white !important;
+  color: #333 !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
 }
 
 /* 🟣 PURPLE FOCUS - Your theme */

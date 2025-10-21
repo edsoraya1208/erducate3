@@ -76,14 +76,14 @@ const LectFileUploadSection = ({
         </div>
       </div>
 
-      {/* 🆕 RUBRIC TEXTAREA SECTION */}
+      {/* 🆕 RUBRIC TEXTAREA SECTION - SIMPLIFIED */}
       <div className="upload-section">
         <div className="section-header">
           <span className="folder-icon">📋</span>
           <h3 className="section-title">Rubric *</h3>
         </div>
         
-        <div className="rubric-textarea-container">
+        <div className="upload-area">
           <textarea
             id="rubricText"
             name="rubricText"
@@ -94,9 +94,6 @@ const LectFileUploadSection = ({
             rows="10"
             disabled={isLoading || isPublishedExercise}
           />
-          <small className="field-info">
-            💡 Enter grading criteria, categories, and point allocations
-          </small>
           
           {validationErrors.rubricText && (
             <div className="validation-error">

@@ -909,51 +909,56 @@
 }
 
 /* ================================
-   🔧 TEXTAREA FIX - NUCLEAR VERSION
+   🔧 RUBRIC TEXTAREA - PERMANENT FIX
    ================================ */
 
-textarea.rubric-textarea {
-  display: block !important;
+/* Override upload-area specifically for rubric section */
+.upload-sections-container .upload-section:last-child .upload-area {
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 0 !important;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+}
+
+/* Rubric textarea - high specificity */
+.upload-sections-container textarea.rubric-textarea {
+  flex: 1 !important;
   width: 100% !important;
-  max-width: 100% !important;
-  min-width: 0 !important;
-  box-sizing: border-box !important;
-  min-height: 200px !important;
-  padding: 12px !important;
+  min-height: 340px !important;
+  padding: 16px !important;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif !important;
   font-size: 0.95rem !important;
   line-height: 1.6 !important;
-  border: 2px solid #ddd !important;
-  border-radius: 6px !important;
-  resize: vertical !important;
+  border: none !important;
+  border-radius: 8px !important;
   background-color: white !important;
   color: #333 !important;
+  box-sizing: border-box !important;
   margin: 0 !important;
-  transition: all 0.3s ease !important;
 }
 
-textarea.rubric-textarea:focus {
+.upload-sections-container textarea.rubric-textarea:focus {
   outline: none !important;
-  border-color: #7c3aed !important;
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1) !important;
+  border: 2px solid #8b5cf6 !important;
+  padding: 14px !important;
 }
 
-textarea.rubric-textarea:disabled {
-  background-color: #f5f5f5 !important;
+.upload-sections-container textarea.rubric-textarea:disabled {
+  background-color: #f9fafb !important;
   cursor: not-allowed !important;
   opacity: 0.6 !important;
 }
 
-.rubric-textarea-container {
-  padding: 1.5rem !important;
-  background: white !important;
-  border-radius: 8px !important;
-  border: 1px solid #e0e0e0 !important;
-  width: 100% !important;
-  min-width: 0 !important;
-  box-sizing: border-box !important;
+.upload-sections-container textarea.rubric-textarea::placeholder {
+  color: #9ca3af !important;
 }
 
-.upload-sections-container > .upload-section {
-  min-width: 0 !important;
+/* Validation error positioning - high specificity */
+.upload-sections-container .upload-section:last-child .validation-error {
+  padding: 8px 16px !important;
+  background: #fef2f2 !important;
+  border-top: 1px solid #fee2e2 !important;
+  border-radius: 0 0 8px 8px !important;
+  margin: 0 !important;
 }

@@ -384,9 +384,21 @@ const saveExerciseToFirestore = async (exerciseData, classId, exerciseRef = null
               setAiLoadingMessage(null);
             }
             console.error('❌ Not an ERD:', detectedData.reason);
+            
+            // 🆕 AUTO-SAVE AS DRAFT when ERD is rejected
+            console.log('💾 Saving as draft despite rejection...');
+            exerciseData.status = 'draft';
+            exerciseData.aiRejectionReason = detectedData.reason; // Track why it was rejected
+            
+            // Save/update the draft
+            await saveExerciseToFirestore(exerciseData, classId, docRef);
+            console.log('✅ Draft saved with rejected ERD');
+            
             return { 
-              success: false, 
-              message: `This is not an ERD diagram.\n\nReason: ${detectedData.reason || 'Invalid image format'}\n\nPlease upload a valid ERD diagram.`
+              success: false,
+              savedAsDraft: true, // 🆕 NEW FLAG
+              exerciseId: docRef.id, // 🆕 Return the draft ID
+              message: `This is not an ERD diagram.\n\nReason: ${detectedData.reason || 'Invalid image format'}\n\nYour work has been saved as a draft. Please upload a valid ERD diagram and try again.`
             };
           }
 

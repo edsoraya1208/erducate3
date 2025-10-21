@@ -24,10 +24,13 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
   const { user, getUserDisplayName } = useUser();
   const [searchParams] = useSearchParams(); 
   const classId = propClassId || searchParams.get('classId');
-  const draftId = searchParams.get('draftId'); 
+  const urlDraftId = searchParams.get('draftId');
+  const [draftId, setDraftId] = useState(urlDraftId);
 
   // 🛡️ NEW: Ref to prevent double loading
   const isNavigatingToReview = useRef(false);
+
+  const justRejectedERD = useRef(false);
 
   // 🆕 CUSTOM HOOKS
   const { validateFile, uploadFiles, formatFirebaseStorageData } = useUploadHandler();
@@ -120,6 +123,13 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
   // 🆕 NEW: Load draft data when draftId exists
   useEffect(() => {
     const loadDraftData = async () => {
+      // 🛡️ FIX: Don't load if we just rejected an ERD
+      if (justRejectedERD.current) {
+        console.log('🛡️ Skipping draft load - just rejected ERD, keeping form data');
+        justRejectedERD.current = false; // Reset flag
+        return;
+      }
+
       // 🛡️ FIX: Don't load if we're navigating to review page
       if (isNavigatingToReview.current) {
         console.log('🛡️ Skipping draft load - navigating to review');
@@ -131,6 +141,7 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
         console.log('🛡️ Skipping draft load - already loaded');
         return;
       }
+
 
       if (!draftId || !classId) return;
 
@@ -391,6 +402,7 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
     setIsLoading(true);
 
     try {
+      console.log('🔍 BEFORE SUBMIT - draftId:', draftId);
       const result = await submitExercise(
         formData, 
         classId, 
@@ -401,6 +413,30 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
         draftId,
         setAiLoadingMessage // 🆕 Pass the loading state setter
       );
+
+      // 🆕 HANDLE AI REJECTION: Draft saved but ERD rejected
+      if (!result.success && result.savedAsDraft) {
+        console.log('⚠️ ERD rejected but saved as draft:', result.exerciseId);
+        
+        // 🛡️ NEW: Set flag to prevent draft reload
+        justRejectedERD.current = true;
+
+        // Update URL to include draftId so next submit will update this draft
+        const newUrl = new URL(window.location);
+        newUrl.searchParams.set('draftId', result.exerciseId);
+        newUrl.searchParams.set('classId', classId);
+        window.history.replaceState({}, '', newUrl);
+        
+        // Update component state
+        setIsEditingDraft(true);
+        setIsDraftLoaded(true);
+        setDraftId(result.exerciseId);
+        
+        // Show the error message
+        alert(result.message);
+        setIsLoading(false);
+        return;
+      }
       
       if (result.success) {
   

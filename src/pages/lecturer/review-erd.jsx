@@ -5,7 +5,7 @@ import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import DashboardHeader from '../../components/dashboard/dashboard-header';
 import LecturerReviewERDComponent from '../../components/class/lect-review-erd-components';
-import '../../styles/create-exercise.css?v=2';
+import '../../styles/create-exercise.css?v=4';
 
 const LecturerReviewERD = () => {
   const navigate = useNavigate();

@@ -26,11 +26,12 @@ const LectExerciseTips = () => {
           <span className="tips-title">Rubric Tips</span>
         </div>
         <ul className="tips-list">
-          <li>Include clear marking criteria and point allocations</li>
-          <li>Specify requirements for each ERD component</li>
-          <li>Ensure PDF is readable and well-formatted</li>
-          <li>Include specific grading guidelines for AI processing</li>
-          <li>Use consistent terminology throughout</li>
+          <li>Use clear and simple English consistently throughout the document</li>
+          <li>Provide clear marking criteria with specific point allocations for each section</li>
+          <li>Specify detailed requirements for each ERD component, avoiding lengthy explanations</li>
+          <li>Include precise grading guidelines for AI processing, avoiding vague descriptions</li>
+          <li>Maintain a consistent structure and terminology across all sections</li>
+
         </ul>
       </div>
     </div>

@@ -1,57 +1,67 @@
-Erducate - An AI-Powered ERD Assessment and Feedback Tool
+# Erducate - An AI-Powered ERD Assessment and Feedback Tool
+
 An intelligent auto-grading system for Entity-Relationship Diagrams (ERD) designed to reduce lecturers' workload and enhance student learning through AI-powered feedback in ERD-based coursework.
-Features
 
-🤖 AI-Powered Auto-Grading: Automatically grades ERD diagrams using Meta Llama 4 Scout AI
-📸 Image-Based Assessment: Lecturers upload answer schemes as images
-📝 Custom Rubrics: Define grading criteria in text format
-✏️ Review & Edit: Lecturers can review and modify AI-generated marks and feedback
-📊 Instant Feedback: Students receive detailed feedback on their submissions
+## Features
 
-Tech Stack
+- 🤖 **AI-Powered Auto-Grading**: Automatically grades ERD diagrams using Meta Llama 4 Scout AI
+- 📸 **Image-Based Assessment**: Lecturers upload answer schemes as images
+- 📝 **Custom Rubrics**: Define grading criteria in text format
+- ✏️ **Review & Edit**: Lecturers can review and modify AI-generated marks and feedback
+- 📊 **Instant Feedback**: Students receive detailed feedback on their submissions
 
-Frontend: React 18
-Build Tool: Vite
-Styling: Vanilla CSS
-AI Model: Meta Llama 4 Scout (via API)
+## Tech Stack
 
-Getting Started
-Prerequisites
+- **Frontend**: React 18
+- **Build Tool**: Vite
+- **Styling**: Vanilla CSS
+- **AI Model**: Meta Llama 4 Scout (via API)
 
-Node.js (v14 or higher)
-npm or yarn
+## Getting Started
 
-Installation
+### Prerequisites
 
-Clone the repository
+- Node.js (v14 or higher)
+- npm or yarn
 
-bashgit clone https://github.com/edsoraya1208/erducate3.git
+### Installation
+
+1. Clone the repository
+```bash
+git clone https://github.com/edsoraya1208/erducate3.git
 cd erducate3
+```
 
-Install dependencies
+2. Install dependencies
+```bash
+npm install
+```
 
-bashnpm install
+3. Start the development server
+```bash
+npm run dev
+```
 
-Start the development server
+4. Open your browser and visit `http://localhost:5173`
 
-bashnpm run dev
+## Available Scripts
 
-Open your browser and visit http://localhost:5173
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
 
-Available Scripts
+## How It Works
 
-npm run dev - Start development server
-npm run build - Build for production
-npm run preview - Preview production build
+1. **Lecturer uploads** the answer scheme (image) and grading rubric (text)
+2. **Students submit** their ERD diagrams
+3. **AI evaluates** submissions against the answer scheme using the rubric
+4. **Lecturer reviews** AI-generated marks and feedback
+5. **Students receive** grades and personalized feedback
 
-How It Works
+## Project Status
 
-Lecturer uploads the answer scheme (image) and grading rubric (text)
-Students submit their ERD diagrams
-AI evaluates submissions against the answer scheme using the rubric
-Lecturer reviews AI-generated marks and feedback
-Students receive grades and personalized feedback
+🚧 **Final Year Project (In Progress)** - Actively developing this platform as part of my undergraduate final year project.
 
-Project Status
-🚧 Final Year Project (In Progress) - Actively developing this platform as part of my undergraduate final year project.
+## API Integration
+
 This project connects to Meta Llama 4 Scout API endpoint for AI-powered grading.

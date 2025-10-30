@@ -279,13 +279,26 @@
   font-weight: 500;
 }
 
+/* Message Display Styles - Complete */
+.message {
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
 .message-success {
-  color: #16a34a; /* green text */
+  background-color: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
   font-weight: 600;
 }
 
 .message-error {
-  color: #dc2626; /* red text */
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
   font-weight: 600;
 }
 

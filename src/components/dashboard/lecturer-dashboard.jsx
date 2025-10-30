@@ -52,7 +52,7 @@ const CreateClassModal = ({
         
         <div className="form-group">
           <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            Max Students <span style={{ color: 'red' }}>*</span>
+            No. of Students <span style={{ color: 'red' }}>*</span>
             <div 
               style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}
               onMouseEnter={() => setShowTooltip(true)}
@@ -105,7 +105,7 @@ const CreateClassModal = ({
             type="number"
             value={maxStudents}
             onChange={(e) => onMaxStudentsChange(e.target.value)}
-            placeholder="Enter number (e.g. 50)"
+            placeholder="Enter a number (e.g. 50)"
             min="1"
             max="100"
             className="form-input"

@@ -85,7 +85,7 @@ const CreateClassModal = ({
                   zIndex: 1000,
                   boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
                 }}>
-                  Enter your actual number of students to prevent duplicate submissions
+                  Enter the number of students in your class
                   <div style={{
                     position: 'absolute',
                     top: '-4px',
@@ -105,9 +105,9 @@ const CreateClassModal = ({
             type="number"
             value={maxStudents}
             onChange={(e) => onMaxStudentsChange(e.target.value)}
-            placeholder="Enter number (Max: 45)"
+            placeholder="Enter number (e.g. 50)"
             min="1"
-            max="45"
+            max="100"
             className="form-input"
           />
         </div>

@@ -71,6 +71,12 @@ const scrollToTop = () => {
     });
   };
 
+  // UNIVERSITY EMAIL VALIDATION - NEW FUNCTION
+  const validateUniversityEmail = (email) => {
+    // Check if email ends with .edu.my (Malaysian universities)
+    return email.toLowerCase().endsWith('.edu.my');
+  };
+
   // FORM VALIDATION - NO CHANGES (keep as is)
   const validateForm = () => {
     if (!formData.name.trim()) {
@@ -90,6 +96,12 @@ const scrollToTop = () => {
       return false;
     }
     
+    //validate university email
+      if (!validateUniversityEmail(formData.email)) {
+      showMessage('Only Malaysian university emails (.edu.my) are allowed');
+      return false;
+    }
+
     if (!formData.password) {
       showMessage('Please enter a password');
       return false;
@@ -209,6 +221,20 @@ const scrollToTop = () => {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
       console.log('Google auth successful:', user.uid);
+
+      // 🔥 NEW: Validate university email for Google sign-up
+      if (!validateUniversityEmail(user.email)) {
+        // Delete the Firebase user account since they don't have a valid university email
+        try {
+          await user.delete();
+          console.log('🗑️ Firebase user account deleted - invalid email domain');
+        } catch (deleteError) {
+          console.error('❌ Error deleting user account:', deleteError);
+          await auth.signOut();
+        }
+        showMessage('Only Malaysian university emails (.edu.my) are allowed');
+        return;
+      }
 
       // Check if user already exists
       const userDoc = await getDoc(doc(db, 'users', user.uid));

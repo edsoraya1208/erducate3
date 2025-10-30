@@ -126,10 +126,10 @@ const Dashboard1 = () => {
       return;
     }
     
-    // ✅✅✅ VALIDATION 4: Must be between 1 and 45 ✅✅✅
-    if (studentCount < 1 || studentCount > 45) {
+    // ✅ VALIDATION 4: Must be between 1 and 100
+    if (studentCount < 1 || studentCount > 100) {
       console.log('❌ VALIDATION FAILED - studentCount out of range:', studentCount);
-      setValidationError('Maximum number of students must be between 1 and 45.');
+      setValidationError('Maximum number of students must be between 1 and 100.');
       return;
     }
     

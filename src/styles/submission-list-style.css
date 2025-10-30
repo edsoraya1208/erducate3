@@ -1,0 +1,371 @@
+/* ============================================
+   LECTURER SUBMISSIONS PAGE STYLES
+   Matching the purple theme and card layouts
+   ============================================ */
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+.submissions-page {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+.submissions-main-content {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+/* ============================================
+   PAGE TITLE
+   ============================================ */
+.submissions-page-title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #1f2937;
+  margin: 0 0 1.5rem 0;
+}
+
+.submissions-stats-bar {
+  display: flex;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 20px;
+  background-color: #f3f4f6;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: #374151;
+  font-weight: 600;
+}
+
+.stat-value {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #1f2937;
+}
+
+/* Badge style for published stats */
+.stat-item:has(.stat-value.published) {
+  background-color: #d1fae5;
+}
+
+.stat-value.published {
+  color: #065f46;
+}
+
+/* Badge style for pending stats */
+.stat-item:has(.stat-value.pending) {
+  background-color: #fef3c7;
+}
+
+.stat-value.pending {
+  color: #92400e;
+}
+
+
+/* ============================================
+   SUBMISSIONS CONTAINER
+   ============================================ */
+.submissions-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+}
+
+.submissions-heading {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 1.5rem 0;
+}
+
+/* ============================================
+   SUBMISSIONS LIST
+   ============================================ */
+.submissions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.submission-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.submission-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+/* ============================================
+   SUBMISSION INFO
+   ============================================ */
+.submission-info {
+  flex: 1;
+}
+
+.student-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 0.5rem 0;
+}
+
+.submission-meta {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 0.25rem 0;
+}
+
+.meta-label {
+  font-weight: 500;
+  color: #374151;
+}
+
+/* ============================================
+   SUBMISSION STATUS & ACTIONS
+   ============================================ */
+.submission-status {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.status-indicator.success {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-indicator.warning {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.status-icon {
+  font-size: 1rem;
+}
+
+.status-text {
+  font-size: 0.9rem;
+}
+
+/* ============================================
+   ACTION BUTTONS
+   ============================================ */
+.submission-action-btn {
+  padding: 0.625rem 1.25rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  color: white;
+  min-width: 140px;
+}
+
+.btn-view {
+  background: linear-gradient(135deg, #7b10a5, #5e17a5);
+  box-shadow: 0 2px 4px rgba(94, 23, 165, 0.2);
+}
+
+.btn-view:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(123, 16, 165, 0.4);
+}
+
+.btn-confirm {
+  background: linear-gradient(135deg, #00a085 0%, #00896b 100%);
+  box-shadow: 0 2px 4px rgba(0, 160, 133, 0.2);
+}
+
+.btn-confirm:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 184, 148, 0.3);
+}
+
+.btn-grade {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
+}
+
+.btn-grade:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+}
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+.no-submissions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+  padding: 3rem;
+}
+
+.no-submissions-content {
+  text-align: center;
+  max-width: 400px;
+}
+
+.no-submissions-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.7;
+}
+
+.no-submissions-content h3 {
+  margin: 0 0 0.5rem 0;
+  color: #374151;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.no-submissions-content p {
+  margin: 0;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+/* ============================================
+   LOADING STATE
+   ============================================ */
+.submissions-loading-container {
+  text-align: center;
+  padding: 3rem;
+}
+
+.submissions-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e5e7eb;
+  border-top: 4px solid #8b5fbf;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.submissions-loading-container p {
+  color: #6b7280;
+  font-size: 1rem;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+@media (max-width: 768px) {
+  .submissions-main-content {
+    padding: 1rem;
+  }
+
+  .submissions-page-title {
+    font-size: 1.75rem;
+  }
+
+  .submissions-stats-bar {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .stat-item {
+    justify-content: space-between;
+  }
+
+  .submissions-container {
+    padding: 1.5rem;
+  }
+
+  .submission-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.25rem;
+  }
+
+  .submission-status {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .status-indicator {
+    justify-content: center;
+  }
+
+  .submission-action-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .submissions-page-title {
+    font-size: 1.5rem;
+  }
+
+  .student-name {
+    font-size: 1rem;
+  }
+
+  .submission-meta {
+    font-size: 0.85rem;
+  }
+
+  .back-to-class-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .submissions-stats-bar {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .stat-item {
+    justify-content: space-between;
+    width: 100%;
+  }
+}

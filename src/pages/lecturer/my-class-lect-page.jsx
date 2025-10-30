@@ -396,7 +396,7 @@ for (const submissionDoc of submissionsSnapshot.docs) {
   };
 
   const handleViewSubmissions = (exerciseId) => {
-    // navigate(`/lecturer/exercise/${exerciseId}/submissions`);
+    navigate(`/lecturer/exercise/${exerciseId}/submissions`);
   };
 
   const handleNewExercise = () => {

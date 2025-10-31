@@ -291,6 +291,95 @@
   font-size: 1rem;
 }
 
+
+/* ============================================
+   🆕 DUE DATE BANNER
+   ============================================ */
+.due-date-banner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 2px solid #fbbf24;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 4px rgba(251, 191, 36, 0.2);
+}
+
+.banner-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.banner-content {
+  flex: 1;
+}
+
+.banner-content strong {
+  display: block;
+  color: #92400e;
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.banner-content p {
+  margin: 0;
+  color: #78350f;
+  font-size: 0.9rem;
+}
+
+/* ============================================
+   🆕 DISABLED BUTTON STYLES
+   ============================================ */
+.submission-action-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.submission-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.button-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+/* Tooltip on hover for disabled buttons */
+.submission-action-btn:disabled:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.5rem 0.75rem;
+  background-color: #1f2937;
+  color: white;
+  font-size: 0.85rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  margin-bottom: 0.5rem;
+  z-index: 10;
+}
+
+/* ============================================
+   🆕 RESPONSIVE - BANNER
+   ============================================ */
+@media (max-width: 768px) {
+  .due-date-banner {
+    flex-direction: column;
+    text-align: center;
+    padding: 1.25rem;
+  }
+  
+  .banner-icon {
+    font-size: 2.5rem;
+  }
+}
+
 /* ============================================
    RESPONSIVE DESIGN
    ============================================ */

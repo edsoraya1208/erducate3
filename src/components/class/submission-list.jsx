@@ -32,8 +32,31 @@ const formatSubmissionDate = (timestamp) => {
   }
 };
 
+// 🆕 Check if due date has passed
+const isDueDatePassed = (dueDate) => {
+  if (!dueDate) return true; // If no due date, allow grading
+  
+  try {
+    let dueDateObj;
+    if (dueDate.toDate) {
+      dueDateObj = dueDate.toDate();
+    } else if (dueDate instanceof Date) {
+      dueDateObj = dueDate;
+    } else if (typeof dueDate === 'string') {
+      dueDateObj = new Date(dueDate);
+    } else {
+      return true; // If invalid, allow grading
+    }
+    
+    return new Date() > dueDateObj;
+  } catch (error) {
+    console.error('Error checking due date:', error);
+    return true; // If error, allow grading
+  }
+};
+
 // Get status badge configuration
-const getStatusConfig = (submission) => {
+const getStatusConfig = (submission, canGrade) => {
   const { status, grade } = submission;
   
   if (status === 'published' && grade !== null) {
@@ -42,7 +65,8 @@ const getStatusConfig = (submission) => {
       icon: '✓',
       text: `${grade}/100`,
       buttonText: 'View',
-      buttonClass: 'btn-view'
+      buttonClass: 'btn-view',
+      disabled: false
     };
   } else if (status === 'graded' && grade !== null) {
     return {
@@ -50,7 +74,8 @@ const getStatusConfig = (submission) => {
       icon: '⚠',
       text: `${grade}/100 (Pending)`,
       buttonText: 'Review & Confirm',
-      buttonClass: 'btn-confirm'
+      buttonClass: 'btn-confirm',
+      disabled: !canGrade // 🆕 Disable if before due date
     };
   } else {
     return {
@@ -58,7 +83,8 @@ const getStatusConfig = (submission) => {
       icon: '⚠',
       text: 'Pending Review',
       buttonText: 'Review & Grade',
-      buttonClass: 'btn-grade'
+      buttonClass: 'btn-grade',
+      disabled: !canGrade // 🆕 Disable if before due date
     };
   }
 };
@@ -71,6 +97,9 @@ const LecturerSubmissions = ({
   onGradeSubmission,
   onViewSubmission,
 }) => {
+  
+  // 🆕 Check if grading is allowed
+  const canGrade = isDueDatePassed(exerciseData?.dueDate);
   
   if (loading) {
     return (
@@ -93,6 +122,20 @@ const LecturerSubmissions = ({
         <h1 className="submissions-page-title">
           {exerciseData?.title || 'Exercise Submissions'}
         </h1>
+
+        {/* 🆕 Due Date Warning Banner */}
+        {!canGrade && exerciseData?.dueDate && (
+          <div className="due-date-banner">
+            <div className="banner-icon">⏰</div>
+            <div className="banner-content">
+              <strong>Grading will be available after the due date</strong>
+              <p>
+                Due: {formatSubmissionDate(exerciseData.dueDate)} • 
+                Students can still resubmit until then
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Stats Bar */}
         <div className="submissions-stats-bar">
@@ -127,7 +170,7 @@ const LecturerSubmissions = ({
           ) : (
             <div className="submissions-list">
               {submissions.map((submission) => {
-                const statusConfig = getStatusConfig(submission);
+                const statusConfig = getStatusConfig(submission, canGrade);
                 
                 return (
                   <div key={submission.id} className="submission-card">
@@ -145,18 +188,25 @@ const LecturerSubmissions = ({
                         <span className="status-text">{statusConfig.text}</span>
                       </div>
                       
-                      <button
-                        className={`submission-action-btn ${statusConfig.buttonClass}`}
-                        onClick={() => {
-                          if (submission.status === 'published') {
-                            onViewSubmission(submission.id);
-                          } else {
-                            onGradeSubmission(submission.id);
-                          }
-                        }}
-                      >
-                        {statusConfig.buttonText}
-                      </button>
+                      {/* 🆕 Button with disabled state and tooltip */}
+                      <div className="button-wrapper">
+                        <button
+                          className={`submission-action-btn ${statusConfig.buttonClass} ${statusConfig.disabled ? 'disabled' : ''}`}
+                          onClick={() => {
+                            if (statusConfig.disabled) return;
+                            
+                            if (submission.status === 'published') {
+                              onViewSubmission(submission.id);
+                            } else {
+                              onGradeSubmission(submission.id);
+                            }
+                          }}
+                          disabled={statusConfig.disabled}
+                          title={statusConfig.disabled ? 'Available after due date' : ''}
+                        >
+                          {statusConfig.buttonText}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );

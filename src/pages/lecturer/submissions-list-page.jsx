@@ -7,7 +7,7 @@ import {
   where, 
   getDocs,
   doc,
-  getDoc
+  onSnapshot
 } from 'firebase/firestore';
 import { db, auth } from '../../config/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -34,87 +34,79 @@ const ExerciseSubmissionsPage = () => {
     return user?.displayName || user?.email?.split('@')[0] || 'User';
   };
 
-  // Fetch exercise data
-  // Fetch exercise data
-useEffect(() => {
-  const fetchExerciseData = async () => {
-    if (!exerciseId) return;
+  // ✅ COMBINED FETCH - Loads exercise + submissions together
+  // ✅ REAL-TIME LISTENER - Auto-updates when due date changes
+  useEffect(() => {
+    if (!exerciseId || !user) return;
+
+    let unsubscribe = null;
     
-    try {
-      // We need to find which class this exercise belongs to
-      // First, let's try to get it from a submission (if any exists)
-      const submissionsQuery = query(
-        collection(db, 'submissions'),
-        where('exerciseId', '==', exerciseId)
-      );
-      const submissionsSnapshot = await getDocs(submissionsQuery);
+    const initializeData = async () => {
+      setLoading(true);
       
-      if (!submissionsSnapshot.empty) {
+      try {
+        // First, get submissions to find classId
+        const submissionsQuery = query(
+          collection(db, 'submissions'),
+          where('exerciseId', '==', exerciseId)
+        );
+        const submissionsSnapshot = await getDocs(submissionsQuery);
+        
+        if (submissionsSnapshot.empty) {
+          setLoading(false);
+          return;
+        }
+
         const firstSubmission = submissionsSnapshot.docs[0].data();
         const classId = firstSubmission.classId;
         
-        // ✅ VERIFY LECTURER OWNS THIS CLASS FIRST
+        // Verify lecturer owns this class
         const classRef = doc(db, 'classes', classId);
-        const classSnap = await getDoc(classRef);
+        const classSnap = await getDocs(query(collection(db, 'classes'), where('__name__', '==', classId)));
         
-        if (!classSnap.exists() || classSnap.data().instructorId !== user?.uid) {
+        if (classSnap.empty) {
+          console.error('Class not found');
+          navigate('/lecturer/dashboard');
+          return;
+        }
+
+        const classData = classSnap.docs[0].data();
+        if (classData.instructorId !== user.uid) {
           console.error('Unauthorized: You do not own this class');
           navigate('/lecturer/dashboard');
           return;
         }
-        
-        // Now fetch the exercise from the class
+
+        // ✅ Set up real-time listener for exercise (auto-updates when due date changes)
         const exerciseRef = doc(db, 'classes', classId, 'exercises', exerciseId);
-        const exerciseSnap = await getDoc(exerciseRef);
-        
-        if (exerciseSnap.exists()) {
-          setExerciseData({
-            id: exerciseSnap.id,
-            classId: classId,
-            ...exerciseSnap.data()
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching exercise:', error);
-    }
-  };
+        unsubscribe = onSnapshot(exerciseRef, (exerciseSnap) => {
+          if (exerciseSnap.exists()) {
+            setExerciseData({
+              id: exerciseSnap.id,
+              classId: classId,
+              ...exerciseSnap.data()
+            });
+          }
+        });
 
-  fetchExerciseData();
-}, [exerciseId, user, navigate]);
-
-  // Fetch submissions
-  useEffect(() => {
-    const fetchSubmissions = async () => {
-      if (!exerciseId) return;
-      
-      setLoading(true);
-      try {
-        const q = query(
-          collection(db, 'submissions'),
-          where('exerciseId', '==', exerciseId)
-        );
-        const querySnapshot = await getDocs(q);
-        
+        // Process submissions
         const submissionsData = [];
         let pendingReview = 0;
         let pendingConfirmation = 0;
         let published = 0;
         
-        querySnapshot.forEach((doc) => {
+        submissionsSnapshot.forEach((doc) => {
           const data = {
             id: doc.id,
             ...doc.data()
           };
           submissionsData.push(data);
           
-          // Count statuses
           if (data.status === 'submitted') pendingReview++;
           else if (data.status === 'graded') pendingConfirmation++;
           else if (data.status === 'published') published++;
         });
         
-        // Sort by submission date (newest first)
         submissionsData.sort((a, b) => {
           const aDate = a.submittedAt?.toDate?.() || new Date(a.submittedAt) || new Date(0);
           const bDate = b.submittedAt?.toDate?.() || new Date(b.submittedAt) || new Date(0);
@@ -128,15 +120,21 @@ useEffect(() => {
           pendingConfirmation,
           published
         });
+        
       } catch (error) {
-        console.error('Error fetching submissions:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchSubmissions();
-  }, [exerciseId]);
+    initializeData();
+
+    // Cleanup listener on unmount
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [exerciseId, user, navigate]);
 
   const handleGradeSubmission = (submissionId) => {
     // TODO: Navigate to grading page when ready
@@ -149,7 +147,6 @@ useEffect(() => {
     console.log('View submission:', submissionId);
     // navigate(`/lecturer/view-submission/${submissionId}`);
   };
-
 
   return (
     <div className="submissions-page">

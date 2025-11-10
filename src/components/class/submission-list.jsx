@@ -1,5 +1,5 @@
-// src/components/submission-list.jsx
-import React from 'react';
+// src/components/class/submission-list.jsx
+import React, { useState, useMemo } from 'react';
 import '../../styles/submission-list-style.css';
 
 // Format submission date
@@ -32,9 +32,9 @@ const formatSubmissionDate = (timestamp) => {
   }
 };
 
-// 🆕 Check if due date has passed
+// Check if due date has passed
 const isDueDatePassed = (dueDate) => {
-  if (!dueDate) return true; // If no due date, allow grading
+  if (!dueDate) return true;
   
   try {
     let dueDateObj;
@@ -45,13 +45,13 @@ const isDueDatePassed = (dueDate) => {
     } else if (typeof dueDate === 'string') {
       dueDateObj = new Date(dueDate);
     } else {
-      return true; // If invalid, allow grading
+      return true;
     }
     
     return new Date() > dueDateObj;
   } catch (error) {
     console.error('Error checking due date:', error);
-    return true; // If error, allow grading
+    return true;
   }
 };
 
@@ -75,7 +75,7 @@ const getStatusConfig = (submission, canGrade) => {
       text: `${grade}/100 (Pending)`,
       buttonText: 'Review & Confirm',
       buttonClass: 'btn-confirm',
-      disabled: !canGrade // 🆕 Disable if before due date
+      disabled: !canGrade
     };
   } else {
     return {
@@ -84,7 +84,7 @@ const getStatusConfig = (submission, canGrade) => {
       text: 'Pending Review',
       buttonText: 'Review & Grade',
       buttonClass: 'btn-grade',
-      disabled: !canGrade // 🆕 Disable if before due date
+      disabled: !canGrade
     };
   }
 };
@@ -98,8 +98,20 @@ const LecturerSubmissions = ({
   onViewSubmission,
 }) => {
   
-  // 🆕 Check if grading is allowed
+  const [filterStatus, setFilterStatus] = useState('all');
+  
   const canGrade = isDueDatePassed(exerciseData?.dueDate);
+  
+  // ✅ Filter submissions based on selected status
+  const filteredSubmissions = useMemo(() => {
+    if (filterStatus === 'all') return submissions;
+    
+    return submissions.filter(submission => {
+      if (filterStatus === 'published') return submission.status === 'published';
+      if (filterStatus === 'pending') return submission.status === 'submitted' || submission.status === 'graded';
+      return true;
+    });
+  }, [submissions, filterStatus]);
   
   if (loading) {
     return (
@@ -118,13 +130,15 @@ const LecturerSubmissions = ({
     <div className="page-container">
       <main className="submissions-main-content">
       
-        {/* Page Title */}
+        {/* Page Title with skeleton loader */}
         <h1 className="submissions-page-title">
-          {exerciseData?.title || 'Exercise Submissions'}
+          {exerciseData ? exerciseData.title : (
+            <span className="title-skeleton">Loading...</span>
+          )}
         </h1>
 
-        {/* 🆕 Due Date Warning Banner */}
-        {!canGrade && exerciseData?.dueDate && (
+        {/* Due Date Warning Banner */}
+        {exerciseData && !canGrade && exerciseData.dueDate && (
           <div className="due-date-banner">
             <div className="banner-icon">⏰</div>
             <div className="banner-content">
@@ -137,39 +151,52 @@ const LecturerSubmissions = ({
           </div>
         )}
 
-        {/* Stats Bar */}
-        <div className="submissions-stats-bar">
-          <div className="stat-item">
-            <span className="stat-label">Total:</span>
-            <span className="stat-value">{stats.total}</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">Published:</span>
-            <span className="stat-value published">{stats.published}</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">Pending:</span>
-            <span className="stat-value pending">
-              {stats.pendingReview + stats.pendingConfirmation}
-            </span>
-          </div>
-        </div>
-
-        {/* Submissions Section */}
+        {/* Submissions Section with Integrated Filter Pills */}
         <div className="submissions-container">
-          <h2 className="submissions-heading">Student Submissions</h2>
+          <div className="submissions-header">
+            <h2 className="submissions-heading">
+              Student Submissions <span className="total-count">({stats.total})</span>
+            </h2>
+            
+            {/* ✅ NEW: Interactive Filter Pills (replaces both stats bar and dropdown) */}
+            <div className="filter-pills">
+              <button
+                className={`filter-pill all ${filterStatus === 'all' ? 'active' : ''}`}
+                onClick={() => setFilterStatus('all')}
+              >
+                All ({stats.total})
+              </button>
+              <button
+                className={`filter-pill published ${filterStatus === 'published' ? 'active' : ''}`}
+                onClick={() => setFilterStatus('published')}
+              >
+                ✓ Published ({stats.published})
+              </button>
+              <button
+                className={`filter-pill pending ${filterStatus === 'pending' ? 'active' : ''}`}
+                onClick={() => setFilterStatus('pending')}
+              >
+                ⚠ Pending ({stats.pendingReview + stats.pendingConfirmation})
+              </button>
+            </div>
+          </div>
 
-          {submissions.length === 0 ? (
+          {filteredSubmissions.length === 0 ? (
             <div className="no-submissions">
               <div className="no-submissions-content">
                 <div className="no-submissions-icon">📝</div>
-                <h3>No submissions yet</h3>
-                <p>Students haven't submitted their work for this exercise yet.</p>
+                <h3>No {filterStatus !== 'all' ? filterStatus : ''} submissions</h3>
+                <p>
+                  {filterStatus === 'all' 
+                    ? "Students haven't submitted their work for this exercise yet."
+                    : `No submissions found with status: ${filterStatus}`
+                  }
+                </p>
               </div>
             </div>
           ) : (
             <div className="submissions-list">
-              {submissions.map((submission) => {
+              {filteredSubmissions.map((submission) => {
                 const statusConfig = getStatusConfig(submission, canGrade);
                 
                 return (
@@ -188,7 +215,6 @@ const LecturerSubmissions = ({
                         <span className="status-text">{statusConfig.text}</span>
                       </div>
                       
-                      {/* 🆕 Button with disabled state and tooltip */}
                       <div className="button-wrapper">
                         <button
                           className={`submission-action-btn ${statusConfig.buttonClass} ${statusConfig.disabled ? 'disabled' : ''}`}

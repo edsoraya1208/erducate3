@@ -13,7 +13,7 @@ import {
 } from 'firebase/firestore';
 
 import { db, auth } from '../../config/firebase';
-import { uploadToCloudinary } from '../../config/cloudinary'; // 🔄 Same import, new functionality
+import { uploadToCloudinary } from '../../config/cloudinary';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import StudentSubmitClass from '../../components/class/student-submit-exercise';
 import DashboardHeader from '../../components/dashboard/dashboard-header';
@@ -24,7 +24,6 @@ const SubmitExercise = () => {
   const navigate = useNavigate();
   const [user] = useAuthState(auth);
   
-  // Component state (unchanged)
   const [exercise, setExercise] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -32,16 +31,13 @@ const SubmitExercise = () => {
   const [uploading, setUploading] = useState(false);
   const [additionalComments, setAdditionalComments] = useState('');
   
-  // Submission and validation states (unchanged)
   const [submitted, setSubmitted] = useState(false);
   const [validationMessage, setValidationMessage] = useState(null);
   
-  // Track existing submission data (unchanged)
   const [existingSubmission, setExistingSubmission] = useState(null);
   const [editCount, setEditCount] = useState(0);
   const [maxEdits] = useState(2);
 
-  // 🔄 All existing useEffect and helper functions stay the same
   useEffect(() => {
     if (classId && exerciseId && user) {
       loadExerciseAndSubmissionData();
@@ -100,7 +96,6 @@ const SubmitExercise = () => {
     }
   };
 
-  // 🔄 All existing validation and UI functions stay the same
   const showValidationMessage = (text, type = 'error', duration = 4000) => {
     setValidationMessage({ text, type });
     if (duration > 0) {
@@ -168,9 +163,6 @@ const SubmitExercise = () => {
     setAdditionalComments(value);
   }, []);
 
-  /**
-   * 🔄 UPDATED: Handle submission - Now uses API with metadata
-   */
   const handleSubmitExercise = async () => {
     setValidationMessage(null);
 
@@ -201,9 +193,8 @@ const SubmitExercise = () => {
       setUploading(true);
       console.log('📤 Starting exercise submission...');
 
-      // 🆕 STEP 1: Upload to Cloudinary via API with metadata
+      // STEP 1: Upload to Cloudinary
       console.log('🚀 Uploading file via Vercel API...');
-
       const uploadData = await uploadToCloudinary(
         selectedFile, 
         'student-submissions',
@@ -215,10 +206,68 @@ const SubmitExercise = () => {
       );
       
       console.log('✅ File uploaded via API:', uploadData.url);
-      console.log('🎯 Predictable filename:', uploadData.predictableFileName);
-      console.log('🔄 Is overwrite:', uploadData.isOverwrite);
 
-      // STEP 2: Check for existing submission (unchanged)
+      // STEP 1.5: Detect ERD elements using AI
+      console.log('🤖 Calling ERD detection API...');
+      let detectedERD = null;
+      
+      try {
+        const detectionResponse = await fetch('https://ai-api-server-vmaz.onrender.com/detect-erd', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageUrl: uploadData.url })
+        });
+
+        if (detectionResponse.ok) {
+          const detectionResult = await detectionResponse.json();
+          
+          if (detectionResult.isERD && detectionResult.elements) {
+            detectedERD = {
+              elements: detectionResult.elements,
+              detectedAt: new Date(),
+              isERD: true
+            };
+            console.log('✅ ERD detection successful:', detectedERD.elements.length, 'elements found');
+          } else {
+            console.warn('⚠️ Detection API returned but not an ERD or no elements:', detectionResult);
+            detectedERD = {
+              elements: [],
+              detectedAt: new Date(),
+              isERD: false,
+              reason: detectionResult.reason || 'No ERD elements detected'
+            };
+          }
+        } else {
+          console.error('❌ Detection API failed:', detectionResponse.statusText);
+        }
+      } catch (detectionError) {
+        console.error('❌ ERD detection error:', detectionError);
+      }
+
+      // STEP 1.75: Auto-grade immediately after detection
+      let initialGrade = null;
+      if (detectedERD?.elements?.length > 0 && exercise.correctAnswer) {
+        try {
+          console.log('🎓 Calling auto-grade API...');
+          const gradeResponse = await fetch('https://ai-api-server-vmaz.onrender.com/autograde-erd', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              studentElements: detectedERD.elements,
+              correctAnswer: exercise.correctAnswer,
+              rubricStructured: exercise.rubricStructured || null
+            })
+          });
+          if (gradeResponse.ok) {
+            initialGrade = await gradeResponse.json();
+            console.log('✅ Auto-grade successful:', initialGrade.totalScore);
+          }
+        } catch (gradeError) {
+          console.error('❌ Auto-grade error:', gradeError);
+        }
+      }
+
+      // STEP 2: Check for existing submission
       const submissionsRef = collection(db, 'submissions');
       const existingQuery = query(
         submissionsRef,
@@ -228,7 +277,7 @@ const SubmitExercise = () => {
       );
       const existingDocs = await getDocs(existingQuery);
 
-      // STEP 3: Create submission data (unchanged)
+      // ✅ STEP 3: Create submission data (FIXED - no duplicate grade, status always 'submitted')
       const submissionData = {
         studentId: user.uid,
         studentName: user.displayName || user.email || 'Unknown Student',
@@ -236,7 +285,7 @@ const SubmitExercise = () => {
         classId: classId,
         exerciseId: exerciseId,
         exerciseTitle: exercise.title,
-        fileURL: uploadData.url, // 🎯 Same URL every time for same student+exercise!
+        fileURL: uploadData.url,
         fileName: uploadData.originalName,
         cloudinaryPublicId: uploadData.publicId,
         fileType: uploadData.fileType,
@@ -247,16 +296,24 @@ const SubmitExercise = () => {
         comments: additionalComments.trim(),
         submittedAt: new Date(),
         uploadedAt: uploadData.createdAt,
-        status: 'submitted',
-        grade: null,
-        feedback: null,
         
-        // 🆕 NEW: Add overwrite info
+        // ✅ FIXED: Always keep status as 'submitted' (students can't set 'graded')
+        status: 'submitted',
+        
+        // ✅ FIXED: Add grade info without changing status
+        grade: initialGrade,
+        autoGradedAt: initialGrade ? new Date() : null,
+        hasAutoGrade: !!initialGrade,
+        
+        feedback: null,
         isOverwrite: uploadData.isOverwrite,
-        predictableFileName: uploadData.predictableFileName
+        predictableFileName: uploadData.predictableFileName,
+        
+        // Add detected ERD elements
+        detectedERD: detectedERD
       };
 
-      // STEP 4: Save to Firestore (unchanged)
+      // STEP 4: Save to Firestore
       if (existingDocs.empty) {
         await addDoc(submissionsRef, submissionData);
         console.log('✅ New submission created successfully');
@@ -266,10 +323,10 @@ const SubmitExercise = () => {
           ...submissionData,
           resubmittedAt: new Date()
         });
-        console.log('✅ Submission updated successfully (resubmission with same URL!)');
+        console.log('✅ Submission updated successfully');
       }
 
-      // STEP 5: Save to studentProgress (unchanged)
+      // STEP 5: Save to studentProgress
       const newEditCount = existingSubmission ? (editCount + 1) : 0;
       
       const progressData = {
@@ -279,7 +336,7 @@ const SubmitExercise = () => {
         submitted: true,
         isCompleted: true,
         status: 'completed',
-        fileUrl: uploadData.url, // 🎯 Same URL always!
+        fileUrl: uploadData.url,
         fileName: selectedFile.name,
         submittedAt: new Date(),
         updatedAt: new Date(),
@@ -303,11 +360,14 @@ const SubmitExercise = () => {
       const remainingEdits = maxEdits - newEditCount;
       
       let successMsg = '🎉 Exercise submitted successfully!';
-      if (isResubmission) {
-        successMsg += ` (Same URL - overwrote previous file!)`;
-        if (remainingEdits > 0) {
-          successMsg += ` ${remainingEdits} edit${remainingEdits === 1 ? '' : 's'} remaining.`;
-        }
+      if (detectedERD?.elements?.length > 0) {
+        successMsg += ` ${detectedERD.elements.length} ERD elements detected.`;
+      }
+      if (initialGrade) {
+        successMsg += ` Auto-graded: ${initialGrade.totalScore}/10.`;
+      }
+      if (isResubmission && remainingEdits > 0) {
+        successMsg += ` ${remainingEdits} edit${remainingEdits === 1 ? '' : 's'} remaining.`;
       }
       
       showValidationMessage(successMsg, 'success', 4000);
@@ -329,7 +389,6 @@ const SubmitExercise = () => {
     }
   };
 
-  // 🔄 All existing helper functions stay the same
   const handleGoBack = () => {
     navigate(`/student/class/${classId}`);
   };
@@ -350,7 +409,6 @@ const SubmitExercise = () => {
     return !isPastDue() && (!existingSubmission || editCount < maxEdits);
   };
 
-  // 🔄 Return statement unchanged
   return (
     <div className="dashboard-page">
       <DashboardHeader 

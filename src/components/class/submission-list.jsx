@@ -55,36 +55,27 @@ const isDueDatePassed = (dueDate) => {
   }
 };
 
-// Get status badge configuration
-const getStatusConfig = (submission, canGrade) => {
+// 🔄 CHANGED: Simplified status config - only for display, not button behavior
+const getStatusConfig = (submission) => {
   const { status, grade } = submission;
   
   if (status === 'published' && grade !== null) {
     return {
       type: 'success',
       icon: '✓',
-      text: `${grade}/100`,
-      buttonText: 'View',
-      buttonClass: 'btn-view',
-      disabled: false
+      text: `${grade}/100`
     };
   } else if (status === 'graded' && grade !== null) {
     return {
       type: 'warning',
       icon: '⚠',
-      text: `${grade}/100 (Pending)`,
-      buttonText: 'Review & Confirm',
-      buttonClass: 'btn-confirm',
-      disabled: !canGrade
+      text: `${grade}/100 (Pending)`
     };
   } else {
     return {
       type: 'warning',
       icon: '⚠',
-      text: 'Pending Review',
-      buttonText: 'Review & Grade',
-      buttonClass: 'btn-grade',
-      disabled: !canGrade
+      text: 'Pending Review'
     };
   }
 };
@@ -94,15 +85,13 @@ const LecturerSubmissions = ({
   submissions,
   stats,
   loading,
-  onGradeSubmission,
-  onViewSubmission,
+  onViewAndGrade, // 🔄 CHANGED: Single handler prop
 }) => {
   
   const [filterStatus, setFilterStatus] = useState('all');
   
   const canGrade = isDueDatePassed(exerciseData?.dueDate);
   
-  // ✅ Filter submissions based on selected status
   const filteredSubmissions = useMemo(() => {
     if (filterStatus === 'all') return submissions;
     
@@ -130,7 +119,6 @@ const LecturerSubmissions = ({
     <div className="page-container">
       <main className="submissions-main-content">
       
-        {/* Page Title with skeleton loader */}
         <h1 className="submissions-page-title">
           {exerciseData ? exerciseData.title : (
             <span className="title-skeleton">Loading...</span>
@@ -151,14 +139,14 @@ const LecturerSubmissions = ({
           </div>
         )}
 
-        {/* Submissions Section with Integrated Filter Pills */}
+        {/* Submissions Section */}
         <div className="submissions-container">
           <div className="submissions-header">
             <h2 className="submissions-heading">
               Student Submissions <span className="total-count">({stats.total})</span>
             </h2>
             
-            {/* ✅ NEW: Interactive Filter Pills (replaces both stats bar and dropdown) */}
+            {/* Filter Pills */}
             <div className="filter-pills">
               <button
                 className={`filter-pill all ${filterStatus === 'all' ? 'active' : ''}`}
@@ -197,7 +185,7 @@ const LecturerSubmissions = ({
           ) : (
             <div className="submissions-list">
               {filteredSubmissions.map((submission) => {
-                const statusConfig = getStatusConfig(submission, canGrade);
+                const statusConfig = getStatusConfig(submission);
                 
                 return (
                   <div key={submission.id} className="submission-card">
@@ -215,23 +203,28 @@ const LecturerSubmissions = ({
                         <span className="status-text">{statusConfig.text}</span>
                       </div>
                       
+                      {/* 🔄 CHANGED: Single button that always goes to grading page */}
                       <div className="button-wrapper">
-                        <button
-                          className={`submission-action-btn ${statusConfig.buttonClass} ${statusConfig.disabled ? 'disabled' : ''}`}
-                          onClick={() => {
-                            if (statusConfig.disabled) return;
-                            
-                            if (submission.status === 'published') {
-                              onViewSubmission(submission.id);
-                            } else {
-                              onGradeSubmission(submission.id);
-                            }
-                          }}
-                          disabled={statusConfig.disabled}
-                          title={statusConfig.disabled ? 'Available after due date' : ''}
-                        >
-                          {statusConfig.buttonText}
-                        </button>
+                      {/* ✅ NEW CODE - Different button based on status */}
+                        {submission.status === 'published' ? (
+                          <button
+                            className="submission-action-btn btn-view"
+                            onClick={() => onViewAndGrade(submission.id)}
+                          >
+                            View
+                          </button>
+                        ) : (
+                          <button
+                            className={`submission-action-btn btn-grade ${!canGrade ? 'disabled' : ''}`}
+                            onClick={() => {
+                              if (!canGrade) return;
+                              onViewAndGrade(submission.id);
+                            }}
+                            disabled={!canGrade}
+                          >
+                            View & Grade
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>

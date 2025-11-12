@@ -6,6 +6,7 @@ import {
   query, 
   where, 
   getDocs,
+  getDoc,
   doc,
   onSnapshot
 } from 'firebase/firestore';
@@ -15,7 +16,8 @@ import LecturerSubmissions from '../../components/class/submission-list';
 import DashboardHeader from '../../components/dashboard/dashboard-header';
 
 const ExerciseSubmissionsPage = () => {
-  const { exerciseId } = useParams();
+  // ✅ NOW GETTING classId FROM URL
+  const { exerciseId, classId } = useParams();
   const navigate = useNavigate();
   
   const [exerciseData, setExerciseData] = useState(null);
@@ -34,10 +36,8 @@ const ExerciseSubmissionsPage = () => {
     return user?.displayName || user?.email?.split('@')[0] || 'User';
   };
 
-  // ✅ COMBINED FETCH - Loads exercise + submissions together
-  // ✅ REAL-TIME LISTENER - Auto-updates when due date changes
   useEffect(() => {
-    if (!exerciseId || !user) return;
+    if (!exerciseId || !classId || !user) return;
 
     let unsubscribe = null;
     
@@ -45,49 +45,64 @@ const ExerciseSubmissionsPage = () => {
       setLoading(true);
       
       try {
-        // First, get submissions to find classId
+        // ✅ FIRST: Verify lecturer owns this class
+        const classRef = doc(db, 'classes', classId);
+        const classSnap = await getDoc(classRef);
+
+        if (!classSnap.exists()) {
+          console.error('Class not found');
+          navigate('/lecturer/dashboard1');
+          return;
+        }
+
+        const classData = classSnap.data();
+
+        if (classData.instructorId !== user.uid) {
+          console.error('Unauthorized: You do not own this class');
+          navigate('/lecturer/dashboard1');
+          return;
+        }
+
+        // ✅ SECOND: Fetch exercise data (ALWAYS, even if no submissions)
+        const exerciseRef = doc(db, 'classes', classId, 'exercises', exerciseId);
+        const exerciseSnap = await getDoc(exerciseRef);
+
+        if (!exerciseSnap.exists()) {
+          console.error('Exercise not found');
+          navigate('/lecturer/dashboard1');
+          return;
+        }
+
+        const exercise = { 
+          id: exerciseSnap.id, 
+          classId: classId,
+          ...exerciseSnap.data() 
+        };
+        setExerciseData(exercise);
+
+        // ✅ Set up real-time listener for exercise updates
+        unsubscribe = onSnapshot(exerciseRef, (snap) => {
+          if (snap.exists()) {
+            setExerciseData({
+              id: snap.id,
+              classId: classId,
+              ...snap.data()
+            });
+          }
+        });
+
+        // ✅ THIRD: Get submissions
         const submissionsQuery = query(
           collection(db, 'submissions'),
           where('exerciseId', '==', exerciseId)
         );
         const submissionsSnapshot = await getDocs(submissionsQuery);
-        
+
+        // If no submissions, just stop here (exercise data already loaded!)
         if (submissionsSnapshot.empty) {
           setLoading(false);
           return;
         }
-
-        const firstSubmission = submissionsSnapshot.docs[0].data();
-        const classId = firstSubmission.classId;
-        
-        // Verify lecturer owns this class
-        const classRef = doc(db, 'classes', classId);
-        const classSnap = await getDocs(query(collection(db, 'classes'), where('__name__', '==', classId)));
-        
-        if (classSnap.empty) {
-          console.error('Class not found');
-          navigate('/lecturer/dashboard');
-          return;
-        }
-
-        const classData = classSnap.docs[0].data();
-        if (classData.instructorId !== user.uid) {
-          console.error('Unauthorized: You do not own this class');
-          navigate('/lecturer/dashboard');
-          return;
-        }
-
-        // ✅ Set up real-time listener for exercise (auto-updates when due date changes)
-        const exerciseRef = doc(db, 'classes', classId, 'exercises', exerciseId);
-        unsubscribe = onSnapshot(exerciseRef, (exerciseSnap) => {
-          if (exerciseSnap.exists()) {
-            setExerciseData({
-              id: exerciseSnap.id,
-              classId: classId,
-              ...exerciseSnap.data()
-            });
-          }
-        });
 
         // Process submissions
         const submissionsData = [];
@@ -130,22 +145,13 @@ const ExerciseSubmissionsPage = () => {
 
     initializeData();
 
-    // Cleanup listener on unmount
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, [exerciseId, user, navigate]);
+  }, [exerciseId, classId, user, navigate]);
 
-  const handleGradeSubmission = (submissionId) => {
-    // TODO: Navigate to grading page when ready
-    console.log('Grade submission:', submissionId);
-    // navigate(`/lecturer/grade-submission/${submissionId}`);
-  };
-
-  const handleViewSubmission = (submissionId) => {
-    // TODO: Navigate to view page when ready
-    console.log('View submission:', submissionId);
-    // navigate(`/lecturer/view-submission/${submissionId}`);
+  const handleViewAndGrade = (submissionId) => {
+    navigate(`/lecturer/class/${classId}/exercise/${exerciseId}/grade/${submissionId}`);
   };
 
   return (
@@ -161,8 +167,7 @@ const ExerciseSubmissionsPage = () => {
         submissions={submissions}
         stats={stats}
         loading={loading}
-        onGradeSubmission={handleGradeSubmission}
-        onViewSubmission={handleViewSubmission}
+        onViewAndGrade={handleViewAndGrade}
         getUserDisplayName={getUserDisplayName}
       />
     </div>

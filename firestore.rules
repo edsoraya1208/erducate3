@@ -125,13 +125,15 @@ match /submissions/{submissionId} {
                    request.resource.data.studentId == request.auth.uid;
   
   allow read: if isAuthenticated() && (
-    // Student can read their own
     (isStudent() && resource.data.studentId == request.auth.uid) ||
-    // Lecturer can read all (but verify ownership in your app code)
     isLecturer()
   );
   
-  allow update: if isAuthenticated() && isLecturer();
+  // ✅ TEMPORARY: Allow students to update their own submissions
+  allow update: if isAuthenticated() && (
+    isLecturer() ||
+    (isStudent() && resource.data.studentId == request.auth.uid)  // 🆕 ADD THIS
+  );
   
   allow delete: if isAuthenticated() && isLecturer();
 }

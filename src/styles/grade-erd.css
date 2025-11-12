@@ -1,0 +1,361 @@
+/* src/styles/grade-erd.css */
+
+/* ========================================
+   GRADING PAGE OVERRIDES
+   ======================================== */
+
+/* Header styling */
+/* NEW: Wrapper to turn the header into a card */
+.grade-header-card {
+  background: #e0f7fa;   /* CHANGED: Pastel blue background */
+  border-radius: 12px;   /* ADDED: Rounded corners */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07); /* ADDED: Soft, gentle shadow */
+  padding: 0.75rem 2rem; /* Adjusted padding */
+  margin-bottom: 1.5rem;
+  border: px solid #b0c4de;  /* CHANGED: Soft, light steel-blue border */
+  height: 80px
+}
+
+.grade-container .rev-title {
+  font-size: 1.25rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start; /* CHANGED: Aligns everything to the top */
+  line-height: 1.3; /* Added for better spacing */
+}
+
+/* NEW: Left side (Title/Subtitle) */
+.grade-header-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.grade-header-title {
+  font-size: 1.5rem; /* Bigger, like screenshot */
+  font-weight: 700; /* Bolder, like screenshot */
+  color: #1a1a1a;
+}
+
+.grade-header-subtitle {
+  font-size: 0.95rem; /* Smaller subtitle */
+  color: #6b7280; /* Muted color */
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
+/* MODIFIED: Right side (Label/Score) */
+.grade-header-right {
+  display: flex;
+  flex-direction: column; /* CHANGED: Stacks label and score */
+  align-items: flex-end; /* CHANGED: Aligns them to the right */
+  gap: 0.25rem; /* Tighter spacing */
+}
+
+.grade-current-label {
+  font-size: 0.9rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* MODIFIED: Score is now a button */
+.grade-score-display {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1457dd; /* CHANGED: This is the bright blue from your screenshot */
+
+  /* Resets button styles to look like text */
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  font-family: inherit; /* Use the same font as the page */
+
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* Space between icon and text */
+  transition: color 0.2s;
+}
+
+.grade-score-display:hover:not(:disabled) {
+  color: #2563EB; /* Darker blue on hover */
+}
+
+.grade-score-display:disabled {
+  color: #9ca3af; /* Muted color when disabled */
+  cursor: not-allowed;
+}
+
+.grade-refresh-icon {
+  font-size: 1.25rem; /* Make icon a good size */
+}
+
+/* REMOVED: .grade-refresh-btn-header is no longer needed */
+
+/* LEFT COLUMN - Match right side white card style */
+.grade-left-column {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+  padding: 2rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.grade-left-column h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 1rem 0;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e1e4e8;
+}
+
+/* Image container with scrollbar */
+.grade-image-container {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.grade-image-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.grade-image-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.grade-image-container::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 4px;
+}
+
+.grade-image-container::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
+}
+
+
+
+/* Make left and right same height */
+.rev-image-section,
+.rev-elements-section {
+  height: 700px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Feedback section */
+.grade-feedback-section {
+  grid-column: 1 / -1;
+  margin-top: 2rem;
+}
+
+.grade-feedback-box {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+}
+
+.grade-feedback-box h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.feedback-strengths,
+.feedback-missing,
+.feedback-incorrect {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 4px solid;
+}
+
+.feedback-strengths {
+  background: #f0fdf4;
+  border-color: #22c55e;
+}
+
+.feedback-missing {
+  background: #fef2f2;
+  border-color: #ef4444;
+}
+
+.feedback-incorrect {
+  background: #fffbeb;
+  border-color: #f59e0b;
+}
+
+.feedback-strengths h4,
+.feedback-missing h4,
+.feedback-incorrect h4 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.feedback-strengths h4 {
+  color: #16a34a;
+}
+
+.feedback-missing h4 {
+  color: #dc2626;
+}
+
+.feedback-incorrect h4 {
+  color: #d97706;
+}
+
+.feedback-strengths ul,
+.feedback-missing ul,
+.feedback-incorrect ul {
+  margin: 0;
+  padding-left: 1.25rem;
+  list-style: disc;
+}
+
+.feedback-strengths li,
+.feedback-missing li,
+.feedback-incorrect li {
+  margin: 0.5rem 0;
+  line-height: 1.5;
+  color: #374151;
+}
+
+.feedback-overall {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.feedback-overall p {
+  margin: 0;
+  color: #374151;
+  line-height: 1.6;
+}
+
+.feedback-overall strong {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+/* Error & Loading states */
+.grade-error-state {
+  text-align: center;
+  padding: 3rem;
+  background: #fef2f2;
+  border: 2px solid #fecaca;
+  border-radius: 12px;
+  margin: 2rem 0;
+}
+
+.grade-error-state p {
+  font-size: 1.1rem;
+  color: #dc2626;
+  margin-bottom: 1.5rem;
+}
+
+.grade-back-button {
+  padding: 0.75rem 1.5rem;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.grade-back-button:hover {
+  background: #5a6268;
+}
+
+.grade-loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.grade-loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: grade-spin 1s linear infinite;
+}
+
+@keyframes grade-spin {
+  to { transform: rotate(360deg); }
+}
+
+.grade-loading-text {
+  margin-top: 1rem;
+  color: #6b7280;
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.grade-image-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  background: #f9fafb;
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  color: #9ca3af;
+}
+
+.grade-image-placeholder svg {
+  margin-bottom: 1rem;
+}
+
+.grade-image-placeholder p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #6b7280;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .rev-image-section,
+  .rev-elements-section {
+    height: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .grade-container .rev-title {
+    font-size: 1.1rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .grade-header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

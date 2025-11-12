@@ -46,6 +46,7 @@
 .rev-image-display img {
   width: 100%;
   height: auto;
+  min-height: 380px;
   border-radius: 4px;
   display: block;
 }
@@ -67,7 +68,7 @@
 }
 
 .rev-header {
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.5rem;
   padding-bottom: 1rem;
   border-bottom: 2px solid #e1e4e8;
 }
@@ -326,7 +327,7 @@
 .rev-form-actions {
   display: flex;
   gap: 1rem;
-  margin-top: 2rem;
+  margin-top: 0rem;
   padding-top: 1.5rem;
   border-top: 2px solid #e1e4e8;
 }
@@ -344,8 +345,8 @@
 }
 
 .rev-cancel-action-btn {
-  background: #6c757d;
-  color: white;
+  background: #cacdcd;
+  color: rgb(255, 255, 255);
 }
 
 .rev-cancel-action-btn:hover:not(:disabled) {

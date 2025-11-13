@@ -103,24 +103,26 @@
 }
 
 /* ========================================
-   TWO-COLUMN RESPONSIVE LAYOUT - Improved
+   TWO-COLUMN RESPONSIVE LAYOUT - BALANCED HEIGHT
    ======================================== */
 .se-exercise-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 32px;
-  align-items: start;
+  align-items: stretch; /* ✅ Makes both columns equal height */
 }
 
 /* ========================================
-   LEFT PANEL - Instructions (Improved)
+   LEFT PANEL - Instructions (BALANCED)
    ======================================== */
 .se-instructions-panel {
   background-color: #f8f9fa;
   border-radius: 8px;
   padding: 24px;
   border: 1px solid #e5e7eb;
-  height: fit-content;
+  height: 100%; /* ✅ CHANGED: Was fit-content, now fills available space */
+  display: flex;
+  flex-direction: column;
 }
 
 .se-panel-title {
@@ -128,21 +130,26 @@
   font-weight: 600;
   color: #374151;
   margin: 0 0 20px 0;
+  flex-shrink: 0; /* ✅ Prevents title from shrinking */
 }
 
 .se-instructions-content {
   font-size: 0.875rem;
   line-height: 1.6;
   color: #4b5563;
+  flex: 1; /* ✅ Takes remaining space */
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 /* Exercise Description */
 .se-exercise-description {
-  margin-bottom: 20px;
   padding: 16px;
   background: white;
   border-radius: 6px;
   border-left: 4px solid #c46cbb;
+  flex-shrink: 0; /* ✅ Keeps fixed size */
 }
 
 .se-exercise-description h4 {
@@ -162,11 +169,11 @@
 
 /* Due Date and Marks Info */
 .se-due-info {
-  margin-bottom: 20px;
   padding: 16px;
   background: white;
   border-radius: 6px;
   border-left: 4px solid #3b82f6;
+  flex-shrink: 0; /* ✅ Keeps fixed size */
 }
 
 .se-info-item {
@@ -198,6 +205,9 @@
   background: white;
   border-radius: 6px;
   border-left: 4px solid #10b981;
+  flex: 1; /* ✅ This section grows to fill remaining space */
+  display: flex;
+  flex-direction: column;
 }
 
 .se-guidelines h4 {
@@ -205,11 +215,13 @@
   color: #374151;
   font-size: 0.9rem;
   font-weight: 600;
+  flex-shrink: 0;
 }
 
 .se-guidelines ul {
   margin: 0;
   padding-left: 20px;
+  flex: 1; /* ✅ List grows to fill space */
 }
 
 .se-guidelines li {
@@ -223,13 +235,13 @@
 }
 
 /* ========================================
-   RIGHT PANEL - Submission (Improved)
+   RIGHT PANEL - Submission (BALANCED)
    ======================================== */
 .se-submission-panel {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  height: fit-content;
+  height: 100%; /* ✅ CHANGED: Was fit-content, now matches left panel */
 }
 
 .se-section-title {
@@ -258,6 +270,7 @@
   cursor: pointer;
   position: relative;
   background: #fafafa;
+  /* ✅ Remove position: relative if causing issues */
 }
 
 .se-upload-area:hover:not(.se-disabled),
@@ -299,11 +312,7 @@
 }
 
 .se-file-input {
-  position: absolute;
-  opacity: 0;
-  width: 100%;
-  height: 100%;
-  cursor: pointer;
+  display: none;
 }
 
 .se-file-input:disabled {
@@ -322,6 +331,8 @@
   font-size: 1rem; /* INCREASED from 0.9rem */
   transition: all 0.2s;
   margin: 0.5rem 0;
+  display: inline-block; /* ✅ ADD THIS */
+
 }
 
 .se-browse-btn:hover:not(.disabled) {
@@ -412,26 +423,26 @@ ransform: translateY(-1px);
 }
 
 /* ========================================
-   COMMENTS SECTION - Enhanced
+   COMMENTS SECTION - Height Control
    ======================================== */
 .se-comments-section {
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 20px;
+  flex-shrink: 0; /* ✅ NEW - Prevent it from shrinking */
 }
 
 .se-comments-textarea {
   width: 100%;
-  min-height: 80px;
   padding: 12px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
-  font-family: inherit;
   font-size: 0.875rem;
+  font-family: inherit;
   resize: vertical;
-  transition: border-color 0.2s;
-  box-sizing: border-box;
+  min-height: 100px; /* ✅ NEW - Minimum height */
+  max-height: 150px; /* ✅ NEW - Maximum height */
 }
 
 .se-comments-textarea:focus {

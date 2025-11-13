@@ -75,7 +75,7 @@ const LecturerReviewERDComponent = ({
 
   // ✅ Filter for display based on active tab
   const displayElements = activeTab === 'review' 
-    ? allElements.filter(el => el.confidence < 95)
+    ? allElements.filter(el => el.confidence < 87)
     : allElements;
 
   // ✅ Update element by ID
@@ -365,7 +365,7 @@ const LecturerReviewERDComponent = ({
               className={`rev-tab ${activeTab === 'review' ? 'active' : ''}`}
               onClick={() => setActiveTab('review')}
             >
-              Review ({allElements.filter(el => el.confidence < 95).length})
+              Review ({allElements.filter(el => el.confidence < 87).length})
             </button>
             <button 
               className={`rev-tab ${activeTab === 'all' ? 'active' : ''}`}
@@ -381,7 +381,7 @@ const LecturerReviewERDComponent = ({
               <div className="rev-no-elements">
                 {activeTab === 'review' ? (
                   <>
-                    <p>🎉 All detected elements have high confidence (≥95%)!</p>
+                    <p>🎉 All detected elements have high confidence (≥85%)!</p>
                     <p>You can still add elements manually if needed.</p>
                   </>
                 ) : (

@@ -201,10 +201,16 @@ const LecturerGradeERDComponent = () => {
   };
 
   const handlePublishGrade = async () => {
-    if (!gradingResult) {
-      showNotification('No grade to publish', 'error');
-      return;
-    }
+  if (isReadOnly) {  // ✅ ADD THIS CHECK
+    showNotification('Grade already published', 'error');
+    return;
+  }
+  
+  if (!gradingResult) {
+    showNotification('No grade to publish', 'error');
+    return;
+  }
+  // ... rest of code
 
     try {
       setPublishingGrade(true);
@@ -243,7 +249,7 @@ const LecturerGradeERDComponent = () => {
   
   // Display elements based on active tab
   const displayElements = activeTab === 'review' 
-    ? allElements.filter(el => el.confidence < 95)
+    ? allElements.filter(el => el.confidence < 87)
     : allElements;
 
   if (loading) {
@@ -347,7 +353,7 @@ const LecturerGradeERDComponent = () => {
             className={`rev-tab ${activeTab === 'review' ? 'active' : ''}`}
             onClick={() => setActiveTab('review')}
           >
-            Review ({allElements.filter(el => el.confidence < 95).length})
+            Review ({allElements.filter(el => el.confidence < 87).length})
           </button>
           <button 
             className={`rev-tab ${activeTab === 'all' ? 'active' : ''}`}
@@ -363,7 +369,7 @@ const LecturerGradeERDComponent = () => {
             <div className="rev-no-elements">
               {activeTab === 'review' ? (
                 <>
-                  <p>🎉 All detected elements have high confidence (≥95%)!</p>
+                  <p>🎉 All detected elements have high confidence (≥87%)!</p>
                   <p>You can still add elements manually if needed.</p>
                 </>
               ) : (

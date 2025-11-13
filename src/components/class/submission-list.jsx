@@ -56,25 +56,39 @@ const isDueDatePassed = (dueDate) => {
 };
 
 // 🔄 CHANGED: Simplified status config - only for display, not button behavior
+// 🔄 FIXED: Handle grade being object/undefined/null properly
+// 🔄 FIXED: grade is a map, need to access grade.total and grade.maxScore
+// 🔄 UPDATED: No icon for grades, icon only for status text
 const getStatusConfig = (submission) => {
   const { status, grade } = submission;
   
-  if (status === 'published' && grade !== null) {
+  // Extract scores from grade map
+  const totalScore = grade?.totalScore;
+  const maxScore = grade?.maxScore || 100;
+  const isValidGrade = totalScore !== null && totalScore !== undefined && typeof totalScore === 'number';
+  
+  if (status === 'published' && isValidGrade) {
     return {
       type: 'success',
-      icon: '✓',
-      text: `${grade}/100`
+      icon: '',  // ✅ No icon for published grades
+      text: `${totalScore}/${maxScore}`
     };
-  } else if (status === 'graded' && grade !== null) {
+  } else if (status === 'graded' && isValidGrade) {
     return {
       type: 'warning',
-      icon: '⚠',
-      text: `${grade}/100 (Pending)`
+      icon: '',  // ✅ No icon for pending grades
+      text: `${totalScore}/${maxScore} (Pending)`
+    };
+  } else if (status === 'published') {
+    return {
+      type: 'success',
+      icon: '✓',  // Keep icon for status text
+      text: 'Published (No Grade)'
     };
   } else {
     return {
       type: 'warning',
-      icon: '⚠',
+      icon: '⚠',  // Keep icon for status text
       text: 'Pending Review'
     };
   }

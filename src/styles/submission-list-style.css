@@ -276,8 +276,8 @@
 
 .status-text {
   font-size: 0.85rem;
+  font-weight: 600;  /* 🆕 ONLY CHANGE: Made text bold */
 }
-
 /* ============================================
    ACTION BUTTONS (Pastel)
    ============================================ */
@@ -303,6 +303,8 @@
 .btn-view {
   background: linear-gradient(135deg, #7b10a5, #5e17a5);
   box-shadow: 0 2px 4px rgba(94, 23, 165, 0.2);
+  min-width: 80px;  /* 🆕 ADD THIS */
+  width: auto;      /* 🆕 ADD THIS */
 }
 
 .btn-view:hover {

@@ -12,7 +12,7 @@ const LectExerciseTips = () => {
         </div>
         <ul className="tips-list">
           <li>Ensure all ERD components are clearly visible</li>
-          <li>Use Crow's Foot notation for consistency</li>
+          <li>Use Chen's  notation for consistency</li>
           <li>Include all required entities, relationships, and attributes</li>
           <li>High resolution images (1080p+) work best for AI analysis</li>
           <li>Avoid shadows, glare, or tilted angles</li>

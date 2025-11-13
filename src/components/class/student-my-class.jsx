@@ -15,6 +15,7 @@ const cache = {
   classData: new Map(),
   exercises: new Map(),
   progress: new Map(),
+  submissions: new Map(),
   timestamps: new Map(),
   sessionId: SESSION_KEY
 };
@@ -100,6 +101,44 @@ const StudentMyClass = ({ classId }) => {
     }
   };
 
+  const fetchSubmissionStatuses = async (exerciseIds, targetClassId) => {
+    const cacheKey = `submissions_${user.uid}_${targetClassId}`;
+    
+    if (isCacheValid(cacheKey) && cache.submissions.has(cacheKey)) {
+      console.log('🚀 Using cached submission statuses');
+      return cache.submissions.get(cacheKey);
+    }
+
+    try {
+      const submissionsRef = collection(db, 'submissions');
+      const statusQuery = query(
+        submissionsRef,
+        where('studentId', '==', user.uid),
+        where('classId', '==', targetClassId)
+      );
+      const statusDocs = await getDocs(statusQuery);
+      
+      const statusMap = {};
+      statusDocs.docs.forEach(doc => {
+        const data = doc.data();
+        statusMap[data.exerciseId] = {
+          status: data.status,
+          feedback: data.feedback,
+          grade: data.grade,
+          gradedAt: data.gradedAt
+        };
+      });
+      
+      cache.submissions.set(cacheKey, setCacheData(cacheKey, statusMap));
+      console.log('✅ Fetched submission statuses for', Object.keys(statusMap).length, 'exercises');
+      
+      return statusMap;
+    } catch (error) {
+      console.error('❌ Error fetching submission statuses:', error);
+      return {};
+    }
+  };
+
   const fetchSingleClassExercises = async () => {
     const cacheKey = `${user.uid}_${classId}`;
     
@@ -113,7 +152,6 @@ const StudentMyClass = ({ classId }) => {
       return;
     }
     
-    // Check enrollment and fetch class data
     const [enrollmentSnapshot, classDoc] = await Promise.all([
       getDocs(query(
         collection(db, 'studentClasses'),
@@ -136,7 +174,6 @@ const StudentMyClass = ({ classId }) => {
       cache.classData.set(classId, setCacheData(`class_${classId}`, classInfo));
     }
     
-    // Get exercises and progress
     const [exercisesSnapshot, allProgressSnapshot] = await Promise.all([
       getDocs(query(
         collection(db, 'classes', classId, 'exercises'),
@@ -154,8 +191,17 @@ const StudentMyClass = ({ classId }) => {
       const progressData = doc.data();
       progressMap[progressData.exerciseId] = progressData;
     });
+
+    const exerciseIds = exercisesSnapshot.docs.map(doc => doc.id);
+    const submissionStatuses = await fetchSubmissionStatuses(exerciseIds, classId);
     
-    const allExercises = processExercises(exercisesSnapshot.docs, classId, classDataFromDb, progressMap);
+    const allExercises = processExercises(
+      exercisesSnapshot.docs, 
+      classId, 
+      classDataFromDb, 
+      progressMap,
+      submissionStatuses
+    );
     
     cache.exercises.set(cacheKey, setCacheData(cacheKey, allExercises));
     setExercises(allExercises);
@@ -182,7 +228,6 @@ const StudentMyClass = ({ classId }) => {
       return;
     }
     
-    // Get all progress for all classes
     const allProgressSnapshot = await getDocs(query(
       collection(db, 'studentProgress'),
       where('studentId', '==', user.uid)
@@ -195,25 +240,34 @@ const StudentMyClass = ({ classId }) => {
       progressMap[key] = progressData;
     });
     
-    // Process each class in parallel
-    const classPromises = enrolledClassIds.map(async (classId) => {
+    const classPromises = enrolledClassIds.map(async (targetClassId) => {
       try {
         const [classDoc, exercisesSnapshot] = await Promise.all([
-          getDoc(doc(db, 'classes', classId)),
+          getDoc(doc(db, 'classes', targetClassId)),
           getDocs(query(
-            collection(db, 'classes', classId, 'exercises'),
+            collection(db, 'classes', targetClassId, 'exercises'),
             where('status', '==', 'active')
           ))
         ]);
         
         const classData = classDoc.exists() ? classDoc.data() : null;
         if (classData) {
-          cache.classData.set(classId, setCacheData(`class_${classId}`, classData));
+          cache.classData.set(targetClassId, setCacheData(`class_${targetClassId}`, classData));
         }
+
+        const exerciseIds = exercisesSnapshot.docs.map(doc => doc.id);
+        const submissionStatuses = await fetchSubmissionStatuses(exerciseIds, targetClassId);
         
-        return processExercises(exercisesSnapshot.docs, classId, classData, progressMap, true);
+        return processExercises(
+          exercisesSnapshot.docs, 
+          targetClassId, 
+          classData, 
+          progressMap, 
+          submissionStatuses,
+          true
+        );
       } catch (error) {
-        console.warn(`Error fetching exercises for class ${classId}:`, error);
+        console.warn(`Error fetching exercises for class ${targetClassId}:`, error);
         return [];
       }
     });
@@ -227,7 +281,7 @@ const StudentMyClass = ({ classId }) => {
     setExercises(flatExercises);
   };
 
-  const processExercises = (exerciseDocs, classId, classData, progressMap, isAllClasses = false) => {
+  const processExercises = (exerciseDocs, classId, classData, progressMap, submissionStatuses = {}, isAllClasses = false) => {
     return exerciseDocs.map(exerciseDoc => {
       const exerciseData = { 
         id: exerciseDoc.id, 
@@ -250,12 +304,21 @@ const StudentMyClass = ({ classId }) => {
         progress.submittedAt ||
         (progress.score !== undefined && progress.score !== null)
       ));
+
+      // ✅ STEP 1: Add submission status FIRST
+      const submissionInfo = submissionStatuses[exerciseDoc.id];
+      if (submissionInfo) {
+        exerciseData.submissionStatus = submissionInfo.status;
+        exerciseData.hasManualFeedback = submissionInfo.feedback !== null && submissionInfo.feedback !== undefined;
+        exerciseData.isGradePublished = submissionInfo.status === 'published';
+      }
       
+      // ✅ STEP 2: NOW check resultsReady (after isGradePublished exists)
       exerciseData.resultsReady = !!(progress && (
         progress.score !== undefined && progress.score !== null ||
         progress.status === 'graded' ||
         progress.isGraded === true
-      ));
+      )) || exerciseData.isGradePublished;  // ← This line enables View Results when grade is published
       
       exerciseData.isPastDue = exerciseData.dueDate && exerciseData.dueDate.toDate 
         ? new Date() > exerciseData.dueDate.toDate() 
@@ -263,7 +326,7 @@ const StudentMyClass = ({ classId }) => {
         
       return exerciseData;
     });
-  };
+};
 
   const sortExercises = (exercises) => {
     exercises.sort((a, b) => {
@@ -285,6 +348,7 @@ const StudentMyClass = ({ classId }) => {
     const cacheKey = classId ? `${user?.uid}_${classId}` : `all_classes_${user?.uid}`;
     cache.exercises.delete(cacheKey);
     cache.progress.delete(cacheKey);
+    cache.submissions.delete(`submissions_${user?.uid}_${classId || 'all'}`);
     if (classId) {
       cache.classData.delete(classId);
     }
@@ -293,7 +357,6 @@ const StudentMyClass = ({ classId }) => {
     fetchExercises();
   };
 
-  // Filter exercises
   const filteredExercises = exercises.filter((exercise) => {
     const matchesSearch = exercise.title.toLowerCase().includes(searchTerm.toLowerCase());
     
@@ -309,7 +372,6 @@ const StudentMyClass = ({ classId }) => {
     return matchesSearch && matchesStatus;
   });
 
-  // Event handlers
   const handleStartExercise = (classId, exerciseId) => {
     window.location.href = `/student/class/${classId}/submit-exercise/${exerciseId}`;
   };
@@ -331,7 +393,6 @@ const StudentMyClass = ({ classId }) => {
 
   const isLoadingClassData = classId && (!classData || (!classData.name && !classData.title));
 
-
   if (error) {
     return (
       <div className="stud-mc-container">
@@ -344,53 +405,52 @@ const StudentMyClass = ({ classId }) => {
     );
   }
 
-  // Update the render section in your StudentMyClass component
-return (
-  <div className="stud-mc-container">
-    <div className="stud-mc-header">
-      <h1 className="stud-mc-title">My Exercises</h1>
-      <p className="stud-mc-subtitle">View available exercises and submit your answers</p>
-    </div>
+  return (
+    <div className="stud-mc-container">
+      <div className="stud-mc-header">
+        <h1 className="stud-mc-title">My Exercises</h1>
+        <p className="stud-mc-subtitle">View available exercises and submit your answers</p>
+      </div>
 
-    <div className="stud-mc-section">
-      <StudExerciseFilters
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        statusFilter={statusFilter}
-        setStatusFilter={setStatusFilter}
-        exerciseCount={filteredExercises.length}
-        sectionTitle={getSectionTitle()} // Call the function here
-      />
-      
-      {filteredExercises.length === 0 && !exercisesLoading ? (
-        <div className="stud-mc-empty-state">
-          {exercises.length === 0 ? (
-            <div className="stud-mc-empty-content">
-              <div className="stud-mc-empty-icon">📝</div>
-              <h3>No exercises available</h3>
-              <p>No exercises available{classId ? ' for this class' : '. Make sure you\'re enrolled in a class'}.</p>
-            </div>
-          ) : (
-            <div className="stud-mc-empty-content">
-              <div className="stud-mc-empty-icon">🔍</div>
-              <h3>No exercises found</h3>
-              <p>No exercises match your current search and filter criteria. Try adjusting your search term or filter.</p>
-            </div>
-          )}
-        </div>
-      ) : (
-        <StudExerciseList
-          exercises={filteredExercises}
-          loading={exercisesLoading}
-          showClassName={!classId}
-          onStartExercise={handleStartExercise}
-          onEditSubmission={handleEditSubmission}
-          onViewResults={handleViewResults}
+      <div className="stud-mc-section">
+        <StudExerciseFilters
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+          exerciseCount={filteredExercises.length}
+          sectionTitle={getSectionTitle()}
         />
-      )}
+        
+        {filteredExercises.length === 0 && !exercisesLoading ? (
+          <div className="stud-mc-empty-state">
+            {exercises.length === 0 ? (
+              <div className="stud-mc-empty-content">
+                <div className="stud-mc-empty-icon">📝</div>
+                <h3>No exercises available</h3>
+                <p>No exercises available{classId ? ' for this class' : '. Make sure you\'re enrolled in a class'}.</p>
+              </div>
+            ) : (
+              <div className="stud-mc-empty-content">
+                <div className="stud-mc-empty-icon">🔍</div>
+                <h3>No exercises found</h3>
+                <p>No exercises match your current search and filter criteria. Try adjusting your search term or filter.</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <StudExerciseList
+            exercises={filteredExercises}
+            loading={exercisesLoading}
+            showClassName={!classId}
+            onStartExercise={handleStartExercise}
+            onEditSubmission={handleEditSubmission}
+            onViewResults={handleViewResults}
+          />
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
 };
 
 export default StudentMyClass;

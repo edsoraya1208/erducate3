@@ -217,17 +217,18 @@ const LecturerSubmissions = ({
                         <span className="status-text">{statusConfig.text}</span>
                       </div>
                       
-                      {/* 🔄 CHANGED: Single button that always goes to grading page */}
                       <div className="button-wrapper">
-                      {/* ✅ NEW CODE - Different button based on status */}
                         {submission.status === 'published' ? (
+                          // ✅ Published submissions - View only (read-only mode)
                           <button
                             className="submission-action-btn btn-view"
                             onClick={() => onViewAndGrade(submission.id)}
+                            title="View published grade (read-only)"
                           >
-                            View
+                            View Grade
                           </button>
                         ) : (
+                          // ✅ Unpublished submissions - Grade button (disabled before due date)
                           <button
                             className={`submission-action-btn btn-grade ${!canGrade ? 'disabled' : ''}`}
                             onClick={() => {
@@ -235,6 +236,7 @@ const LecturerSubmissions = ({
                               onViewAndGrade(submission.id);
                             }}
                             disabled={!canGrade}
+                            title={!canGrade ? 'Grading available after due date' : 'Grade this submission'}
                           >
                             View & Grade
                           </button>

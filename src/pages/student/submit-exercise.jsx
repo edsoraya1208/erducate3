@@ -52,9 +52,11 @@ const SubmitExercise = () => {
     return new Date() > dueDate;
   };
 
-  const loadExerciseAndSubmissionData = async () => {
-    try {
-      console.log('📚 Loading exercise and submission data for:', { classId, exerciseId, userId: user.uid });
+  // ===== UPDATE loadExerciseAndSubmissionData (add this at the end, before finally) =====
+const loadExerciseAndSubmissionData = async () => {
+  try {
+    console.log('📚 Loading exercise and submission data for:', { classId, exerciseId, userId: user.uid });
+
       
       const exerciseRef = doc(db, 'classes', classId, 'exercises', exerciseId);
       const exerciseDoc = await getDoc(exerciseRef);
@@ -95,6 +97,11 @@ const SubmitExercise = () => {
         setEditCount(0);
         setSubmitted(false);
       }
+
+      // Check submission status from submissions collection
+    const status = await loadSubmissionStatus();
+    setSubmissionStatus(status);
+    console.log('📊 Submission status:', status);
       
     } catch (error) {
       console.error('❌ Error loading data:', error);
@@ -102,6 +109,29 @@ const SubmitExercise = () => {
       setLoading(false);
     }
   };
+
+  // ===== ADD THIS NEW FUNCTION (after loadExerciseAndSubmissionData) =====
+const loadSubmissionStatus = async () => {
+  try {
+    const submissionsRef = collection(db, 'submissions');
+    const statusQuery = query(
+      submissionsRef,
+      where('studentId', '==', user.uid),
+      where('classId', '==', classId),
+      where('exerciseId', '==', exerciseId)
+    );
+    const statusDocs = await getDocs(statusQuery);
+    
+    if (!statusDocs.empty) {
+      const submissionData = statusDocs.docs[0].data();
+      return submissionData.status; // Returns 'published', 'graded', or 'submitted'
+    }
+    return null;
+  } catch (error) {
+    console.error('Error loading submission status:', error);
+    return null;
+  }
+};
 
   const showValidationMessage = (text, type = 'error', duration = 4000) => {
     setValidationMessage({ text, type });
@@ -170,7 +200,15 @@ const SubmitExercise = () => {
     setAdditionalComments(value);
   }, []);
 
-  const handleSubmitExercise = async () => {
+  const [submissionStatus, setSubmissionStatus] = useState(null);
+
+  const isGradingLocked = () => {
+  // Lock if status is 'published' OR if lecturer added manual feedback
+  return submissionStatus === 'published' || 
+         (existingSubmission?.feedback !== null && existingSubmission?.feedback !== undefined);
+};
+
+    const handleSubmitExercise = async () => {
     setValidationMessage(null);
 
     if (isPastDue()) {
@@ -178,10 +216,21 @@ const SubmitExercise = () => {
       return;
     }
 
+    // 🆕 NEW CHECK: Prevent resubmission if grading is locked
+    if (isGradingLocked()) {
+      showValidationMessage(
+        '❌ Cannot resubmit - your submission has been graded by the lecturer. Contact your instructor if you need to make changes.', 
+        'error',
+        6000
+      );
+      return;
+    }
+
     if (!selectedFile) {
       showValidationMessage('❌ Please select a file to submit', 'error');
       return;
     }
+
 
     if (!user) {
       showValidationMessage('❌ You must be logged in to submit', 'error');
@@ -317,7 +366,7 @@ const SubmitExercise = () => {
 
       // ✅ ONLY REACH HERE IF BOTH DETECTION AND GRADING SUCCEEDED
       console.log('✅ All validations passed - proceeding to save submission');
-      
+
       // STEP 2: Check for existing submission
       const submissionsRef = collection(db, 'submissions');
       const existingQuery = query(
@@ -449,16 +498,20 @@ const SubmitExercise = () => {
     return uploading || isPastDue() || (existingSubmission && editCount >= maxEdits);
   };
 
-  const getSubmissionButtonText = () => {
-    if (uploading) return 'Uploading...';
-    if (isPastDue()) return 'Past Due Date';
-    if (!existingSubmission) return 'Submit Exercise';
-    if (editCount >= maxEdits) return 'Maximum Edits Reached';
-    return `Resubmit (${maxEdits - editCount} edit${maxEdits - editCount === 1 ? '' : 's'} left)`;
-  };
+  // ===== UPDATE getSubmissionButtonText (add this condition at the start) =====
+const getSubmissionButtonText = () => {
+  if (uploading) return 'Uploading...';
+  if (isGradingLocked()) return 'Grade Published - Locked'; // ✅ ADD THIS LINE
+  if (isPastDue()) return 'Past Due Date';
+  if (!existingSubmission) return 'Submit Exercise';
+  if (editCount >= maxEdits) return 'Maximum Edits Reached';
+  return `Resubmit (${maxEdits - editCount} edit${maxEdits - editCount === 1 ? '' : 's'} left)`;
+};
 
   const canEdit = () => {
-    return !isPastDue() && (!existingSubmission || editCount < maxEdits);
+    return !isPastDue() && 
+          !isGradingLocked() && // 🆕 NEW CHECK
+          (!existingSubmission || editCount < maxEdits);
   };
 
   return (

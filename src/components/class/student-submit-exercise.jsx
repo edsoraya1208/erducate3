@@ -46,36 +46,49 @@ const StudentSubmitClass = ({
     return new Date() > dueDate;
   }, [exercise?.dueDate]);
 
-  // 🚨 Get submission status message - MEMOIZED TO PREVENT RE-RENDERS
-  const statusMessage = useMemo(() => {
-    if (isPastDue && !submitted) {
-      return {
-        type: 'error',
-        text: '⏰ Assignment is past due - submission is no longer allowed'
-      };
+// 🚨 Get submission status message - MEMOIZED TO PREVENT RE-RENDERS
+const statusMessage = useMemo(() => {
+  // ✅ FIXED: Check if grade is published (matches your card logic)
+  const isGradingLocked = existingSubmission?.status === 'published';
+  
+  if (isGradingLocked) {
+    return {
+      type: 'info',
+      text: '🔒 Your submission has been graded and published. No further edits are allowed.'
+    };
+  }
+
+  if (isPastDue && !submitted) {
+    return {
+      type: 'error',
+      text: '⏰ Assignment is past due - submission is no longer allowed'
+    };
+  }
+  
+  if (submitted && isPastDue) {
+    const dueDate = exercise.dueDate.toDate ? exercise.dueDate.toDate() : new Date(exercise.dueDate);
+    const submissionDate = new Date(); // or actual submission date if available
+    const daysLate = Math.ceil((submissionDate - dueDate) / (1000 * 60 * 60 * 24));
+    return {
+      type: 'warning',
+      text: `Assignment was submitted ${daysLate} day${daysLate > 1 ? 's' : ''} late`
+    };
+  } else if (submitted) {
+    const remainingEdits = maxEdits - editCount;
+    let text = 'Assignment submitted successfully';
+    if (remainingEdits > 0 && !isPastDue) {
+      text += ` (${remainingEdits} edit${remainingEdits === 1 ? '' : 's'} remaining)`;
     }
-    
-    if (submitted && isPastDue) {
-      const dueDate = exercise.dueDate.toDate ? exercise.dueDate.toDate() : new Date(exercise.dueDate);
-      const submissionDate = new Date(); // or actual submission date if available
-      const daysLate = Math.ceil((submissionDate - dueDate) / (1000 * 60 * 60 * 24));
-      return {
-        type: 'warning',
-        text: `Assignment was submitted ${daysLate} day${daysLate > 1 ? 's' : ''} late`
-      };
-    } else if (submitted) {
-      const remainingEdits = maxEdits - editCount;
-      let text = 'Assignment submitted successfully';
-      if (remainingEdits > 0 && !isPastDue) {
-        text += ` (${remainingEdits} edit${remainingEdits === 1 ? '' : 's'} remaining)`;
-      }
-      return {
-        type: 'success',
-        text: text
-      };
-    }
-    return null;
-  }, [isPastDue, submitted, maxEdits, editCount, exercise?.dueDate]);
+    return {
+      type: 'success',
+      text: text
+    };
+  }
+  return null;
+}, [isPastDue, submitted, maxEdits, editCount, exercise?.dueDate, existingSubmission?.status]);
+
+// ✅ NEW: Check if grading is locked (used to hide edit messages)
+const isGradingLocked = existingSubmission?.status === 'published';
 
   // 🎯 FORMAT DUE DATE: Helper function - MEMOIZED
   const formattedDueDate = useMemo(() => {

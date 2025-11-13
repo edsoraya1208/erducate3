@@ -299,6 +299,31 @@
   min-width: 140px;
 }
 
+/* ========================================
+   VIEW BUTTON STYLING (Published Grades)
+   ======================================== */
+.submission-action-btn.btn-view {
+  background: linear-gradient(135deg, #8816c5, #5c0ab9);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.submission-action-btn.btn-view:hover {
+  background: linear-gradient(135deg, #8816c5, #5c0ab9);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.submission-action-btn.btn-view:active {
+  transform: translateY(0);
+}
+
 /* Purple View Button (unchanged) */
 .btn-view {
   background: linear-gradient(135deg, #7b10a5, #5e17a5);

@@ -338,6 +338,37 @@
   color: #6b7280;
 }
 
+
+/* Add this to your grade-erd.css */
+
+/* Disabled input fields */
+input:disabled,
+select:disabled {
+  background-color: #f3f4f6 !important;
+  cursor: not-allowed !important;
+  opacity: 0.6;
+}
+
+/* Disabled buttons - no hover effect */
+button:disabled {
+  cursor: not-allowed !important;
+  opacity: 0.5;
+}
+
+button:disabled:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.rev-delete-btn:disabled {
+  background-color: #e5e7eb !important;
+  color: #9ca3af !important;
+}
+
+.rev-delete-btn:disabled:hover {
+  background-color: #e5e7eb !important;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .rev-image-section,

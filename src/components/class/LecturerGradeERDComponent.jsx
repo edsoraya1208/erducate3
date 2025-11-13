@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../config/firebase';
-import '../../styles/review-erd.css';  // ← ADD THIS
-import '../../styles/grade-erd.css';        // ← KEEP THIS (must come after)
+import '../../styles/review-erd.css';
+import '../../styles/grade-erd.css';
 
 const LecturerGradeERDComponent = () => {
   const { classId, exerciseId, submissionId } = useParams();
@@ -18,10 +18,10 @@ const LecturerGradeERDComponent = () => {
   const [exerciseData, setExerciseData] = useState(null);
   const [allElements, setAllElements] = useState([]);
   const [gradingResult, setGradingResult] = useState(null);
-  const [isReadOnly, setIsReadOnly] = useState(false); // ✅ ADDED
+  const [isReadOnly, setIsReadOnly] = useState(false);
 
   
-  // UI states (MATCHING REVIEW PAGE)
+  // UI states
   const [activeTab, setActiveTab] = useState('review');
   const [showAddForm, setShowAddForm] = useState(false);
   const [newElement, setNewElement] = useState({
@@ -31,6 +31,7 @@ const LecturerGradeERDComponent = () => {
     confidence: 100
   });
   const [elementToDelete, setElementToDelete] = useState(null);
+  const [showPublishModal, setShowPublishModal] = useState(false); // ✅ NEW: Publish confirmation modal
   
   // Notification
   const [notification, setNotification] = useState(null);
@@ -60,7 +61,6 @@ const LecturerGradeERDComponent = () => {
       const submission = { id: submissionSnap.id, ...submissionSnap.data() };
       setStudentSubmission(submission);
 
-      // ✅ ADDED: Check if already published
       if (submission.status === 'published') {
         setIsReadOnly(true);
       }
@@ -77,7 +77,6 @@ const LecturerGradeERDComponent = () => {
       setExerciseData(exercise);
 
       if (submission.detectedERD?.elements) {
-        // Add IDs if missing
         const elementsWithIds = submission.detectedERD.elements.map((el, idx) => ({
           ...el,
           id: el.id || `el_${Date.now()}_${idx}`
@@ -140,7 +139,6 @@ const LecturerGradeERDComponent = () => {
     showNotification('Grade recalculated');
   };
 
-  // MATCHING REVIEW PAGE FUNCTIONS
   const updateElement = (id, field, value) => {
     setAllElements(prev => prev.map(el => 
       el.id === id ? { ...el, [field]: value } : el
@@ -200,20 +198,26 @@ const LecturerGradeERDComponent = () => {
     navigate(-1);
   };
 
-  const handlePublishGrade = async () => {
-  if (isReadOnly) {  // ✅ ADD THIS CHECK
-    showNotification('Grade already published', 'error');
-    return;
-  }
-  
-  if (!gradingResult) {
-    showNotification('No grade to publish', 'error');
-    return;
-  }
-  // ... rest of code
+  // ✅ UPDATED: Show confirmation modal instead of publishing directly
+  const handlePublishClick = () => {
+    if (isReadOnly) {
+      showNotification('Grade already published', 'error');
+      return;
+    }
+    
+    if (!gradingResult) {
+      showNotification('No grade to publish', 'error');
+      return;
+    }
 
+    setShowPublishModal(true); // Show confirmation modal
+  };
+
+  // ✅ NEW: Actual publish function after confirmation
+  const handlePublishGrade = async () => {
     try {
       setPublishingGrade(true);
+      setShowPublishModal(false); // Close modal
 
       const submissionRef = doc(db, 'submissions', submissionId);
       
@@ -237,7 +241,11 @@ const LecturerGradeERDComponent = () => {
     }
   };
 
-  // Get options for dropdowns (MATCHING REVIEW)
+  // ✅ NEW: Cancel publish modal
+  const cancelPublish = () => {
+    setShowPublishModal(false);
+  };
+
   const getBelongsToOptions = () => {
     const entities = allElements.filter(el => el.type === 'entity');
     const relationships = allElements.filter(el => el.type === 'relationship');
@@ -247,7 +255,6 @@ const LecturerGradeERDComponent = () => {
 
   const belongsToOptions = getBelongsToOptions();
   
-  // Display elements based on active tab
   const displayElements = activeTab === 'review' 
     ? allElements.filter(el => el.confidence < 87)
     : allElements;
@@ -276,26 +283,22 @@ const LecturerGradeERDComponent = () => {
   <div className="rev-container grade-container">
     <div className="grade-header-card">
       <h1 className="rev-title">
-        {/* NEW: Left side wrapper for title and subtitle */}
         <div className="grade-header-left">
           <span className="grade-header-title">
             Grading: {studentSubmission.studentName || 'Student'}
           </span>
-          {/* NEW: Added exercise title as subtitle */}
           <span className="grade-header-subtitle">
             {exerciseData.title}
           </span>
         </div>
 
-        {/* NEW: Right side wrapper for stacked layout */}
         <div className="grade-header-right">
           <span className="grade-current-label">Current Grade</span>
 
-          {/* NEW: Made score clickable, moved icon inside */}
           <button 
             className="grade-score-display"
             onClick={handleRefreshGrade}
-            disabled={grading || isReadOnly} // ✅ ADDED || isReadOnly
+            disabled={grading || isReadOnly}
             title="Refresh grade"
           >
             <span className="grade-refresh-icon">🔄</span>
@@ -308,28 +311,43 @@ const LecturerGradeERDComponent = () => {
     </div>
         
     <div className="rev-content">
-      {/* Left: Student's ERD */}
+      {/* ✅ UPDATED: Left column with image AND comments */}
       <div className="rev-image-section">
         <div className="grade-left-column">
-          <div className="grade-image-container">
           <h2>Student's ERD Submission</h2>
-          <div className="rev-image-display">
-            {studentSubmission.fileURL ? (
-              <img src={studentSubmission.fileURL} alt="Student ERD" />
-            ) : (
-              <div className="grade-image-placeholder">
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#CBD5E0" strokeWidth="1.5">
-                  <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
-                <p>No image uploaded</p>
-              </div>
-           )}
-      </div>
-    </div>
-  </div>
-</div>
+          
+          <div className="grade-image-container">
+            <div className="rev-image-display">
+              {studentSubmission.fileURL ? (
+                <img src={studentSubmission.fileURL} alt="Student ERD" />
+              ) : (
+                <div className="grade-image-placeholder">
+                  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#CBD5E0" strokeWidth="1.5">
+                    <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                  </svg>
+                  <p>No image uploaded</p>
+                </div>
+              )}
+            </div>
 
-      {/* Right: Detected Elements - UNCHANGED */}
+            {/* ✅ NEW: Student Comments Section */}
+            <div className="grade-student-comments">
+              <h3>Student's Comments</h3>
+              {studentSubmission.comments ? (
+                <div className="grade-comments-content">
+                  <p>{studentSubmission.comments}</p>
+                </div>
+              ) : (
+                <div className="grade-comments-empty">
+                  <p>No comments provided</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right: Detected Elements */}
       <div className="rev-elements-section">
         <div className="rev-header">
           <h2>Detected Elements</h2>
@@ -386,7 +404,7 @@ const LecturerGradeERDComponent = () => {
                     onChange={(e) => updateElement(element.id, 'name', e.target.value)}
                     className="rev-element-name-input"
                     placeholder="Element name"
-                    disabled={isReadOnly} // ✅ ADDED
+                    disabled={isReadOnly}
                   />
                   <span className="rev-confidence">
                     {element.confidence}% confidence
@@ -395,13 +413,12 @@ const LecturerGradeERDComponent = () => {
                     className="rev-delete-btn"
                     onClick={() => handleDeleteClick(element)}
                     title="Delete element"
-                    disabled={isReadOnly} // ✅ ADDED
+                    disabled={isReadOnly}
                   >
                     ×
                   </button>
                 </div>
 
-                {/* Type Selection */}
                 <div className="rev-element-row">
                   <label>Type:</label>
                   <select 
@@ -409,13 +426,12 @@ const LecturerGradeERDComponent = () => {
                     onChange={(e) => {
                       const newType = e.target.value;
                       updateElement(element.id, 'type', newType);
-                      // Set default subType
                       if (newType === 'entity') updateElement(element.id, 'subType', 'strong');
                       if (newType === 'relationship') updateElement(element.id, 'subType', 'one-to-many');
                       if (newType === 'attribute') updateElement(element.id, 'subType', 'regular');
                     }}
                     className="rev-dropdown"
-                    disabled={isReadOnly} // ✅ ADDED
+                    disabled={isReadOnly}
                   >
                     <option value="entity">Entity</option>
                     <option value="relationship">Relationship</option>
@@ -423,7 +439,6 @@ const LecturerGradeERDComponent = () => {
                   </select>
                 </div>
 
-                {/* SubType Selection */}
                 <div className="rev-element-row">
                   <label>SubType:</label>
                   {element.type === 'entity' && (
@@ -431,7 +446,7 @@ const LecturerGradeERDComponent = () => {
                       value={element.subType}
                       onChange={(e) => updateElement(element.id, 'subType', e.target.value)}
                       className="rev-dropdown"
-                      disabled={isReadOnly} // ✅ ADDED
+                      disabled={isReadOnly}
                     >
                       <option value="strong">Strong</option>
                       <option value="weak">Weak</option>
@@ -442,7 +457,7 @@ const LecturerGradeERDComponent = () => {
                       value={element.subType}
                       onChange={(e) => updateElement(element.id, 'subType', e.target.value)}
                       className="rev-dropdown"
-                      disabled={isReadOnly} // ✅ ADDED
+                      disabled={isReadOnly}
                     >
                       <option value="one-to-one">1:1 (One-to-One)</option>
                       <option value="one-to-many">1:N (One-to-Many)</option>
@@ -454,7 +469,7 @@ const LecturerGradeERDComponent = () => {
                       value={element.subType}
                       onChange={(e) => updateElement(element.id, 'subType', e.target.value)}
                       className="rev-dropdown"
-                      disabled={isReadOnly} // ✅ ADDED
+                      disabled={isReadOnly}
                     >
                       <option value="primary_key">Primary Key</option>
                       <option value="foreign_key">Foreign Key</option>
@@ -466,7 +481,6 @@ const LecturerGradeERDComponent = () => {
                   )}
                 </div>
 
-                {/* Relationship: From/To */}
                 {element.type === 'relationship' && (
                   <>
                     <div className="rev-element-row">
@@ -475,7 +489,7 @@ const LecturerGradeERDComponent = () => {
                         value={element.from || ''}
                         onChange={(e) => updateElement(element.id, 'from', e.target.value)}
                         className="rev-dropdown"
-                        disabled={isReadOnly} // ✅ ADDED
+                        disabled={isReadOnly}
                       >
                         <option value="">Select entity</option>
                         {belongsToOptions.entities.map(ent => (
@@ -489,7 +503,7 @@ const LecturerGradeERDComponent = () => {
                         value={element.to || ''}
                         onChange={(e) => updateElement(element.id, 'to', e.target.value)}
                         className="rev-dropdown"
-                        disabled={isReadOnly} // ✅ ADDED
+                        disabled={isReadOnly}
                       >
                         <option value="">Select entity</option>
                         {belongsToOptions.entities.map(ent => (
@@ -500,7 +514,6 @@ const LecturerGradeERDComponent = () => {
                   </>
                 )}
 
-                {/* Attribute: Belongs To */}
                 {element.type === 'attribute' && (
                   <>
                     <div className="rev-element-row">
@@ -509,10 +522,10 @@ const LecturerGradeERDComponent = () => {
                         value={element.belongsToType || 'entity'}
                         onChange={(e) => {
                           updateElement(element.id, 'belongsToType', e.target.value);
-                          updateElement(element.id, 'belongsTo', ''); // Reset selection
+                          updateElement(element.id, 'belongsTo', '');
                         }}
                         className="rev-dropdown"
-                        disabled={isReadOnly} // ✅ ADDED
+                        disabled={isReadOnly}
                       >
                         <option value="entity">Entity</option>
                         <option value="relationship">Relationship</option>
@@ -525,7 +538,7 @@ const LecturerGradeERDComponent = () => {
                         value={element.belongsTo || ''}
                         onChange={(e) => updateElement(element.id, 'belongsTo', e.target.value)}
                         className="rev-dropdown"
-                        disabled={isReadOnly} // ✅ ADDED
+                        disabled={isReadOnly}
                       >
                         <option value="">Select {element.belongsToType || 'entity'}</option>
                         {element.belongsToType === 'entity' && belongsToOptions.entities.map(ent => (
@@ -546,8 +559,7 @@ const LecturerGradeERDComponent = () => {
           )}
         </div>
 
-        {/* Add Element Button */}
-        {!showAddForm && !isReadOnly && ( // ✅ ADDED !isReadOnly
+        {!showAddForm && !isReadOnly && (
           <button 
             className="rev-add-btn"
             onClick={() => setShowAddForm(true)}
@@ -556,7 +568,6 @@ const LecturerGradeERDComponent = () => {
           </button>
         )}
 
-        {/* Add Element Form */}
         {showAddForm && (
           <div className="rev-add-form">
             <h3>Add New Element</h3>
@@ -691,7 +702,7 @@ const LecturerGradeERDComponent = () => {
           </div>
         )}
 
-        {/* Action Buttons */}
+        {/* ✅ UPDATED: Action Buttons - Button text changed to "Publish Grade" */}
         <div className="rev-form-actions">
           <button 
             type="button" 
@@ -701,21 +712,21 @@ const LecturerGradeERDComponent = () => {
           >
             Cancel
           </button>
-          {!isReadOnly && ( // ✅ ADDED WRAPPER
+          {!isReadOnly && (
             <button 
               type="button" 
               className="rev-publish-btn" 
-              onClick={handlePublishGrade}
+              onClick={handlePublishClick}
               disabled={publishingGrade || loading || allElements.length === 0}
             >
-              {(publishingGrade || loading) ? 'Publishing...' : 'Done'}
+              {(publishingGrade || loading) ? 'Publishing...' : 'Publish Grade'}
             </button>
           )}
         </div>
       </div>
     </div>
 
-    {/* AI Feedback - Full Width Below Both Columns */}
+    {/* AI Feedback */}
     {gradingResult && (
       <div className="grade-feedback-section">
         <div className="grade-feedback-box">
@@ -777,6 +788,27 @@ const LecturerGradeERDComponent = () => {
             </button>
             <button onClick={confirmDelete} className="rev-modal-btn rev-modal-btn-confirm">
               Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* ✅ NEW: Publish Confirmation Modal */}
+    {showPublishModal && (
+      <div className="rev-modal-overlay">
+        <div className="rev-modal">
+          <h3 className="rev-modal-header">Publish Grade?</h3>
+          <div className="rev-modal-body">
+            <p>Are you sure you want to publish this grade?</p>
+            <p className="grade-modal-warning">Once published, the student will be able to view their grade and you won't be able to edit it anymore.</p>
+          </div>
+          <div className="rev-modal-actions">
+            <button onClick={cancelPublish} className="rev-modal-btn rev-modal-btn-cancel">
+              Cancel
+            </button>
+            <button onClick={handlePublishGrade} className="rev-modal-btn rev-modal-btn-confirm">
+              Publish
             </button>
           </div>
         </div>

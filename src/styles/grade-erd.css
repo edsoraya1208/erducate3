@@ -5,15 +5,14 @@
    ======================================== */
 
 /* Header styling */
-/* NEW: Wrapper to turn the header into a card */
 .grade-header-card {
-  background: #e0f7fa;   /* CHANGED: Pastel blue background */
-  border-radius: 12px;   /* ADDED: Rounded corners */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07); /* ADDED: Soft, gentle shadow */
-  padding: 0.75rem 2rem; /* Adjusted padding */
+  background: #e0f7fa;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+  padding: 0.75rem 2rem;
   margin-bottom: 1.5rem;
-  border: px solid #b0c4de;  /* CHANGED: Soft, light steel-blue border */
-  height: 80px
+  border: 1px solid #b0c4de;
+  height: 80px;
 }
 
 .grade-container .rev-title {
@@ -21,11 +20,11 @@
   margin-bottom: 1.5rem;
   display: flex;
   justify-content: space-between;
-  align-items: flex-start; /* CHANGED: Aligns everything to the top */
-  line-height: 1.3; /* Added for better spacing */
+  align-items: flex-start;
+  line-height: 1.3;
 }
 
-/* NEW: Left side (Title/Subtitle) */
+/* Left side (Title/Subtitle) */
 .grade-header-left {
   display: flex;
   flex-direction: column;
@@ -33,24 +32,24 @@
 }
 
 .grade-header-title {
-  font-size: 1.5rem; /* Bigger, like screenshot */
-  font-weight: 700; /* Bolder, like screenshot */
+  font-size: 1.5rem;
+  font-weight: 700;
   color: #1a1a1a;
 }
 
 .grade-header-subtitle {
-  font-size: 0.95rem; /* Smaller subtitle */
-  color: #6b7280; /* Muted color */
+  font-size: 0.95rem;
+  color: #6b7280;
   font-weight: 500;
   margin-top: 0.25rem;
 }
 
-/* MODIFIED: Right side (Label/Score) */
+/* Right side (Label/Score) */
 .grade-header-right {
   display: flex;
-  flex-direction: column; /* CHANGED: Stacks label and score */
-  align-items: flex-end; /* CHANGED: Aligns them to the right */
-  gap: 0.25rem; /* Tighter spacing */
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
 }
 
 .grade-current-label {
@@ -59,40 +58,37 @@
   font-weight: 500;
 }
 
-/* MODIFIED: Score is now a button */
+/* Score is now a button */
 .grade-score-display {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1457dd; /* CHANGED: This is the bright blue from your screenshot */
+  color: #1457dd;
 
-  /* Resets button styles to look like text */
   background: none;
   border: none;
   padding: 0;
   margin: 0;
   cursor: pointer;
-  font-family: inherit; /* Use the same font as the page */
+  font-family: inherit;
 
   display: flex;
   align-items: center;
-  gap: 0.5rem; /* Space between icon and text */
+  gap: 0.5rem;
   transition: color 0.2s;
 }
 
 .grade-score-display:hover:not(:disabled) {
-  color: #2563EB; /* Darker blue on hover */
+  color: #2563EB;
 }
 
 .grade-score-display:disabled {
-  color: #9ca3af; /* Muted color when disabled */
+  color: #9ca3af;
   cursor: not-allowed;
 }
 
 .grade-refresh-icon {
-  font-size: 1.25rem; /* Make icon a good size */
+  font-size: 1.25rem;
 }
-
-/* REMOVED: .grade-refresh-btn-header is no longer needed */
 
 /* LEFT COLUMN - Match right side white card style */
 .grade-left-column {
@@ -114,11 +110,14 @@
   border-bottom: 2px solid #e1e4e8;
 }
 
-/* Image container with scrollbar */
+/* ✅ NEW: Image container with scrollbar */
 .grade-image-container {
   flex: 1;
   overflow-y: auto;
   padding-right: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; /* Space between image and comments */
 }
 
 .grade-image-container::-webkit-scrollbar {
@@ -139,12 +138,56 @@
   background: #a0aec0;
 }
 
+/* ✅ Student Comments Section - UPDATED */
+.grade-student-comments {
+  margin-top: 0rem;
+}
 
+/* Make heading match the main h2 style */
+.grade-student-comments h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 1rem 0;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e1e4e8;
+}
 
-/* Make left and right same height */
+/* White box for the actual comments */
+.grade-comments-content {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.25rem;
+}
+
+.grade-comments-content p {
+  margin: 0;
+  color: #374151;
+  line-height: 1.6;
+  font-size: 0.95rem;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.grade-comments-empty {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.grade-comments-empty p {
+  margin: 0;
+}
+
+/* ✅ UPDATED: Make left and right columns same height */
 .rev-image-section,
 .rev-elements-section {
-  height: 700px;
+  height: 750px; /* Increased from 700px to accommodate comments */
   display: flex;
   flex-direction: column;
 }
@@ -163,7 +206,7 @@
 }
 
 .grade-feedback-box h3 {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: 600;
   color: #1a1a1a;
   margin-bottom: 1.5rem;
@@ -249,6 +292,18 @@
 .feedback-overall strong {
   color: #1f2937;
   font-weight: 600;
+}
+
+/* ✅ NEW: Warning text in publish modal */
+.grade-modal-warning {
+  font-size: 0.9rem;
+  color: #d97706;
+  margin-top: 0.5rem;
+  font-weight: 500;
+  background: #fffbeb;
+  padding: 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #fde68a;
 }
 
 /* Error & Loading states */
@@ -338,9 +393,6 @@
   color: #6b7280;
 }
 
-
-/* Add this to your grade-erd.css */
-
 /* Disabled input fields */
 input:disabled,
 select:disabled {
@@ -388,5 +440,13 @@ button:disabled:hover {
   .grade-header-right {
     width: 100%;
     justify-content: space-between;
+  }
+
+  .grade-student-comments {
+    padding: 1rem;
+  }
+
+  .grade-comments-content {
+    padding: 0.75rem;
   }
 }

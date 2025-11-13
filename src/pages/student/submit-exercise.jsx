@@ -30,6 +30,8 @@ const SubmitExercise = () => {
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [additionalComments, setAdditionalComments] = useState('');
+
+  const [aiLoadingMessage, setAiLoadingMessage] = useState('');
   
   const [submitted, setSubmitted] = useState(false);
   const [validationMessage, setValidationMessage] = useState(null);
@@ -76,6 +78,11 @@ const SubmitExercise = () => {
         setExistingSubmission(progressData);
         setEditCount(progressData.editCount || 0);
         setSubmitted(progressData.submitted || false);
+        
+        // ✅ FIX 1: Restore comments from previous submission
+        if (progressData.comments) {
+          setAdditionalComments(progressData.comments);
+        }
         
         console.log('📋 Found existing submission:', {
           editCount: progressData.editCount || 0,
@@ -207,8 +214,9 @@ const SubmitExercise = () => {
       
       console.log('✅ File uploaded via API:', uploadData.url);
 
-      // STEP 1.5: Detect ERD elements using AI
+      // ✅ FIX 2: STEP 1.5 - Detect ERD elements (REQUIRED TO PROCEED)
       console.log('🤖 Calling ERD detection API...');
+      setAiLoadingMessage('🤖 Analyzing your ERD diagram...\nPlease wait while AI detects elements');
       let detectedERD = null;
       
       try {
@@ -218,37 +226,57 @@ const SubmitExercise = () => {
           body: JSON.stringify({ imageUrl: uploadData.url })
         });
 
-        if (detectionResponse.ok) {
-          const detectionResult = await detectionResponse.json();
-          
-          if (detectionResult.isERD && detectionResult.elements) {
-            detectedERD = {
-              elements: detectionResult.elements,
-              detectedAt: new Date(),
-              isERD: true
-            };
-            console.log('✅ ERD detection successful:', detectedERD.elements.length, 'elements found');
-          } else {
-            console.warn('⚠️ Detection API returned but not an ERD or no elements:', detectionResult);
-            detectedERD = {
-              elements: [],
-              detectedAt: new Date(),
-              isERD: false,
-              reason: detectionResult.reason || 'No ERD elements detected'
-            };
-          }
-        } else {
+        if (!detectionResponse.ok) {
           console.error('❌ Detection API failed:', detectionResponse.statusText);
+          setUploading(false);
+          setAiLoadingMessage(''); // ✅ CLEAR OVERLAY
+          showValidationMessage(
+            '❌ ERD detection failed. Please try again or contact your instructor if the problem persists.', 
+            'error', 
+            6000
+          );
+          return;
+        }
+
+        const detectionResult = await detectionResponse.json();
+        
+        if (detectionResult.isERD && detectionResult.elements && detectionResult.elements.length > 0) {
+          detectedERD = {
+            elements: detectionResult.elements,
+            detectedAt: new Date(),
+            isERD: true
+          };
+          console.log('✅ ERD detection successful:', detectedERD.elements.length, 'elements found');
+        } else {
+          console.warn('⚠️ No ERD elements detected:', detectionResult);
+          setUploading(false);
+          setAiLoadingMessage(''); // ✅ CLEAR OVERLAY
+          showValidationMessage(
+            '❌ No ERD elements detected in your image. Please ensure you uploaded a valid ERD diagram and try again.', 
+            'error', 
+            6000
+          );
+          return;
         }
       } catch (detectionError) {
         console.error('❌ ERD detection error:', detectionError);
+        setUploading(false);
+        setAiLoadingMessage(''); // ✅ CLEAR OVERLAY
+        showValidationMessage(
+          '❌ ERD detection service unavailable. Please try again in a few moments.', 
+          'error', 
+          6000
+        );
+        return;
       }
 
-      // STEP 1.75: Auto-grade immediately after detection
+      // ✅ FIX 2: STEP 1.75 - Auto-grade (REQUIRED TO PROCEED)
       let initialGrade = null;
+      
       if (detectedERD?.elements?.length > 0 && exercise.correctAnswer) {
         try {
           console.log('🎓 Calling auto-grade API...');
+          setAiLoadingMessage('🎓 Auto-grading your submission...\nAI is evaluating your ERD');
           const gradeResponse = await fetch('https://ai-api-server-vmaz.onrender.com/autograde-erd', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -258,15 +286,38 @@ const SubmitExercise = () => {
               rubricStructured: exercise.rubricStructured || null
             })
           });
-          if (gradeResponse.ok) {
-            initialGrade = await gradeResponse.json();
-            console.log('✅ Auto-grade successful:', initialGrade.totalScore);
+          
+          if (!gradeResponse.ok) {
+            console.error('❌ Auto-grade API failed:', gradeResponse.statusText);
+            setUploading(false);
+            setAiLoadingMessage(''); // ✅ CLEAR OVERLAY
+            showValidationMessage(
+              '❌ Auto-grading failed. Please try again or contact your instructor if the problem persists.', 
+              'error', 
+              6000
+            );
+            return;
           }
+          
+          initialGrade = await gradeResponse.json();
+          console.log('✅ Auto-grade successful:', initialGrade.totalScore);
+          
         } catch (gradeError) {
           console.error('❌ Auto-grade error:', gradeError);
+          setUploading(false);
+          setAiLoadingMessage(''); // ✅ CLEAR OVERLAY
+          showValidationMessage(
+            '❌ Auto-grading service unavailable. Please try again in a few moments.', 
+            'error', 
+            6000
+          );
+          return;
         }
       }
 
+      // ✅ ONLY REACH HERE IF BOTH DETECTION AND GRADING SUCCEEDED
+      console.log('✅ All validations passed - proceeding to save submission');
+      
       // STEP 2: Check for existing submission
       const submissionsRef = collection(db, 'submissions');
       const existingQuery = query(
@@ -277,7 +328,7 @@ const SubmitExercise = () => {
       );
       const existingDocs = await getDocs(existingQuery);
 
-      // ✅ STEP 3: Create submission data (FIXED - no duplicate grade, status always 'submitted')
+      // STEP 3: Create submission data
       const submissionData = {
         studentId: user.uid,
         studentName: user.displayName || user.email || 'Unknown Student',
@@ -297,10 +348,8 @@ const SubmitExercise = () => {
         submittedAt: new Date(),
         uploadedAt: uploadData.createdAt,
         
-        // ✅ FIXED: Always keep status as 'submitted' (students can't set 'graded')
         status: 'submitted',
         
-        // ✅ FIXED: Add grade info without changing status
         grade: initialGrade,
         autoGradedAt: initialGrade ? new Date() : null,
         hasAutoGrade: !!initialGrade,
@@ -309,7 +358,6 @@ const SubmitExercise = () => {
         isOverwrite: uploadData.isOverwrite,
         predictableFileName: uploadData.predictableFileName,
         
-        // Add detected ERD elements
         detectedERD: detectedERD
       };
 
@@ -338,6 +386,7 @@ const SubmitExercise = () => {
         status: 'completed',
         fileUrl: uploadData.url,
         fileName: selectedFile.name,
+        comments: additionalComments.trim(),
         submittedAt: new Date(),
         updatedAt: new Date(),
         editCount: newEditCount,
@@ -352,30 +401,33 @@ const SubmitExercise = () => {
       setExistingSubmission(progressData);
       setEditCount(newEditCount);
 
-      // SUCCESS STATE
+      // ✅ SUCCESS STATE (Only reached if everything succeeded)
       setSubmitted(true);
       setUploading(false);
       
       const isResubmission = existingSubmission !== null;
       const remainingEdits = maxEdits - newEditCount;
       
+      // ✅ FIX 2: Success message (only shown when submission is actually saved)
       let successMsg = '🎉 Exercise submitted successfully!';
-      if (detectedERD?.elements?.length > 0) {
-        successMsg += ` ${detectedERD.elements.length} ERD elements detected.`;
-      }
-      if (initialGrade) {
-        successMsg += ` Auto-graded: ${initialGrade.totalScore}/10.`;
-      }
+
       if (isResubmission && remainingEdits > 0) {
         successMsg += ` ${remainingEdits} edit${remainingEdits === 1 ? '' : 's'} remaining.`;
       }
       
-      showValidationMessage(successMsg, 'success', 4000);
+      showValidationMessage(successMsg, 'success', 6000);
+      setAiLoadingMessage(''); // ADD THIS - Clear overlay
       window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // ADD THIS: Navigate after 2 seconds
+      setTimeout(() => {
+        navigate(`/student/class/${classId}`);
+      }, 2000);
       
-    } catch (error) {
-      console.error('❌ Error submitting exercise:', error);
-      setUploading(false);
+   } catch (error) {
+  console.error('❌ Error submitting exercise:', error);
+  setUploading(false);
+  setAiLoadingMessage(''); // Clear overlay on error
       
       if (error.message.includes('Network error')) {
         showValidationMessage('❌ Network error. Please check your connection.', 'error');
@@ -432,6 +484,7 @@ const SubmitExercise = () => {
         isSubmissionDisabled={isSubmissionDisabled()}
         submissionButtonText={getSubmissionButtonText()}
         canEdit={canEdit()}
+        aiLoadingMessage={aiLoadingMessage} // ADD THIS
         onFileSelect={handleFileSelect}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}

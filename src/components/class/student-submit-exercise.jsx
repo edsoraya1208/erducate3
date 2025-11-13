@@ -18,6 +18,7 @@ const StudentSubmitClass = ({
   // Submission states
   submitted,
   validationMessage,
+  aiLoadingMessage, // 🆕 NEW: AI loading message
   
   // 🆕 FIXED: Correct props that match parent
   existingSubmission,
@@ -182,7 +183,7 @@ const StudentSubmitClass = ({
     </div>
   ), [selectedFile, submitted, existingSubmission?.fileName, validationMessage, dragOver, canEdit, onDragOver, onDragLeave, onDrop, onFileSelect, onRemoveFile]);
 
-  return (
+ return (
     <div className="se-container">
       {/* HEADER */}
       <div className="se-header">
@@ -215,104 +216,218 @@ const StudentSubmitClass = ({
 
         {/* EXERCISE CONTENT - Two column responsive layout */}
         <div className="se-exercise-content">
-          {/* Left panel - Instructions */}
-          <div className="se-instructions-panel">
-            <h3 className="se-panel-title">Exercise Instructions</h3>
-            <div className="se-instructions-content">
-              
-              {/* EXERCISE DESCRIPTION */}
-              <div className="se-exercise-description">
-                <h4>Description:</h4>
-                <div className="se-description-text">
-                  {exercise?.description || 'No description available'}
-                </div>
-              </div>
-
-              {/* DUE DATE AND MARKS INFO */}
-              <div className="se-due-info">
-                <div className="se-info-item">
-                  <strong>Due Date:</strong> 
-                  <span className={isPastDue ? 'se-overdue' : 'se-on-time'}>
-                    {formattedDueDate}
-                  </span>
-                </div>
-                <div className="se-info-item">
-                  <strong>Total Marks:</strong> {exercise?.totalMarks || 'Not specified'}
-                </div>
-              </div>
-
-              {/* SUBMISSION GUIDELINES */}
-              <div className="se-guidelines">
-                <h4>Submission Guidelines:</h4>
-                <ul>
-                  <li>Submit PNG, JPEG, or JPG files</li>
-                  <li>Maximum file size: 2MB</li>
-                  <li>Keep diagram clear and well-organized</li>
-                  <li>Ensure all text is readable</li>
-                  <li>High resolution images are preferred</li>
-                  <li> <strong>Submit before due date</strong></li>
-                  <li> <strong>Maximum 2 edits allowed</strong></li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          {/* Right panel - Submission area */}
-          <div className="se-submission-panel">
-            {FileUploadArea}
-            
-            {/* 💬 FIXED: Comments Section - Now properly memoized to prevent re-renders */}
-            <div className="se-comments-section">
-              <h3 className="se-section-title">Additional Comments (Optional)</h3>
-              <textarea
-                value={additionalComments}
-                onChange={handleTextareaChange} // 🔧 FIXED: Using memoized handler
-                className="se-comments-textarea"
-                rows="4"
-                disabled={!canEdit}
-                placeholder={!canEdit ? "Comments are disabled" : "Enter any additional comments..."}
-              />
-            </div>
-            
-            {/* Submit button section */}
-            <div className="se-submit-section">
-              {/* UPLOAD STATUS */}
-              {uploading && (
-                <div className="se-upload-progress">
-                  <div className="se-progress-bar">
-                    <div className="se-progress-fill"></div>
+          {loading ? (
+            // 🔄 SKELETON LOADING STATE
+            <>
+              <div className="se-instructions-panel">
+                <h3 className="se-panel-title">Exercise Instructions</h3>
+                <div className="se-instructions-content">
+                  <div className="se-exercise-description">
+                    <h4>Description:</h4>
+                    <div className="se-description-text" style={{
+                      height: '60px',
+                      background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+                      backgroundSize: '200% 100%',
+                      animation: 'loading 1.5s infinite',
+                      borderRadius: '4px'
+                    }} />
                   </div>
-                  <p className="se-upload-status">
-                    📤 Uploading to cloud storage...
-                  </p>
+                  <div className="se-due-info">
+                    <div className="se-info-item" style={{
+                      height: '24px',
+                      width: '60%',
+                      background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+                      backgroundSize: '200% 100%',
+                      animation: 'loading 1.5s infinite',
+                      borderRadius: '4px',
+                      marginBottom: '8px'
+                    }} />
+                    <div className="se-info-item" style={{
+                      height: '24px',
+                      width: '40%',
+                      background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+                      backgroundSize: '200% 100%',
+                      animation: 'loading 1.5s infinite',
+                      borderRadius: '4px'
+                    }} />
+                  </div>
                 </div>
-              )}
+              </div>
+              <div className="se-submission-panel">
+                <div style={{
+                  height: '200px',
+                  background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+                  backgroundSize: '200% 100%',
+                  animation: 'loading 1.5s infinite',
+                  borderRadius: '8px'
+                }} />
+              </div>
+              <style>{`
+                @keyframes loading {
+                  0% { background-position: 200% 0; }
+                  100% { background-position: -200% 0; }
+                }
+              `}</style>
+            </>
+          ) : (
+            // ✅ ACTUAL CONTENT (Your existing code)
+            <>
+              {/* Left panel - Instructions */}
+              <div className="se-instructions-panel">
+                <h3 className="se-panel-title">Exercise Instructions</h3>
+                <div className="se-instructions-content">
+                  
+                  {/* EXERCISE DESCRIPTION */}
+                  <div className="se-exercise-description">
+                    <h4>Description:</h4>
+                    <div className="se-description-text">
+                      {exercise?.description || 'No description available'}
+                    </div>
+                  </div>
 
-              {/* 🆕 FIXED: Submit button with proper logic */}
-              <button
-                onClick={onSubmitExercise}
-                disabled={!selectedFile || isSubmissionDisabled}
-                className={`se-submit-btn ${isSubmissionDisabled ? 'disabled' : ''}`}
-              >
-                {submissionButtonText}
-              </button>
+                  {/* DUE DATE AND MARKS INFO */}
+                  <div className="se-due-info">
+                    <div className="se-info-item">
+                      <strong>Due Date:</strong> 
+                      <span className={isPastDue ? 'se-overdue' : 'se-on-time'}>
+                        {formattedDueDate}
+                      </span>
+                    </div>
+                    <div className="se-info-item">
+                      <strong>Total Marks:</strong> {exercise?.totalMarks || 'Not specified'}
+                    </div>
+                  </div>
 
-              {/* SUBMISSION CONFIRMATION */}
-              {submitted && !isPastDue && editCount < maxEdits && (
-                <p className="se-submitted-note">
-                  Your exercise has been submitted. You can still edit and resubmit before the due date.
-                </p>
-              )}
-              
-              {submitted && (isPastDue || editCount >= maxEdits) && (
-                <p className="se-submitted-note">
-                  Your exercise has been submitted and is ready for grading.
-                </p>
-              )}
-            </div>
-          </div>
+                  {/* SUBMISSION GUIDELINES */}
+                  <div className="se-guidelines">
+                    <h4>Submission Guidelines:</h4>
+                    <ul>
+                      <li>Submit PNG, JPEG, or JPG files</li>
+                      <li>Maximum file size: 2MB</li>
+                      <li>Keep diagram clear and well-organized</li>
+                      <li>Ensure all text is readable</li>
+                      <li>High resolution images are preferred</li>
+                      <li> <strong>Submit before due date</strong></li>
+                      <li> <strong>Maximum 2 edits allowed</strong></li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right panel - Submission area */}
+              <div className="se-submission-panel">
+                {FileUploadArea}
+                
+                {/* 💬 FIXED: Comments Section - Now properly memoized to prevent re-renders */}
+                <div className="se-comments-section">
+                  <h3 className="se-section-title">Additional Comments (Optional)</h3>
+                  <textarea
+                    value={additionalComments}
+                    onChange={handleTextareaChange}
+                    className="se-comments-textarea"
+                    rows="4"
+                    disabled={!canEdit}
+                    placeholder={!canEdit ? "Comments are disabled" : "Enter any additional comments..."}
+                  />
+                </div>
+                
+                {/* Submit button section */}
+                <div className="se-submit-section">
+                  {/* UPLOAD STATUS */}
+                  {uploading && (
+                    <div className="se-upload-progress">
+                      <div className="se-progress-bar">
+                        <div className="se-progress-fill"></div>
+                      </div>
+                      <p className="se-upload-status">
+                        📤 Uploading to cloud storage...
+                      </p>
+                    </div>
+                  )}
+
+                  {/* 🆕 FIXED: Submit button with proper logic */}
+                  <button
+                    onClick={onSubmitExercise}
+                    disabled={!selectedFile || isSubmissionDisabled}
+                    className={`se-submit-btn ${isSubmissionDisabled ? 'disabled' : ''}`}
+                  >
+                    {submissionButtonText}
+                  </button>
+
+                  {/* SUBMISSION CONFIRMATION */}
+                  {submitted && !isPastDue && editCount < maxEdits && (
+                    <p className="se-submitted-note">
+                      Your exercise has been submitted. You can still edit and resubmit before the due date.
+                    </p>
+                  )}
+                  
+                  {submitted && (isPastDue || editCount >= maxEdits) && (
+                    <p className="se-submitted-note">
+                      Your exercise has been submitted and is ready for grading.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
+
+      {/* 🤖 AI LOADING OVERLAY */}
+      {aiLoadingMessage && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.85)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          color: 'white',
+          fontSize: '1.2rem',
+          padding: '2rem',
+          textAlign: 'center'
+        }}>
+          <div style={{
+            marginBottom: '1.5rem',
+            fontSize: '3rem',
+            animation: 'pulse 2s ease-in-out infinite'
+          }}>
+            🤖
+          </div>
+          <div style={{ 
+            marginBottom: '1rem',
+            fontWeight: '500',
+            maxWidth: '500px',
+            whiteSpace: 'pre-line'
+          }}>
+            {aiLoadingMessage}
+          </div>
+          <div style={{
+            width: '50px',
+            height: '50px',
+            border: '4px solid rgba(255, 255, 255, 0.3)',
+            borderTop: '4px solid white',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            marginTop: '1rem'
+          }} />
+          <style>{`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+            @keyframes pulse {
+              0%, 100% { transform: scale(1); opacity: 1; }
+              50% { transform: scale(1.1); opacity: 0.8; }
+            }
+          `}</style>
+        </div>
+      )}
     </div>
   );
 };

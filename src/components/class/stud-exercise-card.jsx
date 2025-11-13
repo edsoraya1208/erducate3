@@ -24,6 +24,18 @@ const StudExerciseCard = ({
       return { show: false };
     }
     
+    // 🆕 NEW CHECK #1: Hide button if grade is published
+    if (exercise.isGradePublished) {
+      console.log('🔒 Edit button hidden - Grade is published');
+      return { show: false };
+    }
+    
+    // 🆕 NEW CHECK #2: Hide button if lecturer added manual feedback
+    if (exercise.hasManualFeedback) {
+      console.log('🔒 Edit button hidden - Lecturer added feedback');
+      return { show: false };
+    }
+    
     // Check if graded by lecturer
     const isGraded = progress && (
       progress.score !== undefined && progress.score !== null ||
@@ -32,7 +44,7 @@ const StudExerciseCard = ({
     );
     
     if (isGraded) {
-      // 🆕 HIDE button completely when graded (better UX)
+      // Hide button completely when graded (better UX)
       return { show: false };
     }
     
@@ -41,7 +53,7 @@ const StudExerciseCard = ({
     const maxEdits = progress?.maxEdits || 2;
     
     if (editCount >= maxEdits) {
-      // 🆕 HIDE button completely when max edits reached (better UX)
+      // Hide button completely when max edits reached (better UX)
       return { show: false };
     }
     

@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import '../../styles/review-erd.css';
+import '../../styles/grade-erd.css'; // ✅ ADD THIS LINE
 import ValidationErrorModal from '../modals/ValidationErrorModal';
 
 const LecturerReviewERDComponent = ({ 
@@ -302,43 +303,48 @@ const LecturerReviewERDComponent = ({
   const belongsToOptions = getBelongsToOptions();
 
   return (
-    <div className="rev-container">
+    <div className="rev-container review-erd-page">
       <h1 className="rev-title">Review AI Detection</h1>
       
       <div className="rev-content">
-        {/* Left: Answer Scheme */}
+        {/* Left: Answer Scheme & Rubric */}
         <div className="rev-image-section">
-          <h2>ERD Answer Scheme</h2>
-          <div className="rev-image-display">
-            <img src={initialAnswerScheme} alt="ERD Answer Scheme" />
-          </div>
-          
-          {/* 🆕 CHANGED: Display rubric text instead of PDF */}
-          {initialRubricText && (
-            <>
-              <h2>Rubric</h2>
-              <div className="rev-rubric-display">
-                <pre className="rubric-text">{initialRubricText}</pre>
-                
-                {/* 🆕 NEW: Show AI-analyzed rubric if available */}
-                {initialRubricAnalysis && initialRubricAnalysis.isERDRubric && (
-                  <div className="rubric-analysis">
-                    <h3>📊 AI Analysis</h3>
-                    <p><strong>Total Points:</strong> {initialRubricAnalysis.totalPoints}</p>
-                    {initialRubricAnalysis.criteria && (
-                      <ul>
-                        {initialRubricAnalysis.criteria.map((criterion, idx) => (
-                          <li key={idx}>
-                            <strong>{criterion.category}</strong> ({criterion.maxPoints} pts): {criterion.description}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                )}
+          <div className="grade-left-column">
+            <h2>ERD Answer Scheme</h2>
+            
+            <div className="grade-image-container">
+              <div className="rev-image-display">
+                <img src={initialAnswerScheme} alt="ERD Answer Scheme" />
               </div>
-            </>
-          )}
+            </div>
+
+            {/* Rubric Section */}
+            {initialRubricText && (
+              <div className="grade-image-container" style={{ marginTop: '1.5rem' }}>
+                <h3 style={{ marginBottom: '0.5rem' }}>Rubric</h3>
+                <div className="rev-rubric-display">
+                  <pre className="rubric-text">{initialRubricText}</pre>
+                  
+                  {/* Show AI-analyzed rubric if available */}
+                  {initialRubricAnalysis && initialRubricAnalysis.isERDRubric && (
+                    <div className="rubric-analysis">
+                      <h3>📊 AI Analysis</h3>
+                      <p><strong>Total Points:</strong> {initialRubricAnalysis.totalPoints}</p>
+                      {initialRubricAnalysis.criteria && (
+                        <ul>
+                          {initialRubricAnalysis.criteria.map((criterion, idx) => (
+                            <li key={idx}>
+                              <strong>{criterion.category}</strong> ({criterion.maxPoints} pts): {criterion.description}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Right: Detected Elements */}

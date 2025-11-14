@@ -110,6 +110,12 @@
   border-bottom: 2px solid #e1e4e8;
 }
 
+.grade-left-column h3 {
+  font-size: 1.5rem;
+  margin-bottom: 0rem;
+  color: #2d3748;
+}
+
 /* ✅ NEW: Image container with scrollbar */
 .grade-image-container {
   flex: 1;

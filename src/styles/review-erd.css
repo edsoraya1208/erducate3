@@ -738,8 +738,8 @@
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 1.5rem;
-  margin-top: 1rem;
-  max-height: 400px;
+  margin-top: 0.1rem;
+  max-height: 320px;
   overflow-y: auto;
 }
 
@@ -811,6 +811,50 @@
 
 .rev-rubric-display::-webkit-scrollbar-thumb:hover {
   background: #6d28d9;
+}
+
+/* Make cards taller on Review ERD page only - NO SCROLL */
+.review-erd-page .grade-image-container {
+  flex: none !important; /* Override flex: 1 */
+  overflow-y: visible !important; /* Override overflow-y: auto */
+  max-height: none !important;
+  min-height: auto !important;
+  padding-right: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.review-erd-page .rev-image-display {
+  overflow: visible;
+}
+
+.review-erd-page .rev-image-display img {
+  max-height: none;
+  height: auto;
+  min-height: auto;
+}
+
+/* Remove fixed height from left section on Review page */
+.review-erd-page .rev-image-section {
+  height: auto !important;
+}
+
+/* Match heights on Review ERD page */
+.review-erd-page .rev-content {
+  align-items: stretch; /* Make both columns same height */
+}
+
+.review-erd-page .rev-image-section,
+.review-erd-page .rev-elements-section {
+  height: auto; /* Let them grow naturally */
+  min-height: 100%; /* But at least match each other */
+}
+
+.review-erd-page .grade-left-column {
+  height: 100%; /* Fill the container */
+  display: flex;
+  flex-direction: column;
 }
 
 /* Responsive */

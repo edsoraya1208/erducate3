@@ -16,61 +16,45 @@ const StudExerciseCard = ({
     }
   };
 
+  // ✅ NEW: Helper function to check if past due date
+  const isPastDue = (dueDate) => {
+    if (!dueDate) return false;
+    const due = dueDate.toDate ? dueDate.toDate() : new Date(dueDate);
+    return new Date() > due;
+  };
+
   const getEditButtonState = (exercise) => {
     const isSubmitted = exercise.isSubmitted || exercise.isCompleted;
-    const progress = exercise.progress;
     
     if (!isSubmitted) {
       return { show: false };
     }
     
-    // 🆕 NEW CHECK #1: Hide button if grade is published
+    // ✅ NEW CHECK #1: Hide button if past due date
+    if (isPastDue(exercise.dueDate)) {
+      console.log('🔒 Edit button hidden - Past due date');
+      return { show: false };
+    }
+    
+    // CHECK #2: Hide button if grade is published
     if (exercise.isGradePublished) {
       console.log('🔒 Edit button hidden - Grade is published');
       return { show: false };
     }
     
-    // 🆕 NEW CHECK #2: Hide button if lecturer added manual feedback
+    // CHECK #3: Hide button if lecturer added manual feedback
     if (exercise.hasManualFeedback) {
       console.log('🔒 Edit button hidden - Lecturer added feedback');
       return { show: false };
     }
     
-    // Check if graded by lecturer
-    const isGraded = progress && (
-      progress.score !== undefined && progress.score !== null ||
-      progress.status === 'graded' ||
-      progress.isGraded === true
-    );
+    // ❌ REMOVED: Edit count checks
+    // const progress = exercise.progress;
+    // const editCount = progress?.editCount || 0;
+    // const maxEdits = progress?.maxEdits || 2;
+    // if (editCount >= maxEdits) return { show: false };
     
-    if (isGraded) {
-      // Hide button completely when graded (better UX)
-      return { show: false };
-    }
-    
-    // Check edit count (default to 0 if not set)
-    const editCount = progress?.editCount || 0;
-    const maxEdits = progress?.maxEdits || 2;
-    
-    if (editCount >= maxEdits) {
-      // Hide button completely when max edits reached (better UX)
-      return { show: false };
-    }
-    
-    const editsLeft = maxEdits - editCount;
-    
-    // Better UX: Just show "Edit Submission" but make button orange when 1 edit left
-    // Tooltip shows on hover with remaining edits info
-    if (editsLeft === 1) {
-      return {
-        show: true,
-        enabled: true,
-        text: 'Edit Submission',
-        class: 'stud-mc-btn-edit-warning',
-        tooltip: '1 edit remaining'
-      };
-    }
-    
+    // ✅ Simple edit button - enabled if all checks pass
     return {
       show: true,
       enabled: true,
@@ -188,7 +172,7 @@ const StudExerciseCard = ({
           {/* Edit and View Results buttons for submitted exercises */}
           {(editButton.show || viewResultsButton.show) && (
             <div className="stud-mc-submitted-actions">
-              {/* Edit Submission Button - Only show if editButton.show is true */}
+              {/* Edit Submission Button */}
               {editButton.show && (
                 <button 
                   className={`stud-mc-action-btn ${editButton.class}`}

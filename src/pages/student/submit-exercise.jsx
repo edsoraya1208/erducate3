@@ -37,8 +37,11 @@ const SubmitExercise = () => {
   const [validationMessage, setValidationMessage] = useState(null);
   
   const [existingSubmission, setExistingSubmission] = useState(null);
-  const [editCount, setEditCount] = useState(0);
-  const [maxEdits] = useState(2);
+  // ❌ REMOVED: editCount, maxEdits (edit count feature disabled)
+  // const [editCount, setEditCount] = useState(0);
+  // const [maxEdits] = useState(2);
+
+  const [submissionStatus, setSubmissionStatus] = useState(null);
 
   useEffect(() => {
     if (classId && exerciseId && user) {
@@ -52,11 +55,9 @@ const SubmitExercise = () => {
     return new Date() > dueDate;
   };
 
-  // ===== UPDATE loadExerciseAndSubmissionData (add this at the end, before finally) =====
-const loadExerciseAndSubmissionData = async () => {
-  try {
-    console.log('📚 Loading exercise and submission data for:', { classId, exerciseId, userId: user.uid });
-
+  const loadExerciseAndSubmissionData = async () => {
+    try {
+      console.log('📚 Loading exercise and submission data for:', { classId, exerciseId, userId: user.uid });
       
       const exerciseRef = doc(db, 'classes', classId, 'exercises', exerciseId);
       const exerciseDoc = await getDoc(exerciseRef);
@@ -78,31 +79,27 @@ const loadExerciseAndSubmissionData = async () => {
       if (progressDoc.exists()) {
         const progressData = progressDoc.data();
         setExistingSubmission(progressData);
-        setEditCount(progressData.editCount || 0);
+        // ❌ REMOVED: setEditCount(progressData.editCount || 0);
         setSubmitted(progressData.submitted || false);
         
-        // ✅ FIX 1: Restore comments from previous submission
         if (progressData.comments) {
           setAdditionalComments(progressData.comments);
         }
         
         console.log('📋 Found existing submission:', {
-          editCount: progressData.editCount || 0,
-          submitted: progressData.submitted,
-          maxEdits
+          submitted: progressData.submitted
         });
       } else {
         console.log('📝 No existing submission found');
         setExistingSubmission(null);
-        setEditCount(0);
+        // ❌ REMOVED: setEditCount(0);
         setSubmitted(false);
       }
 
-      // Check submission status from submissions collection
-    const status = await loadSubmissionStatus();
-    setSubmissionStatus(status);
-    console.log('📊 Submission status:', status);
-      
+      const status = await loadSubmissionStatus();
+      setSubmissionStatus(status);
+      console.log('📊 Submission status:', status);
+        
     } catch (error) {
       console.error('❌ Error loading data:', error);
     } finally {
@@ -110,28 +107,27 @@ const loadExerciseAndSubmissionData = async () => {
     }
   };
 
-  // ===== ADD THIS NEW FUNCTION (after loadExerciseAndSubmissionData) =====
-const loadSubmissionStatus = async () => {
-  try {
-    const submissionsRef = collection(db, 'submissions');
-    const statusQuery = query(
-      submissionsRef,
-      where('studentId', '==', user.uid),
-      where('classId', '==', classId),
-      where('exerciseId', '==', exerciseId)
-    );
-    const statusDocs = await getDocs(statusQuery);
-    
-    if (!statusDocs.empty) {
-      const submissionData = statusDocs.docs[0].data();
-      return submissionData.status; // Returns 'published', 'graded', or 'submitted'
+  const loadSubmissionStatus = async () => {
+    try {
+      const submissionsRef = collection(db, 'submissions');
+      const statusQuery = query(
+        submissionsRef,
+        where('studentId', '==', user.uid),
+        where('classId', '==', classId),
+        where('exerciseId', '==', exerciseId)
+      );
+      const statusDocs = await getDocs(statusQuery);
+      
+      if (!statusDocs.empty) {
+        const submissionData = statusDocs.docs[0].data();
+        return submissionData.status;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error loading submission status:', error);
+      return null;
     }
-    return null;
-  } catch (error) {
-    console.error('Error loading submission status:', error);
-    return null;
-  }
-};
+  };
 
   const showValidationMessage = (text, type = 'error', duration = 4000) => {
     setValidationMessage({ text, type });
@@ -200,15 +196,12 @@ const loadSubmissionStatus = async () => {
     setAdditionalComments(value);
   }, []);
 
-  const [submissionStatus, setSubmissionStatus] = useState(null);
-
   const isGradingLocked = () => {
-  // Lock if status is 'published' OR if lecturer added manual feedback
-  return submissionStatus === 'published' || 
-         (existingSubmission?.feedback !== null && existingSubmission?.feedback !== undefined);
-};
+    return submissionStatus === 'published' || 
+           (existingSubmission?.feedback !== null && existingSubmission?.feedback !== undefined);
+  };
 
-    const handleSubmitExercise = async () => {
+  const handleSubmitExercise = async () => {
     setValidationMessage(null);
 
     if (isPastDue()) {
@@ -216,7 +209,6 @@ const loadSubmissionStatus = async () => {
       return;
     }
 
-    // 🆕 NEW CHECK: Prevent resubmission if grading is locked
     if (isGradingLocked()) {
       showValidationMessage(
         '❌ Cannot resubmit - your submission has been graded by the lecturer. Contact your instructor if you need to make changes.', 
@@ -231,25 +223,18 @@ const loadSubmissionStatus = async () => {
       return;
     }
 
-
     if (!user) {
       showValidationMessage('❌ You must be logged in to submit', 'error');
       return;
     }
 
-    if (existingSubmission && editCount >= maxEdits) {
-      showValidationMessage(
-        `🚫 Maximum edit attempts (${maxEdits}) reached. You cannot resubmit this exercise.`, 
-        'error'
-      );
-      return;
-    }
+    // ❌ REMOVED: Edit count validation
+    // if (existingSubmission && editCount >= maxEdits) { ... }
 
     try {
       setUploading(true);
       console.log('📤 Starting exercise submission...');
 
-      // STEP 1: Upload to Cloudinary
       console.log('🚀 Uploading file via Vercel API...');
       const uploadData = await uploadToCloudinary(
         selectedFile, 
@@ -263,7 +248,6 @@ const loadSubmissionStatus = async () => {
       
       console.log('✅ File uploaded via API:', uploadData.url);
 
-      // ✅ FIX 2: STEP 1.5 - Detect ERD elements (REQUIRED TO PROCEED)
       console.log('🤖 Calling ERD detection API...');
       setAiLoadingMessage('🤖 Analyzing your ERD diagram...\nPlease wait while AI detects elements');
       let detectedERD = null;
@@ -278,7 +262,7 @@ const loadSubmissionStatus = async () => {
         if (!detectionResponse.ok) {
           console.error('❌ Detection API failed:', detectionResponse.statusText);
           setUploading(false);
-          setAiLoadingMessage(''); // ✅ CLEAR OVERLAY
+          setAiLoadingMessage('');
           showValidationMessage(
             '❌ ERD detection failed. Please try again or contact your instructor if the problem persists.', 
             'error', 
@@ -299,7 +283,7 @@ const loadSubmissionStatus = async () => {
         } else {
           console.warn('⚠️ No ERD elements detected:', detectionResult);
           setUploading(false);
-          setAiLoadingMessage(''); // ✅ CLEAR OVERLAY
+          setAiLoadingMessage('');
           showValidationMessage(
             '❌ No ERD elements detected in your image. Please ensure you uploaded a valid ERD diagram and try again.', 
             'error', 
@@ -310,7 +294,7 @@ const loadSubmissionStatus = async () => {
       } catch (detectionError) {
         console.error('❌ ERD detection error:', detectionError);
         setUploading(false);
-        setAiLoadingMessage(''); // ✅ CLEAR OVERLAY
+        setAiLoadingMessage('');
         showValidationMessage(
           '❌ ERD detection service unavailable. Please try again in a few moments.', 
           'error', 
@@ -319,7 +303,6 @@ const loadSubmissionStatus = async () => {
         return;
       }
 
-      // ✅ FIX 2: STEP 1.75 - Auto-grade (REQUIRED TO PROCEED)
       let initialGrade = null;
       
       if (detectedERD?.elements?.length > 0 && exercise.correctAnswer) {
@@ -339,7 +322,7 @@ const loadSubmissionStatus = async () => {
           if (!gradeResponse.ok) {
             console.error('❌ Auto-grade API failed:', gradeResponse.statusText);
             setUploading(false);
-            setAiLoadingMessage(''); // ✅ CLEAR OVERLAY
+            setAiLoadingMessage('');
             showValidationMessage(
               '❌ Auto-grading failed. Please try again or contact your instructor if the problem persists.', 
               'error', 
@@ -354,7 +337,7 @@ const loadSubmissionStatus = async () => {
         } catch (gradeError) {
           console.error('❌ Auto-grade error:', gradeError);
           setUploading(false);
-          setAiLoadingMessage(''); // ✅ CLEAR OVERLAY
+          setAiLoadingMessage('');
           showValidationMessage(
             '❌ Auto-grading service unavailable. Please try again in a few moments.', 
             'error', 
@@ -364,10 +347,8 @@ const loadSubmissionStatus = async () => {
         }
       }
 
-      // ✅ ONLY REACH HERE IF BOTH DETECTION AND GRADING SUCCEEDED
       console.log('✅ All validations passed - proceeding to save submission');
 
-      // STEP 2: Check for existing submission
       const submissionsRef = collection(db, 'submissions');
       const existingQuery = query(
         submissionsRef,
@@ -377,7 +358,6 @@ const loadSubmissionStatus = async () => {
       );
       const existingDocs = await getDocs(existingQuery);
 
-      // STEP 3: Create submission data
       const submissionData = {
         studentId: user.uid,
         studentName: user.displayName || user.email || 'Unknown Student',
@@ -410,7 +390,6 @@ const loadSubmissionStatus = async () => {
         detectedERD: detectedERD
       };
 
-      // STEP 4: Save to Firestore
       if (existingDocs.empty) {
         await addDoc(submissionsRef, submissionData);
         console.log('✅ New submission created successfully');
@@ -423,8 +402,7 @@ const loadSubmissionStatus = async () => {
         console.log('✅ Submission updated successfully');
       }
 
-      // STEP 5: Save to studentProgress
-      const newEditCount = existingSubmission ? (editCount + 1) : 0;
+      // ❌ REMOVED: const newEditCount = existingSubmission ? (editCount + 1) : 0;
       
       const progressData = {
         studentId: user.uid,
@@ -438,45 +416,35 @@ const loadSubmissionStatus = async () => {
         comments: additionalComments.trim(),
         submittedAt: new Date(),
         updatedAt: new Date(),
-        editCount: newEditCount,
-        maxEdits: maxEdits,
+        // ❌ REMOVED: editCount, maxEdits
         isResubmission: existingSubmission ? true : false
       };
 
       const progressDocId = `${user.uid}_${classId}_${exerciseId}`;
       await setDoc(doc(db, 'studentProgress', progressDocId), progressData);
-      console.log('✅ Progress saved with editCount:', newEditCount);
+      console.log('✅ Progress saved');
 
       setExistingSubmission(progressData);
-      setEditCount(newEditCount);
+      // ❌ REMOVED: setEditCount(newEditCount);
 
-      // ✅ SUCCESS STATE (Only reached if everything succeeded)
       setSubmitted(true);
       setUploading(false);
       
-      const isResubmission = existingSubmission !== null;
-      const remainingEdits = maxEdits - newEditCount;
-      
-      // ✅ FIX 2: Success message (only shown when submission is actually saved)
+      // ❌ REMOVED: remainingEdits calculation and display
       let successMsg = '🎉 Exercise submitted successfully!';
-
-      if (isResubmission && remainingEdits > 0) {
-        successMsg += ` ${remainingEdits} edit${remainingEdits === 1 ? '' : 's'} remaining.`;
-      }
       
       showValidationMessage(successMsg, 'success', 6000);
-      setAiLoadingMessage(''); // ADD THIS - Clear overlay
+      setAiLoadingMessage('');
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
-      // ADD THIS: Navigate after 2 seconds
       setTimeout(() => {
         navigate(`/student/class/${classId}`);
       }, 2000);
       
-   } catch (error) {
-  console.error('❌ Error submitting exercise:', error);
-  setUploading(false);
-  setAiLoadingMessage(''); // Clear overlay on error
+    } catch (error) {
+      console.error('❌ Error submitting exercise:', error);
+      setUploading(false);
+      setAiLoadingMessage('');
       
       if (error.message.includes('Network error')) {
         showValidationMessage('❌ Network error. Please check your connection.', 'error');
@@ -495,23 +463,26 @@ const loadSubmissionStatus = async () => {
   };
 
   const isSubmissionDisabled = () => {
-    return uploading || isPastDue() || (existingSubmission && editCount >= maxEdits);
+    // ❌ REMOVED: editCount check
+    return uploading || isPastDue();
   };
 
-  // ===== UPDATE getSubmissionButtonText (add this condition at the start) =====
-const getSubmissionButtonText = () => {
-  if (uploading) return 'Uploading...';
-  if (isGradingLocked()) return 'Grade Published - Locked'; // ✅ ADD THIS LINE
-  if (isPastDue()) return 'Past Due Date';
-  if (!existingSubmission) return 'Submit Exercise';
-  if (editCount >= maxEdits) return 'Maximum Edits Reached';
-  return `Resubmit (${maxEdits - editCount} edit${maxEdits - editCount === 1 ? '' : 's'} left)`;
-};
+  const getSubmissionButtonText = () => {
+    if (uploading) return 'Uploading...';
+    if (isGradingLocked()) return 'Grade Published - Locked';
+    if (isPastDue()) return 'Past Due Date';
+    if (!existingSubmission) return 'Submit Exercise';
+    
+    // ❌ REMOVED: Edit count display
+    // if (editCount >= maxEdits) return 'Maximum Edits Reached';
+    // return `Resubmit (${maxEdits - editCount} edits left)`;
+    
+    return 'Resubmit Exercise';
+  };
 
   const canEdit = () => {
-    return !isPastDue() && 
-          !isGradingLocked() && // 🆕 NEW CHECK
-          (!existingSubmission || editCount < maxEdits);
+    // ❌ REMOVED: editCount check
+    return !isPastDue() && !isGradingLocked();
   };
 
   return (
@@ -532,12 +503,11 @@ const getSubmissionButtonText = () => {
         submitted={submitted}
         validationMessage={validationMessage}
         existingSubmission={existingSubmission}
-        editCount={editCount}
-        maxEdits={maxEdits}
+        // ❌ REMOVED: editCount, maxEdits props
         isSubmissionDisabled={isSubmissionDisabled()}
         submissionButtonText={getSubmissionButtonText()}
         canEdit={canEdit()}
-        aiLoadingMessage={aiLoadingMessage} // ADD THIS
+        aiLoadingMessage={aiLoadingMessage}
         onFileSelect={handleFileSelect}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}

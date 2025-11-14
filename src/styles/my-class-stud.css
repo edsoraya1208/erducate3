@@ -305,7 +305,7 @@
 }
 
 /* Edit Button - Warning State (1 edit left) */
-.stud-mc-btn-edit-warning {
+/*.stud-mc-btn-edit-warning {
   background-color: #f59e0b;
   color: white;
 }
@@ -313,7 +313,7 @@
 .stud-mc-btn-edit-warning:hover {
   background-color: #d97706;
   box-shadow: 0 2px 8px rgba(241, 245, 11, 0.3);
-}
+}*/
 
 /* Tooltip for warning edit button */
 .stud-mc-btn-edit-warning::after {

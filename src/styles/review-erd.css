@@ -762,7 +762,7 @@
 }
 
 .rubric-analysis h3 {
-  color: #7c3aed;
+  color: #5619bf;
   font-size: 1.1rem;
   margin-bottom: 1rem;
 }
@@ -789,7 +789,7 @@
 }
 
 .rubric-analysis li strong {
-  color: #7c3aed;
+  color: #5619bf;
   display: block;
   margin-bottom: 0.25rem;
 }
@@ -805,7 +805,7 @@
 }
 
 .rev-rubric-display::-webkit-scrollbar-thumb {
-  background: #7c3aed;
+  background: #5a1bc6;
   border-radius: 4px;
 }
 

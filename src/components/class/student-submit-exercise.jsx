@@ -22,8 +22,8 @@ const StudentSubmitClass = ({
   
   // 🆕 FIXED: Correct props that match parent
   existingSubmission,
-  editCount,
-  maxEdits,
+  //editCount,
+  //maxEdits,
   isSubmissionDisabled,
   submissionButtonText,
   canEdit, // 🆕 NEW: Editing permission
@@ -47,45 +47,57 @@ const StudentSubmitClass = ({
   }, [exercise?.dueDate]);
 
 // 🚨 Get submission status message - MEMOIZED TO PREVENT RE-RENDERS
-const statusMessage = useMemo(() => {
-  // ✅ FIXED: Check if grade is published (matches your card logic)
-  const isGradingLocked = existingSubmission?.status === 'published';
-  
-  if (isGradingLocked) {
-    return {
-      type: 'info',
-      text: '🔒 Your submission has been graded and published. No further edits are allowed.'
-    };
-  }
-
-  if (isPastDue && !submitted) {
-    return {
-      type: 'error',
-      text: '⏰ Assignment is past due - submission is no longer allowed'
-    };
-  }
-  
-  if (submitted && isPastDue) {
-    const dueDate = exercise.dueDate.toDate ? exercise.dueDate.toDate() : new Date(exercise.dueDate);
-    const submissionDate = new Date(); // or actual submission date if available
-    const daysLate = Math.ceil((submissionDate - dueDate) / (1000 * 60 * 60 * 24));
-    return {
-      type: 'warning',
-      text: `Assignment was submitted ${daysLate} day${daysLate > 1 ? 's' : ''} late`
-    };
-  } else if (submitted) {
-    const remainingEdits = maxEdits - editCount;
-    let text = 'Assignment submitted successfully';
-    if (remainingEdits > 0 && !isPastDue) {
-      text += ` (${remainingEdits} edit${remainingEdits === 1 ? '' : 's'} remaining)`;
+  const statusMessage = useMemo(() => {
+    // ✅ Check if grade is published (matches your card logic)
+    const isGradingLocked = existingSubmission?.status === 'published';
+    
+    if (isGradingLocked) {
+      return {
+        type: 'info',
+        text: '🔒 Your submission has been graded and published. No further edits are allowed.'
+      };
     }
-    return {
-      type: 'success',
-      text: text
-    };
-  }
-  return null;
-}, [isPastDue, submitted, maxEdits, editCount, exercise?.dueDate, existingSubmission?.status]);
+
+    if (isPastDue && !submitted) {
+      return {
+        type: 'error',
+        text: '⏰ Assignment is past due - submission is no longer allowed'
+      };
+    }
+    
+    if (submitted && isPastDue) {
+      const dueDate = exercise.dueDate.toDate ? exercise.dueDate.toDate() : new Date(exercise.dueDate);
+      const submissionDate = new Date(); // or actual submission date if available
+      const daysLate = Math.ceil((submissionDate - dueDate) / (1000 * 60 * 60 * 24));
+      return {
+        type: 'warning',
+        text: `Assignment was submitted ${daysLate} day${daysLate > 1 ? 's' : ''} late`
+      };
+    } else if (submitted) {
+      // ❌ REMOVED: Edit count display in success message
+      // 🔄 TO RESTORE: Uncomment lines below
+      /*
+      const remainingEdits = maxEdits - editCount;
+      let text = 'Assignment submitted successfully';
+      if (remainingEdits > 0 && !isPastDue) {
+        text += ` (${remainingEdits} edit${remainingEdits === 1 ? '' : 's'} remaining)`;
+      }
+      return {
+        type: 'success',
+        text: text
+      };
+      */
+      
+      // ✅ NEW: Simple success message without edit count
+      return {
+        type: 'success',
+        text: 'Assignment submitted successfully'
+      };
+    }
+    return null;
+  // ❌ REMOVED: editCount, maxEdits from dependency array
+  // 🔄 TO RESTORE: Add back editCount, maxEdits to dependencies below
+  }, [isPastDue, submitted, exercise?.dueDate, existingSubmission?.status]);
 
 // ✅ NEW: Check if grading is locked (used to hide edit messages)
 const isGradingLocked = existingSubmission?.status === 'published';
@@ -320,8 +332,10 @@ const isGradingLocked = existingSubmission?.status === 'published';
                       <li>Keep diagram clear and well-organized</li>
                       <li>Use standard English terms</li>
                       <li>Use Chen's notation for consistency</li>
-                      <li> <strong>Submit before due date</strong></li>
-                      <li> <strong>Maximum 2 edits allowed</strong></li>
+                      <li><strong>Submit before due date</strong></li>
+                      {/* ❌ REMOVED: Maximum 2 edits guideline */}
+                      {/* 🔄 TO RESTORE: Uncomment line below */}
+                      {/* <li><strong>Maximum 2 edits allowed</strong></li> */}
                     </ul>
                   </div>
                 </div>
@@ -368,13 +382,29 @@ const isGradingLocked = existingSubmission?.status === 'published';
                   </button>
 
                   {/* SUBMISSION CONFIRMATION */}
-                  {submitted && !isPastDue && editCount < maxEdits && (
+                  {/* ❌ REMOVED: Edit count conditions in confirmation messages */}
+                  {/* 🔄 TO RESTORE: Replace with original lines:
+                    {submitted && !isPastDue && editCount < maxEdits && (
+                      <p className="se-submitted-note">
+                        Your exercise has been submitted. You can still edit and resubmit before the due date.
+                      </p>
+                    )}
+                    
+                    {submitted && (isPastDue || editCount >= maxEdits) && (
+                      <p className="se-submitted-note">
+                        Your exercise has been submitted and is ready for grading.
+                      </p>
+                    )}
+                  */}
+
+                  {/* ✅ NEW: Simplified confirmation - only checks due date */}
+                  {submitted && !isPastDue && (
                     <p className="se-submitted-note">
                       Your exercise has been submitted. You can still edit and resubmit before the due date.
                     </p>
                   )}
-                  
-                  {submitted && (isPastDue || editCount >= maxEdits) && (
+
+                  {submitted && isPastDue && (
                     <p className="se-submitted-note">
                       Your exercise has been submitted and is ready for grading.
                     </p>

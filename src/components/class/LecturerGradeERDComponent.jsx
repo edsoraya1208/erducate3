@@ -1,7 +1,9 @@
+// Full file with changes marked
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../config/firebase';
+import ERDReviewPanel from './ERDReviewPanel';
 import '../../styles/review-erd.css';
 import '../../styles/grade-erd.css';
 
@@ -13,27 +15,12 @@ const LecturerGradeERDComponent = () => {
   const [grading, setGrading] = useState(false);
   const [publishingGrade, setPublishingGrade] = useState(false);
   
-  // Data states
   const [studentSubmission, setStudentSubmission] = useState(null);
   const [exerciseData, setExerciseData] = useState(null);
   const [allElements, setAllElements] = useState([]);
   const [gradingResult, setGradingResult] = useState(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
-
   
-  // UI states
-  const [activeTab, setActiveTab] = useState('review');
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newElement, setNewElement] = useState({
-    name: '',
-    type: 'entity',
-    subType: 'strong',
-    confidence: 100
-  });
-  const [elementToDelete, setElementToDelete] = useState(null);
-  const [showPublishModal, setShowPublishModal] = useState(false); // ✅ NEW: Publish confirmation modal
-  
-  // Notification
   const [notification, setNotification] = useState(null);
   
   const showNotification = (message, type = 'success') => {
@@ -41,7 +28,6 @@ const LecturerGradeERDComponent = () => {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  // Fetch data on mount
   useEffect(() => {
     fetchData();
   }, [classId, exerciseId, submissionId]);
@@ -139,85 +125,9 @@ const LecturerGradeERDComponent = () => {
     showNotification('Grade recalculated');
   };
 
-  const updateElement = (id, field, value) => {
-    setAllElements(prev => prev.map(el => 
-      el.id === id ? { ...el, [field]: value } : el
-    ));
-  };
-
-  const handleDeleteClick = (element) => {
-    setElementToDelete(element);
-  };
-
-  const confirmDelete = () => {
-    if (elementToDelete) {
-      setAllElements(prev => prev.filter(el => el.id !== elementToDelete.id));
-      showNotification('Element deleted');
-      setElementToDelete(null);
-    }
-  };
-
-  const cancelDelete = () => {
-    setElementToDelete(null);
-  };
-
-  const handleAddElement = () => {
-    if (!newElement.name.trim()) {
-      showNotification('Please enter element name', 'error');
-      return;
-    }
-
-    if (newElement.type === 'relationship' && (!newElement.from || !newElement.to)) {
-      showNotification('Relationships need "from" and "to" entities', 'error');
-      return;
-    }
-    if (newElement.type === 'attribute' && (!newElement.belongsTo || !newElement.belongsToType)) {
-      showNotification('Attributes need to belong to something', 'error');
-      return;
-    }
-
-    const elementWithId = {
-      ...newElement,
-      id: `el_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    };
-
-    setAllElements(prev => [...prev, elementWithId]);
-    
-    setNewElement({
-      name: '',
-      type: 'entity',
-      subType: 'strong',
-      confidence: 100
-    });
-    setShowAddForm(false);
-    setActiveTab('all');
-    showNotification('Element added successfully');
-  };
-
-  const handleCancel = () => {
-    navigate(-1);
-  };
-
-  // ✅ UPDATED: Show confirmation modal instead of publishing directly
-  const handlePublishClick = () => {
-    if (isReadOnly) {
-      showNotification('Grade already published', 'error');
-      return;
-    }
-    
-    if (!gradingResult) {
-      showNotification('No grade to publish', 'error');
-      return;
-    }
-
-    setShowPublishModal(true); // Show confirmation modal
-  };
-
-  // ✅ NEW: Actual publish function after confirmation
   const handlePublishGrade = async () => {
     try {
       setPublishingGrade(true);
-      setShowPublishModal(false); // Close modal
 
       const submissionRef = doc(db, 'submissions', submissionId);
       
@@ -241,23 +151,9 @@ const LecturerGradeERDComponent = () => {
     }
   };
 
-  // ✅ NEW: Cancel publish modal
-  const cancelPublish = () => {
-    setShowPublishModal(false);
+  const handleCancel = () => {
+    navigate(-1);
   };
-
-  const getBelongsToOptions = () => {
-    const entities = allElements.filter(el => el.type === 'entity');
-    const relationships = allElements.filter(el => el.type === 'relationship');
-    const attributes = allElements.filter(el => el.type === 'attribute');
-    return { entities, relationships, attributes };
-  };
-
-  const belongsToOptions = getBelongsToOptions();
-  
-  const displayElements = activeTab === 'review' 
-    ? allElements.filter(el => el.confidence < 87)
-    : allElements;
 
   if (loading) {
     return (
@@ -280,550 +176,143 @@ const LecturerGradeERDComponent = () => {
   }
 
   return (
-  <div className="rev-container grade-container">
-    <div className="grade-header-card">
-      <h1 className="rev-title">
-        <div className="grade-header-left">
-          <span className="grade-header-title">
-            Grading: {studentSubmission.studentName || 'Student'}
-          </span>
-          <span className="grade-header-subtitle">
-            {exerciseData.title}
-          </span>
-        </div>
-
-        <div className="grade-header-right">
-          <span className="grade-current-label">Current Grade</span>
-
-          <button 
-            className="grade-score-display"
-            onClick={handleRefreshGrade}
-            disabled={grading || isReadOnly}
-            title="Refresh grade"
-          >
-            <span className="grade-refresh-icon">🔄</span>
-            <span>
-              {grading ? '...' : gradingResult ? `${gradingResult.totalScore}/${gradingResult.maxScore}` : '--/--'}
+    <div className="rev-container grade-container">
+      <div className="grade-header-card">
+        <h1 className="rev-title">
+          <div className="grade-header-left">
+            <span className="grade-header-title">
+              Grading: {studentSubmission.studentName || 'Student'}
             </span>
-          </button>
-        </div>
-      </h1>
-    </div>
-        
-    <div className="rev-content">
-      {/* ✅ UPDATED: Left column with image AND comments */}
-      <div className="rev-image-section">
-        <div className="grade-left-column">
-          <h2>Student's ERD Submission</h2>
-          
-          <div className="grade-image-container">
-            <div className="rev-image-display">
-              {studentSubmission.fileURL ? (
-                <img src={studentSubmission.fileURL} alt="Student ERD" />
-              ) : (
-                <div className="grade-image-placeholder">
-                  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#CBD5E0" strokeWidth="1.5">
-                    <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                  </svg>
-                  <p>No image uploaded</p>
-                </div>
-              )}
-            </div>
-
-            {/* ✅ NEW: Student Comments Section */}
-            <div className="grade-student-comments">
-              <h3>Student's Comments</h3>
-              {studentSubmission.comments ? (
-                <div className="grade-comments-content">
-                  <p>{studentSubmission.comments}</p>
-                </div>
-              ) : (
-                <div className="grade-comments-empty">
-                  <p>No comments provided</p>
-                </div>
-              )}
-            </div>
+            <span className="grade-header-subtitle">
+              {exerciseData.title}
+            </span>
           </div>
-        </div>
+
+          {/* ✅ KEPT: Refresh button stays here in header card */}
+          <div className="grade-header-right">
+            <span className="grade-current-label">Current Grade</span>
+
+            <button 
+              className="grade-score-display"
+              onClick={handleRefreshGrade}
+              disabled={grading || isReadOnly}
+              title="Refresh grade"
+            >
+              <span className="grade-refresh-icon">🔄</span>
+              <span>
+                {grading ? '...' : gradingResult ? `${gradingResult.totalScore}/${gradingResult.maxScore}` : '--/--'}
+              </span>
+            </button>
+          </div>
+        </h1>
       </div>
-
-      {/* Right: Detected Elements */}
-      <div className="rev-elements-section">
-        <div className="rev-header">
-          <h2>Detected Elements</h2>
-          <p className="rev-subtitle">
-            Total: {allElements.length} elements
-            <span className="rev-element-badge">
-              {allElements.filter(e => e.type === 'entity').length} Entities
-            </span>
-            <span className="rev-element-badge">
-              {allElements.filter(e => e.type === 'relationship').length} Relationships
-            </span>
-            <span className="rev-element-badge">
-              {allElements.filter(e => e.type === 'attribute').length} Attributes
-            </span>
-          </p>
-        </div>
-
-        {/* Tabs */}
-        <div className="rev-tabs">
-          <button 
-            className={`rev-tab ${activeTab === 'review' ? 'active' : ''}`}
-            onClick={() => setActiveTab('review')}
-          >
-            Review ({allElements.filter(el => el.confidence < 87).length})
-          </button>
-          <button 
-            className={`rev-tab ${activeTab === 'all' ? 'active' : ''}`}
-            onClick={() => setActiveTab('all')}
-          >
-            All Elements ({allElements.length})
-          </button>
-        </div>
         
-        {/* Elements List */}
-        <div className="rev-elements-list">
-          {displayElements.length === 0 ? (
-            <div className="rev-no-elements">
-              {activeTab === 'review' ? (
-                <>
-                  <p>🎉 All detected elements have high confidence (≥87%)!</p>
-                  <p>You can still add elements manually if needed.</p>
-                </>
-              ) : (
-                <p>No elements detected yet. Add elements manually.</p>
-              )}
-            </div>
-          ) : (
-            displayElements.map((element) => (
-              <div key={element.id} className="rev-element-card">
-                <div className="rev-element-header">
-                  <input
-                    type="text"
-                    value={element.name}
-                    onChange={(e) => updateElement(element.id, 'name', e.target.value)}
-                    className="rev-element-name-input"
-                    placeholder="Element name"
-                    disabled={isReadOnly}
-                  />
-                  <span className="rev-confidence">
-                    {element.confidence}% confidence
-                  </span>
-                  <button 
-                    className="rev-delete-btn"
-                    onClick={() => handleDeleteClick(element)}
-                    title="Delete element"
-                    disabled={isReadOnly}
-                  >
-                    ×
-                  </button>
-                </div>
-
-                <div className="rev-element-row">
-                  <label>Type:</label>
-                  <select 
-                    value={element.type}
-                    onChange={(e) => {
-                      const newType = e.target.value;
-                      updateElement(element.id, 'type', newType);
-                      if (newType === 'entity') updateElement(element.id, 'subType', 'strong');
-                      if (newType === 'relationship') updateElement(element.id, 'subType', 'one-to-many');
-                      if (newType === 'attribute') updateElement(element.id, 'subType', 'regular');
-                    }}
-                    className="rev-dropdown"
-                    disabled={isReadOnly}
-                  >
-                    <option value="entity">Entity</option>
-                    <option value="relationship">Relationship</option>
-                    <option value="attribute">Attribute</option>
-                  </select>
-                </div>
-
-                <div className="rev-element-row">
-                  <label>SubType:</label>
-                  {element.type === 'entity' && (
-                    <select 
-                      value={element.subType}
-                      onChange={(e) => updateElement(element.id, 'subType', e.target.value)}
-                      className="rev-dropdown"
-                      disabled={isReadOnly}
-                    >
-                      <option value="strong">Strong</option>
-                      <option value="weak">Weak</option>
-                    </select>
-                  )}
-                  {element.type === 'relationship' && (
-                    <select 
-                      value={element.subType}
-                      onChange={(e) => updateElement(element.id, 'subType', e.target.value)}
-                      className="rev-dropdown"
-                      disabled={isReadOnly}
-                    >
-                      <option value="one-to-one">1:1 (One-to-One)</option>
-                      <option value="one-to-many">1:N (One-to-Many)</option>
-                      <option value="many-to-many">M:N (Many-to-Many)</option>
-                    </select>
-                  )}
-                  {element.type === 'attribute' && (
-                    <select 
-                      value={element.subType}
-                      onChange={(e) => updateElement(element.id, 'subType', e.target.value)}
-                      className="rev-dropdown"
-                      disabled={isReadOnly}
-                    >
-                      <option value="primary_key">Primary Key</option>
-                      <option value="foreign_key">Foreign Key</option>
-                      <option value="regular">Regular</option>
-                      <option value="derived">Derived</option>
-                      <option value="multivalued">Multivalued</option>
-                      <option value="composite">Composite</option>
-                    </select>
-                  )}
-                </div>
-
-                {element.type === 'relationship' && (
-                  <>
-                    <div className="rev-element-row">
-                      <label>From:</label>
-                      <select 
-                        value={element.from || ''}
-                        onChange={(e) => updateElement(element.id, 'from', e.target.value)}
-                        className="rev-dropdown"
-                        disabled={isReadOnly}
-                      >
-                        <option value="">Select entity</option>
-                        {belongsToOptions.entities.map(ent => (
-                          <option key={ent.id} value={ent.name}>{ent.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="rev-element-row">
-                      <label>To:</label>
-                      <select 
-                        value={element.to || ''}
-                        onChange={(e) => updateElement(element.id, 'to', e.target.value)}
-                        className="rev-dropdown"
-                        disabled={isReadOnly}
-                      >
-                        <option value="">Select entity</option>
-                        {belongsToOptions.entities.map(ent => (
-                          <option key={ent.id} value={ent.name}>{ent.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </>
-                )}
-
-                {element.type === 'attribute' && (
-                  <>
-                    <div className="rev-element-row">
-                      <label>Belongs To Type:</label>
-                      <select 
-                        value={element.belongsToType || 'entity'}
-                        onChange={(e) => {
-                          updateElement(element.id, 'belongsToType', e.target.value);
-                          updateElement(element.id, 'belongsTo', '');
-                        }}
-                        className="rev-dropdown"
-                        disabled={isReadOnly}
-                      >
-                        <option value="entity">Entity</option>
-                        <option value="relationship">Relationship</option>
-                        <option value="attribute">Attribute (Composite)</option>
-                      </select>
-                    </div>
-                    <div className="rev-element-row">
-                      <label>Belongs To:</label>
-                      <select 
-                        value={element.belongsTo || ''}
-                        onChange={(e) => updateElement(element.id, 'belongsTo', e.target.value)}
-                        className="rev-dropdown"
-                        disabled={isReadOnly}
-                      >
-                        <option value="">Select {element.belongsToType || 'entity'}</option>
-                        {element.belongsToType === 'entity' && belongsToOptions.entities.map(ent => (
-                          <option key={ent.id} value={ent.name}>{ent.name}</option>
-                        ))}
-                        {element.belongsToType === 'relationship' && belongsToOptions.relationships.map(rel => (
-                          <option key={rel.id} value={rel.name}>{rel.name}</option>
-                        ))}
-                        {element.belongsToType === 'attribute' && belongsToOptions.attributes.map(attr => (
-                          <option key={attr.id} value={attr.name}>{attr.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </>
+      <div className="rev-content">
+        {/* Left: Image & Comments */}
+        <div className="rev-image-section">
+          <div className="grade-left-column">
+            <h2>Student's ERD Submission</h2>
+            
+            <div className="grade-image-container">
+              <div className="rev-image-display">
+                {studentSubmission.fileURL ? (
+                  <img src={studentSubmission.fileURL} alt="Student ERD" />
+                ) : (
+                  <div className="grade-image-placeholder">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#CBD5E0" strokeWidth="1.5">
+                      <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <p>No image uploaded</p>
+                  </div>
                 )}
               </div>
-            ))
-          )}
+
+              <div className="grade-student-comments">
+                <h3>Student's Comments</h3>
+                {studentSubmission.comments ? (
+                  <div className="grade-comments-content">
+                    <p>{studentSubmission.comments}</p>
+                  </div>
+                ) : (
+                  <div className="grade-comments-empty">
+                    <p>No comments provided</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
-        {!showAddForm && !isReadOnly && (
-          <button 
-            className="rev-add-btn"
-            onClick={() => setShowAddForm(true)}
-          >
-            + Add Element
-          </button>
-        )}
+        {/* ❌ REMOVED: showRefreshGrade, onRefreshGrade, gradingResult, grading props */}
+        <ERDReviewPanel
+          allElements={allElements}
+          setAllElements={setAllElements}
+          isReadOnly={isReadOnly}
+          onPublish={handlePublishGrade}
+          onCancel={handleCancel}
+          isPublishing={publishingGrade}
+          isLoading={loading}
+          publishButtonText="Publish Grade"
+        />
+      </div>
 
-        {showAddForm && (
-          <div className="rev-add-form">
-            <h3>Add New Element</h3>
+      {/* AI Feedback */}
+      {gradingResult && (
+        <div className="grade-feedback-section">
+          <div className="grade-feedback-box">
+            <h3>✨ AI Feedback</h3>
             
-            <input
-              type="text"
-              value={newElement.name}
-              onChange={(e) => setNewElement({...newElement, name: e.target.value})}
-              placeholder="Element name"
-              className="rev-input"
-            />
-
-            <select 
-              value={newElement.type}
-              onChange={(e) => {
-                const type = e.target.value;
-                setNewElement({
-                  ...newElement, 
-                  type,
-                  subType: type === 'entity' ? 'strong' : type === 'relationship' ? 'one-to-many' : 'regular',
-                  belongsToType: type === 'attribute' ? 'entity' : undefined
-                });
-              }}
-              className="rev-dropdown"
-            >
-              <option value="entity">Entity</option>
-              <option value="relationship">Relationship</option>
-              <option value="attribute">Attribute</option>
-            </select>
-
-            {newElement.type === 'entity' && (
-              <select 
-                value={newElement.subType}
-                onChange={(e) => setNewElement({...newElement, subType: e.target.value})}
-                className="rev-dropdown"
-              >
-                <option value="strong">Strong</option>
-                <option value="weak">Weak</option>
-              </select>
+            {gradingResult.feedback?.correct?.length > 0 && (
+              <div className="feedback-strengths">
+                <h4>✅ Strengths</h4>
+                <ul>
+                  {gradingResult.feedback.correct.map((item, idx) => (
+                    <li key={idx}>{item}</li>
+                  ))}
+                </ul>
+              </div>
             )}
 
-            {newElement.type === 'relationship' && (
-              <>
-                <select 
-                  value={newElement.subType}
-                  onChange={(e) => setNewElement({...newElement, subType: e.target.value})}
-                  className="rev-dropdown"
-                >
-                  <option value="one-to-one">1:1</option>
-                  <option value="one-to-many">1:N</option>
-                  <option value="many-to-many">M:N</option>
-                </select>
-                <select 
-                  value={newElement.from || ''}
-                  onChange={(e) => setNewElement({...newElement, from: e.target.value})}
-                  className="rev-dropdown"
-                >
-                  <option value="">From entity</option>
-                  {belongsToOptions.entities.map(ent => (
-                    <option key={ent.id} value={ent.name}>{ent.name}</option>
+            {gradingResult.feedback?.missing?.length > 0 && (
+              <div className="feedback-missing">
+                <h4>❌ Missing</h4>
+                <ul>
+                  {gradingResult.feedback.missing.map((item, idx) => (
+                    <li key={idx}>{item}</li>
                   ))}
-                </select>
-                <select 
-                  value={newElement.to || ''}
-                  onChange={(e) => setNewElement({...newElement, to: e.target.value})}
-                  className="rev-dropdown"
-                >
-                  <option value="">To entity</option>
-                  {belongsToOptions.entities.map(ent => (
-                    <option key={ent.id} value={ent.name}>{ent.name}</option>
-                  ))}
-                </select>
-              </>
+                </ul>
+              </div>
             )}
 
-            {newElement.type === 'attribute' && (
-              <>
-                <select 
-                  value={newElement.subType}
-                  onChange={(e) => setNewElement({...newElement, subType: e.target.value})}
-                  className="rev-dropdown"
-                >
-                  <option value="primary_key">Primary Key</option>
-                  <option value="foreign_key">Foreign Key</option>
-                  <option value="regular">Regular</option>
-                  <option value="derived">Derived</option>
-                  <option value="multivalued">Multivalued</option>
-                  <option value="composite">Composite</option>
-                </select>
-                <select 
-                  value={newElement.belongsToType || 'entity'}
-                  onChange={(e) => setNewElement({...newElement, belongsToType: e.target.value, belongsTo: ''})}
-                  className="rev-dropdown"
-                >
-                  <option value="entity">Belongs to Entity</option>
-                  <option value="relationship">Belongs to Relationship</option>
-                  <option value="attribute">Belongs to Attribute</option>
-                </select>
-                <select 
-                  value={newElement.belongsTo || ''}
-                  onChange={(e) => setNewElement({...newElement, belongsTo: e.target.value})}
-                  className="rev-dropdown"
-                >
-                  <option value="">Select {newElement.belongsToType}</option>
-                  {newElement.belongsToType === 'entity' && belongsToOptions.entities.map(ent => (
-                    <option key={ent.id} value={ent.name}>{ent.name}</option>
+            {gradingResult.feedback?.incorrect?.length > 0 && (
+              <div className="feedback-incorrect">
+                <h4>⚠️ Needs Improvement</h4>
+                <ul>
+                  {gradingResult.feedback.incorrect.map((item, idx) => (
+                    <li key={idx}>{item}</li>
                   ))}
-                  {newElement.belongsToType === 'relationship' && belongsToOptions.relationships.map(rel => (
-                    <option key={rel.id} value={rel.name}>{rel.name}</option>
-                  ))}
-                  {newElement.belongsToType === 'attribute' && belongsToOptions.attributes.map(attr => (
-                    <option key={attr.id} value={attr.name}>{attr.name}</option>
-                  ))}
-                </select>
-              </>
+                </ul>
+              </div>
             )}
 
-            <div className="rev-add-form-actions">
-              <button 
-                className="rev-cancel-btn"
-                onClick={() => setShowAddForm(false)}
-              >
-                Cancel
-              </button>
-              <button 
-                className="rev-confirm-btn"
-                onClick={handleAddElement}
-              >
-                Add Element
-              </button>
-            </div>
+            {gradingResult.overallComment && (
+              <div className="feedback-overall">
+                <p><strong>Overall:</strong> {gradingResult.overallComment}</p>
+              </div>
+            )}
           </div>
-        )}
-
-        {/* ✅ UPDATED: Action Buttons - Button text changed to "Publish Grade" */}
-        <div className="rev-form-actions">
-          <button 
-            type="button" 
-            className="rev-cancel-action-btn" 
-            onClick={handleCancel}
-            disabled={publishingGrade || loading}
-          >
-            Cancel
-          </button>
-          {!isReadOnly && (
-            <button 
-              type="button" 
-              className="rev-publish-btn" 
-              onClick={handlePublishClick}
-              disabled={publishingGrade || loading || allElements.length === 0}
-            >
-              {(publishingGrade || loading) ? 'Publishing...' : 'Publish Grade'}
-            </button>
-          )}
         </div>
-      </div>
+      )}
+
+      {/* Notification Toast */}
+      {notification && (
+        <div className={`rev-notification ${notification.type}`}>
+          <span>{notification.type === 'success' ? '✅' : '❌'}</span>
+          <span>{notification.message}</span>
+        </div>
+      )}
     </div>
-
-    {/* AI Feedback */}
-    {gradingResult && (
-      <div className="grade-feedback-section">
-        <div className="grade-feedback-box">
-          <h3>✨ AI Feedback</h3>
-          
-          {gradingResult.feedback?.correct?.length > 0 && (
-            <div className="feedback-strengths">
-              <h4>✅ Strengths</h4>
-              <ul>
-                {gradingResult.feedback.correct.map((item, idx) => (
-                  <li key={idx}>{item}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {gradingResult.feedback?.missing?.length > 0 && (
-            <div className="feedback-missing">
-              <h4>❌ Missing</h4>
-              <ul>
-                {gradingResult.feedback.missing.map((item, idx) => (
-                  <li key={idx}>{item}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {gradingResult.feedback?.incorrect?.length > 0 && (
-            <div className="feedback-incorrect">
-              <h4>⚠️ Needs Improvement</h4>
-              <ul>
-                {gradingResult.feedback.incorrect.map((item, idx) => (
-                  <li key={idx}>{item}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {gradingResult.overallComment && (
-            <div className="feedback-overall">
-              <p><strong>Overall:</strong> {gradingResult.overallComment}</p>
-            </div>
-          )}
-        </div>
-      </div>
-    )}
-
-    {/* Delete Confirmation Modal */}
-    {elementToDelete && (
-      <div className="rev-modal-overlay">
-        <div className="rev-modal">
-          <h3 className="rev-modal-header">Delete Element?</h3>
-          <div className="rev-modal-body">
-            <p>Are you sure you want to delete "{elementToDelete.name}"?</p>
-          </div>
-          <div className="rev-modal-actions">
-            <button onClick={cancelDelete} className="rev-modal-btn rev-modal-btn-cancel">
-              Cancel
-            </button>
-            <button onClick={confirmDelete} className="rev-modal-btn rev-modal-btn-confirm">
-              Delete
-            </button>
-          </div>
-        </div>
-      </div>
-    )}
-
-    {/* ✅ NEW: Publish Confirmation Modal */}
-    {showPublishModal && (
-      <div className="rev-modal-overlay">
-        <div className="rev-modal">
-          <h3 className="rev-modal-header">Publish Grade?</h3>
-          <div className="rev-modal-body">
-            <p>Are you sure you want to publish this grade?</p>
-            <p className="grade-modal-warning">Once published, the student will be able to view their grade and you won't be able to edit it anymore.</p>
-          </div>
-          <div className="rev-modal-actions">
-            <button onClick={cancelPublish} className="rev-modal-btn rev-modal-btn-cancel">
-              Cancel
-            </button>
-            <button onClick={handlePublishGrade} className="rev-modal-btn rev-modal-btn-confirm">
-              Publish
-            </button>
-          </div>
-        </div>
-      </div>
-    )}
-
-    {/* Notification Toast */}
-    {notification && (
-      <div className={`rev-notification ${notification.type}`}>
-        <span>{notification.type === 'success' ? '✅' : '❌'}</span>
-        <span>{notification.message}</span>
-      </div>
-    )}
-  </div>
-);
+  );
 };
 
 export default LecturerGradeERDComponent;

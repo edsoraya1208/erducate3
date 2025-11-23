@@ -1,4 +1,11 @@
-/* src/styles/rev-review-erd.css */
+/* ========================================
+   BASE STYLES - SHARED BETWEEN REVIEW & GRADING
+   Used by: LecturerReviewERDComponent, LecturerGradeERDComponent
+   ======================================== */
+
+/* ========================================
+   LAYOUT & CONTAINER
+   ======================================== */
 
 .rev-container {
   max-width: 1400px;
@@ -22,7 +29,10 @@
   align-items: start;
 }
 
-/* Left: Image Section */
+/* ========================================
+   LEFT SECTION - IMAGE/SUBMISSION DISPLAY
+   ======================================== */
+
 .rev-image-section {
   position: sticky;
   top: 2rem;
@@ -59,7 +69,10 @@
   min-height: 400px;
 }
 
-/* Right: Elements Section */
+/* ========================================
+   RIGHT SECTION - ELEMENTS PANEL
+   ======================================== */
+
 .rev-elements-section {
   background: white;
   border-radius: 12px;
@@ -85,6 +98,10 @@
   color: #6c757d;
   margin: 0;
   line-height: 1.6;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .rev-subtitle small {
@@ -95,7 +112,55 @@
   font-weight: 500;
 }
 
-/* Elements List */
+/* Badge for element count */
+.rev-element-badge {
+  display: inline-block;
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+/* ========================================
+   TABS SYSTEM (Review / All Elements)
+   ======================================== */
+
+.rev-tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.rev-tab {
+  padding: 0.75rem 1.5rem;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-weight: 500;
+  color: #6b7280;
+  transition: all 0.2s;
+  font-size: 0.95rem;
+}
+
+.rev-tab.active {
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+}
+
+.rev-tab:hover:not(.active) {
+  color: #1d4ed8;
+  background-color: #f9fafb;
+}
+
+/* ========================================
+   ELEMENTS LIST
+   ======================================== */
+
 .rev-elements-list {
   max-height: 600px;
   overflow-y: auto;
@@ -140,7 +205,10 @@
   color: #28a745;
 }
 
-/* Element Card */
+/* ========================================
+   ELEMENT CARD (Individual element display)
+   ======================================== */
+
 .rev-element-card {
   background: #f8f9fa;
   border: 2px solid #e1e4e8;
@@ -171,12 +239,13 @@
   font-weight: 600;
   color: #1a1a1a;
   background: white;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .rev-element-name-input:focus {
   outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 .rev-confidence {
@@ -206,6 +275,20 @@
   background: #c82333;
 }
 
+.rev-delete-btn:disabled {
+  background-color: #e5e7eb !important;
+  color: #9ca3af !important;
+  cursor: not-allowed;
+}
+
+.rev-delete-btn:disabled:hover {
+  background-color: #e5e7eb !important;
+}
+
+/* ========================================
+   ELEMENT FIELDS (Type, SubType, etc.)
+   ======================================== */
+
 .rev-element-row {
   display: grid;
   grid-template-columns: 100px 1fr;
@@ -228,13 +311,13 @@
   color: #495057;
   background: white;
   cursor: pointer;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .rev-dropdown:focus {
   outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 .rev-input {
@@ -245,15 +328,27 @@
   font-size: 0.9rem;
   color: #495057;
   margin-bottom: 0.75rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .rev-input:focus {
   outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-/* Add Element Button */
+/* Disabled state for inputs/selects */
+input:disabled,
+select:disabled {
+  background-color: #f3f4f6 !important;
+  cursor: not-allowed !important;
+  opacity: 0.6;
+}
+
+/* ========================================
+   ADD ELEMENT BUTTON & FORM
+   ======================================== */
+
 .rev-add-btn {
   width: 100%;
   padding: 0.75rem;
@@ -272,7 +367,6 @@
   background: #218838;
 }
 
-/* Add Element Form */
 .rev-add-form {
   background: #e7f3ff;
   border: 2px solid #007bff;
@@ -323,7 +417,10 @@
   background: #0056b3;
 }
 
-/* Action Buttons */
+/* ========================================
+   ACTION BUTTONS (Cancel / Publish)
+   ======================================== */
+
 .rev-form-actions {
   display: flex;
   gap: 1rem;
@@ -372,41 +469,20 @@
   transform: none;
 }
 
+button:disabled {
+  cursor: not-allowed !important;
+  opacity: 0.5;
+}
+
+button:disabled:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
 /* ========================================
-   ADD THESE TO YOUR EXISTING review-erd.css
+   MODALS (Delete, Publish confirmation)
    ======================================== */
 
-/* Tab system */
-.rev-tabs {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  border-bottom: 2px solid #e5e7eb;
-}
-
-.rev-tab {
-  padding: 0.75rem 1.5rem;
-  background: none;
-  border: none;
-  border-bottom: 3px solid transparent;
-  cursor: pointer;
-  font-weight: 500;
-  color: #6b7280;
-  transition: all 0.2s;
-  font-size: 0.95rem;
-}
-
-.rev-tab.active {
-  color: #2563eb;
-  border-bottom-color: #2563eb;
-}
-
-.rev-tab:hover:not(.active) {
-  color: #1d4ed8;
-  background-color: #f9fafb;
-}
-
-/* Custom modal */
 .rev-modal-overlay {
   position: fixed;
   top: 0;
@@ -521,7 +597,10 @@
   background: #1d4ed8;
 }
 
-/* Loading overlay */
+/* ========================================
+   LOADING OVERLAY
+   ======================================== */
+
 .rev-loading-overlay {
   position: fixed;
   top: 0;
@@ -556,7 +635,10 @@
   font-size: 1rem;
 }
 
-/* Success/Error notification toast */
+/* ========================================
+   NOTIFICATION TOAST (Success/Error)
+   ======================================== */
+
 .rev-notification {
   position: fixed;
   bottom: 2rem;
@@ -598,80 +680,10 @@
   font-size: 1.25rem;
 }
 
-/* Badge for element count */
-.rev-element-badge {
-  display: inline-block;
-  background: #dbeafe;
-  color: #1e40af;
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  margin-left: 0.5rem;
-}
+/* ========================================
+   RUBRIC DISPLAY (Review page only)
+   ======================================== */
 
-/* Improve subtitle spacing */
-.rev-subtitle {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-/* Smooth transitions for dropdowns */
-.rev-dropdown {
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.rev-dropdown:focus {
-  outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-}
-
-/* Better input focus states */
-.rev-element-name-input:focus {
-  outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-}
-
-.rev-input:focus {
-  outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .rev-tabs {
-    gap: 0.5rem;
-  }
-  
-  .rev-tab {
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
-  }
-  
-  .rev-modal {
-    padding: 1.5rem;
-    width: 95%;
-  }
-  
-  .rev-notification {
-    bottom: 1rem;
-    right: 1rem;
-    left: 1rem;
-    min-width: auto;
-  }
-  
-  .rev-element-badge {
-    font-size: 0.75rem;
-    padding: 0.2rem 0.6rem;
-  }
-}
-
-/* Rubric textarea container */
 .rubric-textarea-container {
   padding: 0 !important;
   background: transparent !important;
@@ -700,14 +712,12 @@
   margin: 0 !important;
 }
 
-/* 🟣 PURPLE FOCUS - Your theme */
 .rubric-textarea:focus {
   outline: none;
   border-color: #7c3aed;
   box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
 }
 
-/* Error state */
 .rubric-textarea.error {
   border-color: #ef4444;
 }
@@ -717,14 +727,12 @@
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
 
-/* Disabled state */
 .rubric-textarea:disabled {
   background-color: #f5f5f5;
   cursor: not-allowed;
   opacity: 0.6;
 }
 
-/* Field info text */
 .field-info {
   display: block;
   margin-top: 8px;
@@ -732,7 +740,6 @@
   color: #666;
 }
 
-/* 🆕 REVIEW PAGE - Rubric Display */
 .rev-rubric-display {
   background: #f9fafb;
   border: 1px solid #e5e7eb;
@@ -754,7 +761,6 @@
   padding: 0;
 }
 
-/* AI Analysis section */
 .rubric-analysis {
   margin-top: 1.5rem;
   padding-top: 1.5rem;
@@ -794,7 +800,6 @@
   margin-bottom: 0.25rem;
 }
 
-/* Scrollbar styling for rubric display */
 .rev-rubric-display::-webkit-scrollbar {
   width: 8px;
 }
@@ -813,10 +818,14 @@
   background: #6d28d9;
 }
 
-/* Make cards taller on Review ERD page only - NO SCROLL */
+/* ========================================
+   REVIEW PAGE SPECIFIC STYLES
+   Only applied when .review-erd-page class is present
+   ======================================== */
+
 .review-erd-page .grade-image-container {
-  flex: none !important; /* Override flex: 1 */
-  overflow-y: visible !important; /* Override overflow-y: auto */
+  flex: none !important;
+  overflow-y: visible !important;
   max-height: none !important;
   min-height: auto !important;
   padding-right: 0.5rem;
@@ -835,29 +844,30 @@
   min-height: auto;
 }
 
-/* Remove fixed height from left section on Review page */
 .review-erd-page .rev-image-section {
   height: auto !important;
 }
 
-/* Match heights on Review ERD page */
 .review-erd-page .rev-content {
-  align-items: stretch; /* Make both columns same height */
+  align-items: stretch;
 }
 
 .review-erd-page .rev-image-section,
 .review-erd-page .rev-elements-section {
-  height: auto; /* Let them grow naturally */
-  min-height: 100%; /* But at least match each other */
+  height: auto;
+  min-height: 100%;
 }
 
 .review-erd-page .grade-left-column {
-  height: 100%; /* Fill the container */
+  height: 100%;
   display: flex;
   flex-direction: column;
 }
 
-/* Responsive */
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
 @media (max-width: 1024px) {
   .rev-content {
     grid-template-columns: 1fr;
@@ -866,6 +876,34 @@
   .rev-image-section {
     position: relative;
     top: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .rev-tabs {
+    gap: 0.5rem;
+  }
+  
+  .rev-tab {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  .rev-modal {
+    padding: 1.5rem;
+    width: 95%;
+  }
+  
+  .rev-notification {
+    bottom: 1rem;
+    right: 1rem;
+    left: 1rem;
+    min-width: auto;
+  }
+  
+  .rev-element-badge {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.6rem;
   }
 }
 

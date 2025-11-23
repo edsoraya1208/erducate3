@@ -41,6 +41,24 @@ const LecturerReviewERD = () => {
   const handlePublish = async (reviewedData) => {
     setIsLoading(true);
     
+    // 🐛 DEBUG - CHECK WHAT WE'RE SAVING
+    console.log('🔥 About to save to Firebase:');
+    console.log('Full reviewedData:', reviewedData);
+    console.log('reviewedData.elements:', JSON.stringify(reviewedData.elements, null, 2));
+    
+    // Find a relationship and log it
+    const relationship = reviewedData.elements.find(e => e.type === 'relationship');
+    if (relationship) {
+      console.log('🔥 Sample relationship:', relationship);
+      console.log('Has cardinalityFrom?', relationship.cardinalityFrom);
+      console.log('Has cardinalityTo?', relationship.cardinalityTo);
+      console.log('Has subType?', relationship.subType);
+      console.log('Has from?', relationship.from);
+      console.log('Has to?', relationship.to);
+    } else {
+      console.log('⚠️ No relationship found in elements!');
+    }
+    
     try {
       const exerciseRef = doc(db, 'classes', classId, 'exercises', exerciseId);
       
@@ -53,11 +71,12 @@ const LecturerReviewERD = () => {
         updatedAt: serverTimestamp()
       });
 
+      console.log('✅ Firebase update successful!');
       alert('✅ Exercise published successfully!');
       navigate(`/lecturer/class/${classId}`, { replace: true });
       
     } catch (error) {
-      console.error('Publish error:', error);
+      console.error('❌ Publish error:', error);
       alert('❌ Failed to publish exercise');
     } finally {
       setIsLoading(false);

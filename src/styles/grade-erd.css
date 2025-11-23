@@ -1,10 +1,16 @@
-/* src/styles/grade-erd.css */
-
 /* ========================================
-   GRADING PAGE OVERRIDES
+   GRADING PAGE SPECIFIC STYLES
+   Extends: review-erd.css
+   Used by: LecturerGradeERDComponent
    ======================================== */
 
-/* Header styling */
+/* Import base styles */
+@import './review-erd.css';
+
+/* ========================================
+   GRADING HEADER (Top section with grade display)
+   ======================================== */
+
 .grade-header-card {
   background: #e0f7fa;
   border-radius: 12px;
@@ -24,7 +30,7 @@
   line-height: 1.3;
 }
 
-/* Left side (Title/Subtitle) */
+/* Left side (Student name / Exercise title) */
 .grade-header-left {
   display: flex;
   flex-direction: column;
@@ -44,7 +50,7 @@
   margin-top: 0.25rem;
 }
 
-/* Right side (Label/Score) */
+/* Right side (Grade display with refresh button) */
 .grade-header-right {
   display: flex;
   flex-direction: column;
@@ -58,19 +64,16 @@
   font-weight: 500;
 }
 
-/* Score is now a button */
 .grade-score-display {
   font-size: 1.5rem;
   font-weight: 700;
   color: #1457dd;
-
   background: none;
   border: none;
   padding: 0;
   margin: 0;
   cursor: pointer;
   font-family: inherit;
-
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -90,7 +93,10 @@
   font-size: 1.25rem;
 }
 
-/* LEFT COLUMN - Match right side white card style */
+/* ========================================
+   LEFT COLUMN (Student submission & comments)
+   ======================================== */
+
 .grade-left-column {
   background: white;
   border-radius: 12px;
@@ -116,14 +122,14 @@
   color: #2d3748;
 }
 
-/* ✅ NEW: Image container with scrollbar */
+/* Image container with scrollbar */
 .grade-image-container {
   flex: 1;
   overflow-y: auto;
   padding-right: 0.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem; /* Space between image and comments */
+  gap: 1.5rem;
 }
 
 .grade-image-container::-webkit-scrollbar {
@@ -144,12 +150,14 @@
   background: #a0aec0;
 }
 
-/* ✅ Student Comments Section - UPDATED */
+/* ========================================
+   STUDENT COMMENTS SECTION
+   ======================================== */
+
 .grade-student-comments {
   margin-top: 0rem;
 }
 
-/* Make heading match the main h2 style */
 .grade-student-comments h3 {
   font-size: 1.5rem;
   font-weight: 600;
@@ -159,7 +167,6 @@
   border-bottom: 2px solid #e1e4e8;
 }
 
-/* White box for the actual comments */
 .grade-comments-content {
   background: white;
   border: 2px solid #e5e7eb;
@@ -190,15 +197,21 @@
   margin: 0;
 }
 
-/* ✅ UPDATED: Make left and right columns same height */
+/* ========================================
+   HEIGHT MATCHING (Left & Right columns)
+   ======================================== */
+
 .rev-image-section,
 .rev-elements-section {
-  height: 750px; /* Increased from 700px to accommodate comments */
+  height: 750px;
   display: flex;
   flex-direction: column;
 }
 
-/* Feedback section */
+/* ========================================
+   AI FEEDBACK SECTION (Bottom of page)
+   ======================================== */
+
 .grade-feedback-section {
   grid-column: 1 / -1;
   margin-top: 2rem;
@@ -221,6 +234,7 @@
   gap: 0.5rem;
 }
 
+/* Feedback categories */
 .feedback-strengths,
 .feedback-missing,
 .feedback-incorrect {
@@ -281,6 +295,7 @@
   color: #374151;
 }
 
+/* Overall comment section */
 .feedback-overall {
   background: #f9fafb;
   border: 1px solid #e5e7eb;
@@ -300,7 +315,10 @@
   font-weight: 600;
 }
 
-/* ✅ NEW: Warning text in publish modal */
+/* ========================================
+   PUBLISH MODAL WARNING (Grading page only)
+   ======================================== */
+
 .grade-modal-warning {
   font-size: 0.9rem;
   color: #d97706;
@@ -312,7 +330,10 @@
   border: 1px solid #fde68a;
 }
 
-/* Error & Loading states */
+/* ========================================
+   ERROR & LOADING STATES
+   ======================================== */
+
 .grade-error-state {
   text-align: center;
   padding: 3rem;
@@ -377,6 +398,7 @@
   font-size: 1rem;
 }
 
+/* Image placeholder (when no image uploaded) */
 .grade-image-placeholder {
   display: flex;
   flex-direction: column;
@@ -399,35 +421,10 @@
   color: #6b7280;
 }
 
-/* Disabled input fields */
-input:disabled,
-select:disabled {
-  background-color: #f3f4f6 !important;
-  cursor: not-allowed !important;
-  opacity: 0.6;
-}
+/* ========================================
+   RESPONSIVE DESIGN (Grading page)
+   ======================================== */
 
-/* Disabled buttons - no hover effect */
-button:disabled {
-  cursor: not-allowed !important;
-  opacity: 0.5;
-}
-
-button:disabled:hover {
-  transform: none !important;
-  box-shadow: none !important;
-}
-
-.rev-delete-btn:disabled {
-  background-color: #e5e7eb !important;
-  color: #9ca3af !important;
-}
-
-.rev-delete-btn:disabled:hover {
-  background-color: #e5e7eb !important;
-}
-
-/* Responsive */
 @media (max-width: 1024px) {
   .rev-image-section,
   .rev-elements-section {

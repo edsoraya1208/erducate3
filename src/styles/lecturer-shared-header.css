@@ -1,4 +1,6 @@
-/* HEADER STYLES - Main container */
+/* ========================================
+   1. BASE LAYOUT & HEADER
+   ======================================== */
 .dashboard-header {
   background: linear-gradient(135deg, #7b10a5, #5e17a5);
   color: white;
@@ -9,19 +11,23 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   position: relative;
+  /* Ensure header stays on top if needed */
+  z-index: 100; 
 }
 
-/* LEFT SECTION - Logo and branding */
-.header-left {
+.header-left,
+.header-right {
   display: flex;
   align-items: center;
 }
 
+/* ========================================
+   2. BRANDING & LOGO
+   ======================================== */
 .logo-container {
   display: flex;
   align-items: center;
   gap: 12px;
-  gap: 12px !important;
   transform: translateZ(0);
 }
 
@@ -32,16 +38,22 @@
   margin-right: -65px;
 }
 
-.logo-icon {
-  display: flex;
-  align-items: center;
+/* Clickable Logo Button Reset */
+.clickable-logo {
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.logo-text {
-  color: white;
-  font-weight: bold;
-  font-size: 14px;
-  z-index: 1;
+.clickable-logo:hover {
+  opacity: 0.9;
+  transform: scale(1.02);
+}
+
+.clickable-logo:active {
+  transform: scale(0.98);
 }
 
 .brand-name {
@@ -52,13 +64,9 @@
   color: white;
 }
 
-/* RIGHT SECTION - Navigation and logout */
-.header-right {
-  display: flex;
-  align-items: center;
-}
-
-/* DESKTOP NAVIGATION */
+/* ========================================
+   3. DESKTOP NAVIGATION
+   ======================================== */
 .desktop-nav {
   display: flex;
   align-items: center;
@@ -89,7 +97,226 @@
   font-weight: 500;
 }
 
-/* HAMBURGER MENU STYLES */
+.nav-item:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+
+/* ========================================
+   4. INTERACTIVE ELEMENTS (Avatar, Bell, Buttons)
+   ======================================== */
+
+/* User Avatar */
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  
+  /* HIGHER VISIBILITY: */
+  /* Stronger background fill (less faded) */
+  background: rgba(255, 255, 255, 0.13); 
+  /* Solid white border (crisp, clearly shows 'logged in' status) */
+  border: 1.7px solid #ffffff; 
+  
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  
+  /* NON-INTERACTIVE: */
+  /* Keeps the standard mouse arrow so users know not to click */
+  cursor: default; 
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* Notification Bell Trigger */
+.notification-bell-container {
+  position: relative;
+  display: inline-block;
+}
+
+.notification-bell-button {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notification-bell-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.bell-icon {
+  width: 22px;
+  height: 22px;
+  stroke-width: 2;
+}
+
+.notification-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: #FF6B35;
+  color: white;
+  border-radius: 50%;
+  min-width: 18px;
+  height: 18px;
+  font-size: 11px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 2px solid #7b10a5;
+}
+
+/* LOGOUT BUTTON (Orange Style) */
+.logout-btn {
+  /* Keep the orange gradient */
+  background: linear-gradient(135deg, #FF8A50 0%, #FF6B35 100%) !important;
+  color: white;
+  border: none;
+  padding: 10px 24px; /* Increased padding slightly for balance */
+  border-radius: 25px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  /* Flexbox to center the text */
+  display: flex;
+  align-items: center;
+  justify-content: center; 
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.logout-btn:hover {
+  background: linear-gradient(135deg, #ff7b38 0%, #ea580c 100%) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+}
+
+/* HIDE THE EXIT ICON */
+.logout-icon {
+  display: none;
+}
+
+/* ========================================
+   5. NOTIFICATION DROPDOWN COMPONENT
+   ======================================== */
+.notification-dropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  width: 380px;
+  max-height: 520px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  z-index: 1000;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.notification-header {
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #FF8A50 0%, #FF6B35 100%) !important;
+  color: white;
+  font-weight: 600;
+  font-size: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.notification-refresh {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notification-refresh:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.notification-refresh:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.refresh-icon { width: 16px; height: 16px; }
+
+.notification-list { max-height: 440px; overflow-y: auto; }
+
+.notification-empty {
+  padding: 60px 20px;
+  text-align: center;
+  color: #94a3b8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.empty-icon { width: 48px; height: 48px; opacity: 0.3; }
+
+.notification-item {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.notification-item:hover { background-color: #f8fafc; }
+.notification-item:last-child { border-bottom: none; }
+.notification-item.unread { background-color: #fef3f2; }
+.notification-item.unread:hover { background-color: #fde8e7; }
+
+.notification-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #7b10a5, #5e17a5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.notification-icon svg { width: 20px; height: 20px; stroke: white; }
+
+.notification-content { flex: 1; min-width: 0; }
+.notification-title { font-weight: 600; font-size: 14px; color: #1e293b; margin-bottom: 4px; line-height: 1.4; }
+.notification-subtitle { font-size: 13px; color: #64748b; line-height: 1.4; }
+
+/* ========================================
+   6. MOBILE NAVIGATION & HAMBURGER
+   ======================================== */
 .hamburger-btn {
   display: none;
   background: none;
@@ -102,9 +329,8 @@
   transition: background-color 0.2s ease;
 }
 
-.hamburger-btn:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
+.hamburger-btn:hover { background-color: rgba(255, 255, 255, 0.1); }
+.hamburger-btn:focus { outline: 2px solid rgba(255, 255, 255, 0.5); outline-offset: 2px; }
 
 .hamburger-line {
   width: 24px;
@@ -115,20 +341,11 @@
   transform-origin: center;
 }
 
-/* Hamburger animation when open */
-.hamburger-line.open:nth-child(1) {
-  transform: rotate(45deg) translate(7px, 7px);
-}
+/* Hamburger animation */
+.hamburger-line.open:nth-child(1) { transform: rotate(45deg) translate(7px, 7px); }
+.hamburger-line.open:nth-child(2) { opacity: 0; }
+.hamburger-line.open:nth-child(3) { transform: rotate(-45deg) translate(7px, -7px); }
 
-.hamburger-line.open:nth-child(2) {
-  opacity: 0;
-}
-
-.hamburger-line.open:nth-child(3) {
-  transform: rotate(-45deg) translate(7px, -7px);
-}
-
-/* MOBILE NAVIGATION */
 .mobile-nav {
   display: none;
   position: fixed;
@@ -142,10 +359,7 @@
   transition: all 0.3s ease;
 }
 
-.mobile-nav.open {
-  opacity: 1;
-  visibility: visible;
-}
+.mobile-nav.open { opacity: 1; visibility: visible; }
 
 .mobile-nav-overlay {
   position: absolute;
@@ -171,9 +385,7 @@
   transition: transform 0.3s ease;
 }
 
-.mobile-nav.open .mobile-nav-content {
-  transform: translateX(0);
-}
+.mobile-nav.open .mobile-nav-content { transform: translateX(0); }
 
 .mobile-nav .nav-item {
   color: white;
@@ -184,54 +396,42 @@
   transition: background-color 0.2s ease;
 }
 
-.mobile-nav .nav-item:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+.mobile-nav .nav-item:hover { background-color: rgba(255, 255, 255, 0.1); }
+
+/* Mobile Specific Components inside Menu */
+.mobile-notification-section {
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: center;
 }
 
+.mobile-notification-section .notification-bell-button { padding: 12px 16px; }
+.mobile-notification-section .bell-icon { width: 24px; height: 24px; }
+
+.mobile-user-info {
+  padding: 16px 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+/* Mobile Logout Button Adjustment */
 .mobile-nav .logout-btn {
   margin-top: 24px;
   width: 100%;
   justify-content: center;
-  height: 35px;
-  font-size: 18px;
+  height: 45px; /* Slightly taller for mobile touch targets */
+  font-size: 16px;
 }
 
-/* LOGOUT BUTTON */
-.logout-btn {
-  background: linear-gradient(135deg, #FF8A50 0%, #FF6B35 100%) !important;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 25px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
+/* ========================================
+   7. RESPONSIVE MEDIA QUERIES
+   ======================================== */
 
-.logout-btn:hover {
-  background-color: #ea580c;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
-}
-
-/* ACCESSIBILITY */
-.logout-btn:focus, .delete-btn:focus, .copy-btn:focus {
-  outline: 2px solid #4a12bb;
-  outline-offset: 2px;
-}
-
-.nav-item:focus {
-  outline: 2px solid rgba(255, 255, 255, 0.5);
-  outline-offset: 2px;
-}
-
-.hamburger-btn:focus {
-  outline: 2px solid rgba(255, 255, 255, 0.5);
-  outline-offset: 2px;
-}
-
-/* MOBILE RESPONSIVE STYLES */
+/* Tablet & Mobile (Max 768px) */
 @media (max-width: 768px) {
   .dashboard-header {
     padding: 12px 16px;
@@ -239,24 +439,17 @@
   }
   
   /* Hide desktop navigation */
-  .desktop-nav {
-    display: none;
-  }
+  .desktop-nav { display: none; }
   
   /* Show hamburger menu */
-  .hamburger-btn {
-    display: flex;
-  }
+  .hamburger-btn { display: flex; }
+  .mobile-nav { display: block; }
   
-  .mobile-nav {
-    display: block;
-  }
-  
-  /* Make logo bigger since we have more space */
+  /* Adjust Logo */
   .custom-logo {
     width: 220px;
     height: 66px;
-     margin-left: -60px;
+    margin-left: -60px;
     margin-right: -65px;
   }
   
@@ -264,14 +457,25 @@
     font-size: 36px;
     font-weight: 900;
   }
-}
 
-@media (max-width: 480px) {
-  .dashboard-header {
-    padding: 8px 12px;
+  /* Adjust Components */
+  .notification-dropdown {
+    width: 90vw;
+    max-width: 380px;
+    right: -20px;
   }
   
-  /* Logo still prominent but reasonable for small screens */
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+  }
+}
+
+/* Small Mobile (Max 480px) */
+@media (max-width: 480px) {
+  .dashboard-header { padding: 8px 12px; }
+  
   .custom-logo {
     width: 180px;
     height: 54px;
@@ -289,12 +493,11 @@
     padding: 70px 20px 20px 20px;
   }
   
-  .hamburger-btn {
-    padding: 6px;
-  }
-  
-  .hamburger-line {
-    width: 20px;
-    height: 2.5px;
+  .hamburger-btn { padding: 6px; }
+  .hamburger-line { width: 20px; height: 2.5px; }
+
+  .notification-dropdown {
+    width: calc(100vw - 32px);
+    right: -16px;
   }
 }

@@ -1,37 +1,33 @@
-// src/components/shared/DashboardHeader.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../../config/firebase';
 import { useUser } from '../../contexts/UserContext';
+import NotificationBell from './NotificationBell';
 import '../../styles/lecturer-shared-header.css';
 
 const DashboardHeader = ({ 
-  userType = 'student', // 'student' or 'lecturer'
-  currentPage = 'dashboard', // for highlighting active nav items
-  additionalNavItems = [] // array of {label, onClick} objects
+  userType = 'student',
+  currentPage = 'dashboard',
+  additionalNavItems = []
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { getUserDisplayName } = useUser();
   const navigate = useNavigate();
 
-  // Toggle mobile menu
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  // Close mobile menu
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
   };
 
-  // Navigate to dashboard
   const onDashboardClick = () => {
     const dashboardPath = userType === 'student' ? '/student/dashboard' : '/lecturer/dashboard1';
     navigate(dashboardPath);
     closeMobileMenu();
   };
 
-  // Handle logout with confirmation
   const handleLogout = async () => {
     const confirmLogout = window.confirm('Are you sure you want to logout?');
     if (confirmLogout) {
@@ -46,10 +42,25 @@ const DashboardHeader = ({
     closeMobileMenu();
   };
 
+  // Get user initials (e.g., "John Doe" → "JD")
+  const getUserInitials = () => {
+    const name = getUserDisplayName();
+    if (!name) return 'U';
+    
+    const parts = name.split(' ');
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  };
+
   return (
     <header className="dashboard-header">
+      {/* ✅ LEFT: Logo is now clickable button */}
       <div className="header-left">
-        <div className="logo-container">
+        <button 
+          className="logo-container clickable-logo" 
+          onClick={onDashboardClick}
+          aria-label="Go to dashboard"
+        >
           <div className="logo-icon">
             <img 
               src="/logo.svg" 
@@ -58,20 +69,14 @@ const DashboardHeader = ({
             />
           </div>
           <span className="brand-name">ERDucate</span>
-        </div>
+        </button>
       </div>
       
+      {/* ✅ RIGHT: Clean icons only */}
       <div className="header-right">
         {/* Desktop Navigation */}
         <nav className="nav-items desktop-nav">
-          <span 
-            className={`nav-item ${currentPage === 'dashboard' ? 'active' : ''}`}
-            onClick={onDashboardClick}
-          >
-            Dashboard
-          </span>
-          
-          {/* Render additional nav items */}
+          {/* Additional nav items (if any) */}
           {additionalNavItems.map((item, index) => (
             <span 
               key={index}
@@ -85,8 +90,19 @@ const DashboardHeader = ({
             </span>
           ))}
           
-          <span className="nav-item">{getUserDisplayName()}</span>
+          {/* ✅ Notification Bell */}
+          <NotificationBell userType={userType} />
+          
+          {/* ✅ User Initial Circle */}
+          <div className="user-avatar" title={getUserDisplayName()}>
+            {getUserInitials()}
+          </div>
+          
+          {/* ✅ Logout Button with Icon */}
           <button className="logout-btn" onClick={handleLogout}>
+            <svg className="logout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+            </svg>
             Logout
           </button>
         </nav>
@@ -106,14 +122,7 @@ const DashboardHeader = ({
         <div className={`mobile-nav ${isMobileMenuOpen ? 'open' : ''}`}>
           <div className="mobile-nav-overlay" onClick={closeMobileMenu}></div>
           <div className="mobile-nav-content">
-            <span 
-              className={`nav-item ${currentPage === 'dashboard' ? 'active' : ''}`}
-              onClick={onDashboardClick}
-            >
-              Dashboard
-            </span>
-            
-            {/* Render additional nav items for mobile */}
+            {/* Additional nav items */}
             {additionalNavItems.map((item, index) => (
               <span 
                 key={index}
@@ -127,8 +136,22 @@ const DashboardHeader = ({
               </span>
             ))}
             
-            <span className="nav-item">{getUserDisplayName()}</span>
-            <button className="logout-btn" onClick={handleLogout}>
+            {/* Notification Bell for Mobile */}
+            <div className="mobile-notification-section">
+              <NotificationBell userType={userType} />
+            </div>
+            
+            {/* User info */}
+            <div className="mobile-user-info">
+              <div className="user-avatar">{getUserInitials()}</div>
+              <span>{getUserDisplayName()}</span>
+            </div>
+            
+            {/* Logout */}
+            <button className="logout-btn mobile-logout" onClick={handleLogout}>
+              <svg className="logout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+              </svg>
               Logout
             </button>
           </div>

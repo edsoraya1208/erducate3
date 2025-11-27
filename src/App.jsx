@@ -14,10 +14,11 @@ const MyClassLectPage = lazy(() => import('./pages/lecturer/my-class-lect-page')
 const SubmissionsListPage = lazy(() => import('./pages/lecturer/submissions-list-page')); 
 const SubmitExercise = lazy(() => import('./pages/student/submit-exercise'));
 const LecturerReviewERD = lazy(() => import('./pages/lecturer/review-erd')); 
-const GradeERDPage = lazy(() => import('./pages/lecturer/GradeERDpage')); // 🆕 ADD THIS
+const GradeERDPage = lazy(() => import('./pages/lecturer/GradeERDpage'));
 
 const StudentDashboard = lazy(() => import('./pages/student/dashboard2'));  
 const MyClassStudPage = lazy(() => import('./pages/student/my-class-stud-page'));
+const StudentReportPage = lazy(() => import('./pages/student/StudentReportPage')); // ✅ ADD THIS LINE
 
 const LoadingFallback = () => (   
   <div style={{     
@@ -43,12 +44,13 @@ function App() {
             <Route path="/lecturer/create-exercise" element={<CreateExercisePage />} />             
             <Route path="/lecturer/class/:classId" element={<MyClassLectPage />} />             
             <Route path="/lecturer/class/:classId/exercise/:exerciseId/submissions" element={<SubmissionsListPage />} />
-           <Route path="/lecturer/class/:classId/exercise/:exerciseId/grade/:submissionId" element={<GradeERDPage />} 
-/>
+            <Route path="/lecturer/class/:classId/exercise/:exerciseId/grade/:submissionId" element={<GradeERDPage />} />
             
             <Route path="/student/dashboard" element={<StudentDashboard />} />  
             <Route path="/student/class/:classId" element={<MyClassStudPage />} />                     
             <Route path="/student/class/:classId/submit-exercise/:exerciseId" element={<SubmitExercise />} />
+            <Route path="/student/class/:classId/exercise/:exerciseId/results" element={<StudentReportPage />} /> {/* ✅ ADD THIS LINE */}
+            
             <Route path="/lecturer/review-erd" element={<LecturerReviewERD />} />
           </Routes>         
         </Suspense>       

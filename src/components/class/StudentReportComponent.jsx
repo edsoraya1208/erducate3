@@ -37,18 +37,26 @@ const StudentReportComponent = ({ submission, exerciseData, loading, error, clas
   const { grade } = submission;
 
   const handleDownloadPDF = () => {
-    window.print();
-  };
-
-  const formatDate = (timestamp) => {
-    if (!timestamp) return 'N/A';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleDateString('en-MY', { 
-      day: 'numeric',
-      month: 'numeric',
-      year: 'numeric'
-    });
-  };
+  // Save original title
+  const originalTitle = document.title;
+  
+  // Create a custom filename
+  // Format: StudentName_ExerciseTitle_Date.pdf
+  const studentName = submission.studentEmail.split('@')[0]; // Gets part before @
+  const exerciseTitle = exerciseData.title.replace(/\s+/g, '_'); // Replace spaces with underscores
+  const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  
+  // Set temporary title (this becomes the PDF filename)
+  document.title = `${studentName}_${exerciseTitle}_${date}`;
+  
+  // Trigger print dialog
+  window.print();
+  
+  // Restore original title after a short delay
+  setTimeout(() => {
+    document.title = originalTitle;
+  }, 1000);
+};
 
   // Helper function to get color class based on score
   const getScoreColorClass = (earned, max) => {

@@ -1,4 +1,3 @@
-// src/pages/lecturer/submission-list-page.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -12,14 +11,17 @@ import {
 } from 'firebase/firestore';
 import { db, auth } from '../../config/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
+
+// Components
 import LecturerSubmissions from '../../components/class/submission-list';
 import DashboardHeader from '../../components/dashboard/dashboard-header';
 
 const ExerciseSubmissionsPage = () => {
-  // ✅ NOW GETTING classId FROM URL
   const { exerciseId, classId } = useParams();
   const navigate = useNavigate();
-  
+  const [user] = useAuthState(auth);
+
+  // State
   const [exerciseData, setExerciseData] = useState(null);
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -29,8 +31,6 @@ const ExerciseSubmissionsPage = () => {
     pendingConfirmation: 0,
     published: 0
   });
-
-  const [user] = useAuthState(auth);
 
   const getUserDisplayName = () => {
     return user?.displayName || user?.email?.split('@')[0] || 'User';
@@ -45,7 +45,7 @@ const ExerciseSubmissionsPage = () => {
       setLoading(true);
       
       try {
-        // ✅ FIRST: Verify lecturer owns this class
+        // 1. Verify lecturer owns this class
         const classRef = doc(db, 'classes', classId);
         const classSnap = await getDoc(classRef);
 
@@ -56,20 +56,19 @@ const ExerciseSubmissionsPage = () => {
         }
 
         const classData = classSnap.data();
-
         if (classData.instructorId !== user.uid) {
-          console.error('Unauthorized: You do not own this class');
+          console.error('Unauthorized');
           navigate('/lecturer/dashboard1');
           return;
         }
 
-        // ✅ SECOND: Fetch exercise data (ALWAYS, even if no submissions)
+        // 2. Fetch exercise data
         const exerciseRef = doc(db, 'classes', classId, 'exercises', exerciseId);
         const exerciseSnap = await getDoc(exerciseRef);
 
         if (!exerciseSnap.exists()) {
           console.error('Exercise not found');
-          navigate('/lecturer/dashboard1');
+          navigate(`/lecturer/class/${classId}`);
           return;
         }
 
@@ -80,7 +79,7 @@ const ExerciseSubmissionsPage = () => {
         };
         setExerciseData(exercise);
 
-        // ✅ Set up real-time listener for exercise updates
+        // Real-time listener for exercise updates
         unsubscribe = onSnapshot(exerciseRef, (snap) => {
           if (snap.exists()) {
             setExerciseData({
@@ -91,20 +90,19 @@ const ExerciseSubmissionsPage = () => {
           }
         });
 
-        // ✅ THIRD: Get submissions
+        // 3. Get submissions
         const submissionsQuery = query(
           collection(db, 'submissions'),
           where('exerciseId', '==', exerciseId)
         );
         const submissionsSnapshot = await getDocs(submissionsQuery);
 
-        // If no submissions, just stop here (exercise data already loaded!)
         if (submissionsSnapshot.empty) {
           setLoading(false);
           return;
         }
 
-        // Process submissions
+        // 4. Process submissions & Stats
         const submissionsData = [];
         let pendingReview = 0;
         let pendingConfirmation = 0;
@@ -122,6 +120,7 @@ const ExerciseSubmissionsPage = () => {
           else if (data.status === 'published') published++;
         });
         
+        // Sort: Newest first
         submissionsData.sort((a, b) => {
           const aDate = a.submittedAt?.toDate?.() || new Date(a.submittedAt) || new Date(0);
           const bDate = b.submittedAt?.toDate?.() || new Date(b.submittedAt) || new Date(0);
@@ -151,6 +150,7 @@ const ExerciseSubmissionsPage = () => {
   }, [exerciseId, classId, user, navigate]);
 
   const handleViewAndGrade = (submissionId) => {
+    // Navigate to the Grading Page
     navigate(`/lecturer/class/${classId}/exercise/${exerciseId}/grade/${submissionId}`);
   };
 

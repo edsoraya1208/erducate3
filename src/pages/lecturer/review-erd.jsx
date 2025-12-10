@@ -16,60 +16,53 @@ const LecturerReviewERD = () => {
     detectedData, 
     exerciseData, 
     classId, 
-    exerciseId 
+    exerciseId,
+    rubricAnalysis // ✅ Grab this from location state
   } = location.state || {};
 
   useEffect(() => {
     console.log('📍 Review page loaded, checking data...');
-    console.log('detectedData:', detectedData);
-    console.log('classId:', classId);
-    console.log('exerciseId:', exerciseId);
-
+    // ... (Keep existing validation logic) ...
     if (!detectedData || !exerciseData || !classId || !exerciseId) {
       console.error('❌ Missing required data!');
       alert('Missing data. Redirecting...');
       navigate('/lecturer/dashboard1', { replace: true });
     } else if (!detectedData.isERD) {
-      // ✅ Handle non-ERD images
       alert(`❌ This is not an ERD diagram!\n\nReason: ${detectedData.reason || 'Invalid image format'}\n\nPlease upload a valid ERD diagram.`);
       navigate(-1, { replace: true });
-    } else {
-      console.log('✅ All data present, showing review page');
     }
   }, [detectedData, exerciseData, classId, exerciseId, navigate]);
 
-  const handlePublish = async (reviewedData) => {
+  // ✅ UPDATED: Now receives the processed data from the component
+  const handlePublish = async (publishData) => {
     setIsLoading(true);
     
-    // 🐛 DEBUG - CHECK WHAT WE'RE SAVING
-    console.log('🔥 About to save to Firebase:');
-    console.log('Full reviewedData:', reviewedData);
-    console.log('reviewedData.elements:', JSON.stringify(reviewedData.elements, null, 2));
-    
-    // Find a relationship and log it
-    const relationship = reviewedData.elements.find(e => e.type === 'relationship');
-    if (relationship) {
-      console.log('🔥 Sample relationship:', relationship);
-      console.log('Has cardinalityFrom?', relationship.cardinalityFrom);
-      console.log('Has cardinalityTo?', relationship.cardinalityTo);
-      console.log('Has subType?', relationship.subType);
-      console.log('Has from?', relationship.from);
-      console.log('Has to?', relationship.to);
-    } else {
-      console.log('⚠️ No relationship found in elements!');
-    }
+    console.log('🔥 Page received data to publish:', publishData);
     
     try {
       const exerciseRef = doc(db, 'classes', classId, 'exercises', exerciseId);
       
-      await updateDoc(exerciseRef, {
+      // ✅ Prepare Firestore Update Data
+      const updateData = {
         correctAnswer: {
-          elements: reviewedData.elements
+          elements: publishData.elements // Elements cleaned by component
         },
         status: 'active',
+        approvedAt: serverTimestamp(), // Added approvedAt to match original component logic
         publishedAt: serverTimestamp(),
         updatedAt: serverTimestamp()
-      });
+      };
+
+      // ✅ Add Rubric data if it exists in the passed data
+      if (publishData.rubricStructured) {
+        updateData.rubricStructured = {
+            ...publishData.rubricStructured,
+            detectedAt: serverTimestamp()
+        };
+      }
+
+      // ✅ Perform the DB write
+      await updateDoc(exerciseRef, updateData);
 
       console.log('✅ Firebase update successful!');
       alert('✅ Exercise published successfully!');
@@ -92,30 +85,22 @@ const LecturerReviewERD = () => {
   if (!detectedData || !detectedData.isERD) {
     return (
       <div className="ce-page create-exercise-container">
-        <DashboardHeader 
-          userType="lecturer"
-          currentPage="review-erd"
-          additionalNavItems={[]}
-        />
-        <div style={{ padding: '2rem', textAlign: 'center' }}>
-          <p>Loading review data...</p>
-        </div>
+        <DashboardHeader userType="lecturer" currentPage="review-erd" />
+        <div style={{ padding: '2rem', textAlign: 'center' }}><p>Loading review data...</p></div>
       </div>
     );
   }
 
   return (
     <div className="ce-page create-exercise-container">
-      <DashboardHeader 
-        userType="lecturer"
-        currentPage="review-erd"
-        additionalNavItems={[]}
-      />
+      <DashboardHeader userType="lecturer" currentPage="review-erd" />
       
+      {/* ✅ Component is now Pure UI, Page handles the Logic */}
       <LecturerReviewERDComponent
         detectedData={detectedData}
         answerSchemeUrl={exerciseData.answerScheme.url}
-        rubricUrl={exerciseData.rubric?.url}
+        rubricText={exerciseData.rubricText}
+        rubricAnalysis={rubricAnalysis} // Pass this down
         onPublish={handlePublish}
         onCancel={handleCancel}
         isLoading={isLoading}

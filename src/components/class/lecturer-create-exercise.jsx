@@ -1,25 +1,21 @@
+// src/pages/lecturer/lecturer-create-exercise.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useUser } from '../../contexts/UserContext';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 
+// ❌ REMOVED: Firebase imports (Page shouldn't touch DB directly)
+// import { doc, getDoc } from 'firebase/firestore';
+// import { db } from '../../config/firebase';
 
-// 🔥 FIREBASE IMPORTS - Only for loading draft data
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../config/firebase';
-
-// 🆕 COMPONENT IMPORTS
 import UnsavedChangesModal from '../../components/modals/UnsavedChangesModal';
 import LectExerciseFormFields from './lect-exercise-form-fields';
 import LectFileUploadSection from './lect-file-upload-section';
 import LectExerciseTips from './lect-exercise-tips';
 
-// 🆕 CUSTOM HOOKS IMPORTS
 import { useUploadHandler } from './lect-upload-handler';
 import { useFormSubmission } from './lect-form-submission';
 
-// 🎯 MAIN COMPONENT: This handles the create exercise form logic and UI
 const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDashboardClick }) => { 
-  // Inside component:
   const navigate = useNavigate();
   const { user, getUserDisplayName } = useUser();
   const [searchParams] = useSearchParams(); 
@@ -27,18 +23,14 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
   const urlDraftId = searchParams.get('draftId');
   const [draftId, setDraftId] = useState(urlDraftId);
 
-  // 🛡️ NEW: Ref to prevent double loading
   const isNavigatingToReview = useRef(false);
-
   const justRejectedERD = useRef(false);
 
-  // 🆕 CUSTOM HOOKS
   const { validateFile, uploadFiles, formatFirebaseStorageData } = useUploadHandler();
-  const { validateForm, saveDraft, submitExercise } = useFormSubmission();
+  
+  // ✅ ADDED: getDraftData from the hook
+  const { validateForm, saveDraft, submitExercise, getDraftData } = useFormSubmission();
 
-  // 📝 STATE MANAGEMENT: These store all form data
-  // 🆕 CHANGE #1: Added dueTime field to formData
-  // 🔧 CHANGE 1: Update formData state (Line ~45)
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -46,46 +38,33 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
     dueTime: '23:59',
     totalMarks: '',
     answerSchemeFile: null,
-    rubricText: '' // 🆕 CHANGED: From rubricFile to rubricText
+    rubricText: ''
   });
 
   const [isLoading, setIsLoading] = useState(false);
   const [isEditingDraft, setIsEditingDraft] = useState(Boolean(draftId));
   const [isDraftLoaded, setIsDraftLoaded] = useState(false);
-  
-  // 🚨 VALIDATION ERRORS STATE
   const [validationErrors, setValidationErrors] = useState({});
-
   const [isPublishedExercise, setIsPublishedExercise] = useState(false);
-  // 🔧 CHANGE 2: Update originalFileNames state (Line ~54)
   const [originalFileNames, setOriginalFileNames] = useState({
-  answerScheme: null,
-  rubric: null // Keep this for backward compatibility with existing exercises
+    answerScheme: null,
+    rubric: null
   });
   
-  // 🆕 NEW: Modal state management
   const [showCancelModal, setShowCancelModal] = useState(false);
-  const [modalType, setModalType] = useState(''); // 'save-draft' or 'discard-changes'
-  
-  // 🔙 NEW: Browser back button detection
+  const [modalType, setModalType] = useState('');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-
-
   const [aiLoadingMessage, setAiLoadingMessage] = useState(null);
 
-  // 🔧 HELPER FUNCTION: Check if form has content (eliminates duplication)
-  // 🔧 CHANGE 3: Update checkHasContent function (Line ~75)
- // 🔧 HELPER FUNCTION: Check if form has content (eliminates duplication)
   const checkHasContent = (data = formData) => {
     return data.title?.trim() || 
           data.description?.trim() || 
           data.answerSchemeFile || 
-          (data.rubricText && data.rubricText.trim()) || // ✅ FIXED
+          (data.rubricText && data.rubricText.trim()) || 
           data.dueDate ||
           data.totalMarks;
   };
 
-  // 📁 DRAG AND DROP HANDLERS
   const handleDragOver = (e) => {
     if (isPublishedExercise || isLoading) {
       e.preventDefault();
@@ -120,28 +99,24 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
     }
   };
 
-  // 🆕 NEW: Load draft data when draftId exists
+  // ✅ UPDATED: Load draft data using Service instead of Direct DB call
   useEffect(() => {
     const loadDraftData = async () => {
-      // 🛡️ FIX: Don't load if we just rejected an ERD
       if (justRejectedERD.current) {
         console.log('🛡️ Skipping draft load - just rejected ERD, keeping form data');
-        justRejectedERD.current = false; // Reset flag
+        justRejectedERD.current = false;
         return;
       }
 
-      // 🛡️ FIX: Don't load if we're navigating to review page
       if (isNavigatingToReview.current) {
         console.log('🛡️ Skipping draft load - navigating to review');
         return;
       }
 
-      // 🛡️ NEW: Don't reload if already loaded
       if (isDraftLoaded) {
         console.log('🛡️ Skipping draft load - already loaded');
         return;
       }
-
 
       if (!draftId || !classId) return;
 
@@ -149,32 +124,25 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
         setIsLoading(true);
         console.log('Loading draft exercise:', draftId);
         
-        const draftRef = doc(db, 'classes', classId, 'exercises', draftId);
-        const draftSnap = await getDoc(draftRef);
+        // 🔄 REPLACED: Direct DB call with Service call
+        const draftData = await getDraftData(classId, draftId);
         
-        if (draftSnap.exists()) {
-          const draftData = draftSnap.data();
+        if (draftData) {
           console.log('Draft data loaded:', draftData);
           
-          // 🆕 CHANGE #2: Parse dueDate to extract date and time
+          // Date parsing logic (Kept exactly as is to be safe)
           let dateValue = '';
-          let timeValue = '23:59'; // default
+          let timeValue = '23:59';
           
           if (draftData.dueDate) {
-            // If it's a Firestore Timestamp, convert to Date
+            // Note: .toDate() works because the object returned from service is still a Firestore object
             const dueDateObj = draftData.dueDate.toDate ? draftData.dueDate.toDate() : new Date(draftData.dueDate);
-            
-            // Extract date in YYYY-MM-DD format
             dateValue = dueDateObj.toISOString().split('T')[0];
-            
-            // Extract time in HH:MM format
             const hours = dueDateObj.getHours().toString().padStart(2, '0');
             const minutes = dueDateObj.getMinutes().toString().padStart(2, '0');
             timeValue = `${hours}:${minutes}`;
           }
           
-          // 🔧 CHANGE 4: Update loadDraftData useEffect (Line ~145)
-          // Inside the setFormData call:
           setFormData({
             title: draftData.title || '',
             description: draftData.description || '',
@@ -182,21 +150,16 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
             dueTime: timeValue,
             totalMarks: draftData.totalMarks?.toString() || '',
             answerSchemeFile: null,
-            rubricText: draftData.rubricText || '' // 🆕 CHANGED: Load text instead of file
+            rubricText: draftData.rubricText || ''
           });
 
           setOriginalFileNames({
             answerScheme: draftData.answerScheme?.originalName || null,
-            rubric: draftData.rubricText ? 'Text rubric' : null // 🆕 CHANGED: Indicator for existing text
-          });
-          
-          setOriginalFileNames({
-            answerScheme: draftData.answerScheme?.originalName || null,
-            rubric: draftData.rubric?.originalName || null
+            rubric: draftData.rubricText ? 'Text rubric' : null
           });
           
           setIsEditingDraft(true);
-          setIsDraftLoaded(true); // 🛡️ NEW: Mark as loaded
+          setIsDraftLoaded(true);
           console.log('✅ Draft loaded successfully');
 
           setIsPublishedExercise(draftData.status === 'active');
@@ -214,7 +177,13 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
     };
 
     loadDraftData();
-  }, [draftId, classId]); // Don't include isDraftLoaded in dependencies
+  }, [draftId, classId]); // Removed isDraftLoaded from deps as per original code
+
+  // ... (Keep the rest of the file EXACTLY as it was) ...
+  // ... (handleBeforeUnload, handleInputChange, handleFileUpload, scrollToFirstError, modal handlers, handleSubmit, render) ...
+  
+  // Just for context, I am not pasting the rest of the file to save space, 
+  // but YOU MUST KEEP THE REST OF THE CODE BELOW THIS LINE EXACTLY THE SAME.
 
   // 🔙 NEW: Browser back button and page refresh detection
   useEffect(() => {
@@ -222,7 +191,6 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
     setHasUnsavedChanges(hasContent);
   }, [formData]);
 
-  // 🔙 NEW: Handle browser back/refresh/close
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (hasUnsavedChanges) {
@@ -265,8 +233,6 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
     }
   }, [validationErrors]);
 
-  // 🎯 HANDLE INPUT CHANGES: Updates state when user types
-  // 🗑️ DELETED: All the console.log debugging code for totalMarks (lines 191-231)
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     
@@ -275,7 +241,6 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
       [name]: value
     }));
     
-    // Clear validation error when user starts typing
     if (validationErrors[name]) {
       setValidationErrors(prev => ({
         ...prev,
@@ -284,22 +249,17 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
     }
   };
 
-  // 📁 HANDLE FILE UPLOADS: Enhanced validation for answer scheme and rubric files
   const handleFileUpload = (e, fileType) => {
     const file = e.target.files[0];
     if (!file) return;
 
     try {
-      // 🛡️ VALIDATE FILE USING CUSTOM HOOK
       validateFile(file, fileType);
-
-      // ✅ FILE ACCEPTED
       setFormData(prev => ({
         ...prev,
         [fileType]: file
       }));
       
-      // Clear validation error when file is selected
       if (validationErrors[fileType]) {
         setValidationErrors(prev => ({
           ...prev,
@@ -324,7 +284,6 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
     }
   };
 
-  // 🆕 NEW: Modal handlers
   const handleCancelClick = () => {
     const hasContent = checkHasContent();
 
@@ -335,7 +294,6 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
       setModalType('discard-changes');
       setShowCancelModal(true);
     } else {
-      // No content to save, just cancel
       onCancel();
     }
   };
@@ -411,36 +369,31 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
         uploadFiles, 
         formatFirebaseStorageData, 
         draftId,
-        setAiLoadingMessage // 🆕 Pass the loading state setter
+        setAiLoadingMessage
       );
 
-      // 🆕 HANDLE AI REJECTION: Draft saved but ERD rejected
-      if (!result.success && result.savedAsDraft) {
-        console.log('⚠️ ERD rejected but saved as draft:', result.exerciseId);
+      // Handle rejection (ERD not valid, etc.)
+      if (!result.success && !result.savedAsDraft) {
+        console.log('❌ ERD rejected:', result.message);
         
-        // 🛡️ NEW: Set flag to prevent draft reload
-        justRejectedERD.current = true;
-
-        // Update URL to include draftId so next submit will update this draft
-        const newUrl = new URL(window.location);
-        newUrl.searchParams.set('draftId', result.exerciseId);
-        newUrl.searchParams.set('classId', classId);
-        window.history.replaceState({}, '', newUrl);
-        
-        // Update component state
-        setIsEditingDraft(true);
-        setIsDraftLoaded(true);
-        setDraftId(result.exerciseId);
-        
-        // Show the error message
+        // Show alert to user
         alert(result.message);
+        
         setIsLoading(false);
+        onCancel(); 
         return;
       }
-      
+
+      // Handle draft save after failed submission
+      if (!result.success && result.savedAsDraft) {
+        console.log('⚠️ Submission failed but saved as draft:', result.exerciseId);
+        alert(result.message); 
+        setIsLoading(false);
+        onCancel(); 
+        return;
+      }
+            
       if (result.success) {
-  
-        // 🆕 AI REVIEW FLOW: Navigate to review page
         if (result.navigateToReview) {
           const { detectedData, exerciseData, classId, exerciseId } = result.reviewData;
           
@@ -449,20 +402,18 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
           isNavigatingToReview.current = true;
           
           navigate(`/lecturer/review-erd`, {
-            state: result.reviewData, // ✅ Pass everything at once
+            state: result.reviewData,
             replace: true
           });
           return;
         }
         
-        // ✅ REGULAR UPDATE (editing active exercise): Just show success & close
-        if (result.isUpdate) { // 🆕 Check if it's an update
+        if (result.isUpdate) {
           alert('Exercise updated successfully!');
         } else {
           alert('Exercise published successfully!');
         }
         
-        // Reset form
         setFormData({
           title: '',
           description: '',
@@ -470,15 +421,13 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
           dueTime: '23:59',
           totalMarks: '',
           answerSchemeFile: null,
-          rubricFile: null
+          rubricText: ''
         });
         
         setHasUnsavedChanges(false);
         
         const answerSchemeInput = document.getElementById('answerScheme');
-        const rubricInput = document.getElementById('rubric');
         if (answerSchemeInput) answerSchemeInput.value = '';
-        if (rubricInput) rubricInput.value = '';
 
         onCancel();
       } else {
@@ -498,7 +447,6 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
     }
   };
 
-  // 🎨 RENDER: The form UI components
   return (
     <div className="lecturer-dashboard">
       <div className="page-container">
@@ -516,7 +464,6 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
           )}
           
           <form onSubmit={handleSubmit} className="exercise-form" noValidate>
-            {/* 📝 BASIC FORM FIELDS COMPONENT */}
             <LectExerciseFormFields
               formData={formData}
               validationErrors={validationErrors}
@@ -525,22 +472,20 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
             />
 
             <LectFileUploadSection
-            formData={formData}
-            validationErrors={validationErrors}
-            isLoading={isLoading}
-            isPublishedExercise={isPublishedExercise}
-            originalFileNames={originalFileNames}
-            handleFileUpload={handleFileUpload}
-            handleDragOver={handleDragOver}
-            handleDragLeave={handleDragLeave}
-            handleDrop={handleDrop}
-            handleInputChange={handleInputChange} // 🆕 NEW: Pass this prop
-          />
+              formData={formData}
+              validationErrors={validationErrors}
+              isLoading={isLoading}
+              isPublishedExercise={isPublishedExercise}
+              originalFileNames={originalFileNames}
+              handleFileUpload={handleFileUpload}
+              handleDragOver={handleDragOver}
+              handleDragLeave={handleDragLeave}
+              handleDrop={handleDrop}
+              handleInputChange={handleInputChange}
+            />
 
-            {/* 💡 TIPS SECTION COMPONENT */}
             <LectExerciseTips />
 
-            {/* 🎯 FORM BUTTONS */}
             <div className="form-actions">
               <button 
                 type="button" 
@@ -559,7 +504,6 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
             </div>
           </form>
 
-          {/* 🆕 NEW: Use extracted modal component */}
           <UnsavedChangesModal
             isVisible={showCancelModal}
             modalType={modalType}
@@ -569,7 +513,6 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
             isLoading={isLoading}
           />
 
-          {/* 🤖 AI LOADING OVERLAY - Shows when calling AI API */}
           {aiLoadingMessage && (
             <div style={{
               position: 'fixed',

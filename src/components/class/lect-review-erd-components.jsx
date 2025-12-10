@@ -1,8 +1,9 @@
-// Full file - only the ERDReviewPanel section changed
+// src/components/class/lect-review-erd-components.jsx
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../config/firebase';
+// ❌ REMOVED: Firebase imports (This component is now Pure UI)
+// import { doc, updateDoc, serverTimestamp } from 'firebase/firestore'; 
+// import { db } from '../../config/firebase';
 import ERDReviewPanel from './ERDReviewPanel';
 import '../../styles/review-erd.css';
 import '../../styles/grade-erd.css';
@@ -20,6 +21,7 @@ const LecturerReviewERDComponent = ({
   const navigate = useNavigate();
   
   const passedData = location.state || {};
+  // Note: We still use location state for init, but we don't fetch data here.
   const { classId, exerciseId } = passedData;
   
   const initialDetectedData = passedData.detectedData || detectedData;
@@ -27,6 +29,7 @@ const LecturerReviewERDComponent = ({
   const initialRubricText = passedData.exerciseData?.rubricText || rubricText;
   const initialRubricAnalysis = passedData.rubricAnalysis || rubricAnalysis;
 
+  // ... (Console logs kept as requested) ...
   console.log('🔍 Review Page Data Check:');
   console.log('  - detectedData:', initialDetectedData ? '✅ Present' : '❌ Missing');
   console.log('  - rubricText:', initialRubricText ? '✅ Present' : '❌ Missing');
@@ -44,7 +47,7 @@ const LecturerReviewERDComponent = ({
     }))
   );
   
-  const [isPublishing, setIsPublishing] = useState(false);
+  // ❌ REMOVED: isPublishing state (The Page handles the loading state now via props)
   const [notification, setNotification] = useState(null);
 
   const showNotification = (message, type = 'success') => {
@@ -52,7 +55,8 @@ const LecturerReviewERDComponent = ({
     setTimeout(() => setNotification(null), 3000);
   };
 
-  const handlePublish = async () => {
+  const handlePublishClick = () => {
+    // 1. VALIDATION (Kept here because it's UI feedback)
     if (!initialDetectedData?.elements || initialDetectedData.elements.length === 0) {
       showNotification('Cannot publish: No ERD elements detected', 'error');
       return;
@@ -63,75 +67,49 @@ const LecturerReviewERDComponent = ({
       return;
     }
 
-    if (onPublish && !classId) {
-      onPublish({ elements: allElements });
-      return;
-    }
-
-    if (!classId || !exerciseId) {
-      showNotification('Missing exercise information. Cannot publish.', 'error');
-      return;
-    }
-
-    try {
-      setIsPublishing(true);
-      
-      const cleanedElements = allElements.map(element => {
-        const cleaned = {
-          id: element.id,
-          name: element.name,
-          type: element.type,
-          subType: element.subType,
-          confidence: element.confidence
-        };
-
-        if (element.type === 'relationship') {
-          cleaned.from = element.from;
-          cleaned.to = element.to;
-          if (element.cardinalityFrom) cleaned.cardinalityFrom = element.cardinalityFrom;
-          if (element.cardinalityTo) cleaned.cardinalityTo = element.cardinalityTo;
-        }
-
-        if (element.type === 'attribute') {
-          cleaned.belongsTo = element.belongsTo;
-          cleaned.belongsToType = element.belongsToType;
-        }
-
-        return cleaned;
-      });
-      
-      const exerciseRef = doc(db, 'classes', classId, 'exercises', exerciseId);
-      
-      const updateData = {
-        status: 'active',
-        correctAnswer: {
-          elements: cleanedElements
-        },
-        approvedAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+    // 2. DATA CLEANING (Prepare the data for the Page)
+    const cleanedElements = allElements.map(element => {
+      const cleaned = {
+        id: element.id,
+        name: element.name,
+        type: element.type,
+        subType: element.subType,
+        confidence: element.confidence
       };
 
-      if (initialRubricAnalysis?.isERDRubric === true) {
-        updateData.rubricStructured = {
-          isERDRubric: initialRubricAnalysis.isERDRubric,
-          totalPoints: initialRubricAnalysis.totalPoints || 0,
-          criteria: initialRubricAnalysis.criteria || [],
-          detectedAt: serverTimestamp()
-        };
+      if (element.type === 'relationship') {
+        cleaned.from = element.from;
+        cleaned.to = element.to;
+        if (element.cardinalityFrom) cleaned.cardinalityFrom = element.cardinalityFrom;
+        if (element.cardinalityTo) cleaned.cardinalityTo = element.cardinalityTo;
       }
 
-      await updateDoc(exerciseRef, updateData);
-      
-      showNotification('Exercise published successfully!');
-      setTimeout(() => {
-        navigate(`/lecturer/class/${classId}`, { replace: true });
-      }, 1500);
-      
-    } catch (error) {
-      console.error('Error publishing exercise:', error);
-      showNotification('Failed to publish exercise. Please try again.', 'error');
-    } finally {
-      setIsPublishing(false);
+      if (element.type === 'attribute') {
+        cleaned.belongsTo = element.belongsTo;
+        cleaned.belongsToType = element.belongsToType;
+      }
+
+      return cleaned;
+    });
+
+    // 3. PREPARE FINAL OBJECT
+    const publishData = {
+      elements: cleanedElements,
+      // Pass rubric data up if it exists
+      rubricStructured: (initialRubricAnalysis?.isERDRubric === true) ? {
+        isERDRubric: initialRubricAnalysis.isERDRubric,
+        totalPoints: initialRubricAnalysis.totalPoints || 0,
+        criteria: initialRubricAnalysis.criteria || [],
+        // note: detectedAt will be added by serverTimestamp in the Page if needed
+      } : null
+    };
+
+    // 4. SEND TO PARENT PAGE
+    // ✅ CHANGED: We don't save to DB here. We just call the prop.
+    if (onPublish) {
+      onPublish(publishData); 
+    } else {
+      console.error("onPublish prop is missing!");
     }
   };
 
@@ -186,14 +164,13 @@ const LecturerReviewERDComponent = ({
           </div>
         </div>
 
-        {/* ❌ REMOVED: showRefreshGrade prop */}
         <ERDReviewPanel
           allElements={allElements}
           setAllElements={setAllElements}
           isReadOnly={false}
-          onPublish={handlePublish}
+          onPublish={handlePublishClick} // ✅ Changed to local handler
           onCancel={handleCancel}
-          isPublishing={isPublishing}
+          isPublishing={isLoading} // ✅ Uses prop from parent
           isLoading={isLoading}
           publishButtonText="Confirm & Publish Exercise"
         />

@@ -48,28 +48,26 @@ const StudentReportComponent = ({ submission, exerciseData, loading, error, clas
   
 
   const handleDownloadPDF = () => {
-    // Save original title
-    const originalTitle = document.title;
-    
-    // Create a custom filename
+    // 1. Get the data
     const studentName = submission.studentEmail.split('@')[0];
     const exerciseTitle = exerciseData.title.replace(/\s+/g, '_');
-    const date = new Date().toISOString().split('T')[0];
     
-    // Set temporary title
-    document.title = `${studentName}_${exerciseTitle}_${date}`;
+    // 2. Save original title
+    const originalTitle = document.title;
     
-    // CHANGE: Wrap window.print() in a timeout
-    // This allows the browser to register the title change before opening the dialog
+    // 3. Set custom title IMMEDIATELY
+    // We do this first so it has the best chance of being picked up
+    document.title = `${studentName}_${exerciseTitle}`;
+    
+    // 4. Trigger Print IMMEDIATELY (No setTimeout)
+    // This satisfies the iOS security requirement so the dialog opens
+    window.print();
+    
+    // 5. Restore title after a delay
+    // We can delay this part safely because the print dialog is already open
     setTimeout(() => {
-      window.print();
-      
-      // Restore original title after a longer delay (2 seconds)
-      // giving the mobile browser enough time to "capture" the new title
-      setTimeout(() => {
-        document.title = originalTitle;
-      }, 2000);
-    }, 100);
+      document.title = originalTitle;
+    }, 2000);
   };
   
 

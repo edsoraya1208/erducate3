@@ -327,11 +327,11 @@ const isGradingLocked = existingSubmission?.status === 'published';
                   <div className="se-guidelines">
                     <h4>Submission Guidelines:</h4>
                     <ul>
-                      <li>Submit PNG, JPEG, or JPG files</li>
+                      <li>Submit <strong>PNG, JPEG, or JPG files</strong></li>
                       <li>Maximum file size: 2MB</li>
                       <li>Keep diagram clear and well-organized</li>
                       <li>Use standard English terms</li>
-                      <li>Use Chen's notation for consistency</li>
+                      <li>Use <strong>Chen's notation</strong> for consistency</li>
                       <li><strong>Submit before due date</strong></li>
                       {/* ❌ REMOVED: Maximum 2 edits guideline */}
                       {/* 🔄 TO RESTORE: Uncomment line below */}

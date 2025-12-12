@@ -134,7 +134,10 @@ const DashboardHeader = ({
             
             <div className="mobile-user-info">
               <div className="user-avatar">{getUserInitials()}</div>
-              <span>{getUserDisplayName()}</span>
+              {/* 👇 Added className and a title so you can see full name if you hold press */}
+              <span className="mobile-user-name" title={getUserDisplayName()}>
+                {getUserDisplayName()}
+              </span>
             </div>
             
             <button className="logout-btn mobile-logout" onClick={handleLogout}>

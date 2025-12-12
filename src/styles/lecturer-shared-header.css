@@ -129,6 +129,7 @@
   /* Keeps the standard mouse arrow so users know not to click */
   cursor: default; 
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  flex-shrink: 0; 
 }
 
 /* Notification Bell Trigger */
@@ -418,6 +419,17 @@
   color: white;
 }
 
+/* Add this new class for the text */
+.mobile-user-name {
+  white-space: nowrap;      /* Force text to stay on one line */
+  overflow: hidden;         /* Hide anything that sticks out */
+  text-overflow: ellipsis;  /* Add the "..." at the end */
+  
+  flex: 1;                  /* Take up remaining space */
+  min-width: 0;             /* crucial fix for flexbox truncation */
+  display: block;           /* Ensures constraints work */
+}
+
 /* Mobile Logout Button Adjustment */
 .mobile-nav .logout-btn {
   margin-top: 24px;
@@ -458,12 +470,21 @@
     font-weight: 900;
   }
 
-  /* Adjust Components */
-  .notification-dropdown {
-    width: 90vw;
-    max-width: 380px;
-    right: -20px;
-  }
+  /* smaller pop up noti fo rmobile */
+.notification-dropdown {
+  position: fixed;             /* Float freely */
+  top: 20%;                    /* Move it down a bit from the very top */
+  left: 50%;                   /* Center horizontal */
+  transform: translateX(-50%); /* Center horizontal alignment */
+  
+  /* UPDATED SIZES: */
+  width: 85vw;                 /* 85% of phone width (gives it breathing room) */
+  max-width: 320px;            /* Stop it from getting too wide */
+  max-height: 60vh;            /* Ensure it doesn't cover the whole screen height */
+  
+  z-index: 2000;
+  right: auto;                 /* Reset default positioning */
+}
   
   .user-avatar {
     width: 32px;

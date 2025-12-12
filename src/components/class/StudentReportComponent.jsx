@@ -52,23 +52,25 @@ const StudentReportComponent = ({ submission, exerciseData, loading, error, clas
     const originalTitle = document.title;
     
     // Create a custom filename
-    // Format: StudentName_ExerciseTitle_Date.pdf
-    const studentName = submission.studentEmail.split('@')[0]; // Gets part before @
-    const exerciseTitle = exerciseData.title.replace(/\s+/g, '_'); // Replace spaces with underscores
-    const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const studentName = submission.studentEmail.split('@')[0];
+    const exerciseTitle = exerciseData.title.replace(/\s+/g, '_');
+    const date = new Date().toISOString().split('T')[0];
     
-    // Set temporary title (this becomes the PDF filename)
+    // Set temporary title
     document.title = `${studentName}_${exerciseTitle}_${date}`;
     
-    // Trigger print dialog
-    window.print();
-    
-    // Restore original title after a short delay
+    // CHANGE: Wrap window.print() in a timeout
+    // This allows the browser to register the title change before opening the dialog
     setTimeout(() => {
-      document.title = originalTitle;
-    }, 1000);
+      window.print();
+      
+      // Restore original title after a longer delay (2 seconds)
+      // giving the mobile browser enough time to "capture" the new title
+      setTimeout(() => {
+        document.title = originalTitle;
+      }, 2000);
+    }, 100);
   };
-
   
 
   // Helper function to get color class based on score

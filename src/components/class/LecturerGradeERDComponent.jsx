@@ -127,34 +127,56 @@ const LecturerGradeERDComponent = ({
           <div className="grade-feedback-box">
             <h3>✨ AI Feedback</h3>
             
+            {/* CORRECT ITEMS */}
             {gradingResult.feedback?.correct?.length > 0 && (
               <div className="feedback-strengths">
                 <h4>✅ Strengths</h4>
                 <ul>
                   {gradingResult.feedback.correct.map((item, idx) => (
-                    <li key={idx}>{item}</li>
+                    <li key={idx}>
+                      {/* Check if item is an object or just text */}
+                      {typeof item === 'object' ? (
+                        <span><strong>{item.item}</strong>: {item.explanation}</span>
+                      ) : (
+                        item
+                      )}
+                    </li>
                   ))}
                 </ul>
               </div>
             )}
 
+            {/* MISSING ITEMS */}
             {gradingResult.feedback?.missing?.length > 0 && (
               <div className="feedback-missing">
                 <h4>❌ Missing</h4>
                 <ul>
                   {gradingResult.feedback.missing.map((item, idx) => (
-                    <li key={idx}>{item}</li>
+                    <li key={idx}>
+                      {typeof item === 'object' ? (
+                        <span><strong>{item.item}</strong>: {item.explanation}</span>
+                      ) : (
+                        item
+                      )}
+                    </li>
                   ))}
                 </ul>
               </div>
             )}
 
+            {/* INCORRECT ITEMS */}
             {gradingResult.feedback?.incorrect?.length > 0 && (
               <div className="feedback-incorrect">
                 <h4>⚠️ Needs Improvement</h4>
                 <ul>
                   {gradingResult.feedback.incorrect.map((item, idx) => (
-                    <li key={idx}>{item}</li>
+                    <li key={idx}>
+                       {typeof item === 'object' ? (
+                        <span><strong>{item.item}</strong>: {item.explanation}</span>
+                      ) : (
+                        item
+                      )}
+                    </li>
                   ))}
                 </ul>
               </div>

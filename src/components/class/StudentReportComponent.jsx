@@ -103,6 +103,17 @@ const StudentReportComponent = ({ submission, exerciseData, loading, error, clas
 
       {/* Main Content */}
       <div className="report-main-content">
+        
+        {/* ✅ NEW: Question Section (Full Width) */}
+        {exerciseData.description && (
+          <div className="report-question-section">
+            <h3>📝 Question / Instructions</h3>
+            <div className="report-question-content">
+              {exerciseData.description}
+            </div>
+          </div>
+        )}
+
         {/* LEFT: Student Submission */}
         <div className="report-submission-section">
           <h2>Your Submission</h2>
@@ -138,6 +149,7 @@ const StudentReportComponent = ({ submission, exerciseData, loading, error, clas
           </div>
         </div>
       </div>
+      
 
       {/* Feedback Section */}
       {grade?.feedback && (

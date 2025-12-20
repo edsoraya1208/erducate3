@@ -459,6 +459,37 @@
 }
 
 /* ========================================
+   QUESTION SECTION (New)
+   ======================================== */
+.report-question-section {
+  grid-column: 1 / -1; /* Spans full width of the grid */
+  background: #fff; /* White background to match others */
+  border-radius: 12px;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  margin-bottom: 0; /* Let grid gap handle spacing */
+  border-left: 5px solid #5e17a5; /* Purple accent to distinguish it */
+}
+
+
+.report-question-section h3 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.report-question-content {
+  font-size: 0.95rem;
+  color: #374151;
+  line-height: 1.6;
+  white-space: pre-wrap; /* Preserves paragraphs/spacing from the DB */
+}
+
+/* ========================================
    RESPONSIVE
    ======================================== */
 @media (max-width: 1024px) {
@@ -507,5 +538,124 @@
 
   .report-breakdown-score-large {
     font-size: 1.5rem;
+  }
+}
+/* ========================================
+   PRINT OPTIMIZATION (Force One Page Fit)
+   ======================================== */
+@media print {
+  @page {
+    size: A4;
+    margin: 1cm;
+  }
+
+  body {
+    zoom: 75%; 
+    -webkit-print-color-adjust: exact !important; 
+    print-color-adjust: exact !important;
+  }
+
+  /* 1. HIDE UI ELEMENTS */
+  .no-print, 
+  .report-download-container {
+    display: none !important;
+  }
+
+  /* 2. RESET CONTAINER */
+  .report-container {
+    width: 100%;
+    max-width: none;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* 3. WHITE CONTAINERS */
+  .report-question-section,
+  .report-submission-section,
+  .report-breakdown-section,
+  .report-feedback-section {
+    background: white !important;
+    break-inside: avoid; 
+    page-break-inside: avoid;
+    box-shadow: none !important; 
+    border: 1px solid #ccc !important;
+    padding: 0.75rem !important;
+    margin-bottom: 1rem;
+  }
+
+  /* 4. COLORED FEEDBACK BOXES */
+  .report-feedback-box {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    border: 1px solid #ccc !important;
+    break-inside: avoid;
+  }
+  
+  .report-feedback-strengths { background-color: #f0fdf4 !important; }
+  .report-feedback-missing { background-color: #fef2f2 !important; }
+  .report-feedback-incorrect { background-color: #fffbeb !important; }
+  .report-feedback-overall { background-color: #eff6ff !important; }
+
+  /* 5. FORCE 1 LINE SUB-HEADERS */
+  .report-breakdown-section h2,
+  .report-submission-section h2 {
+    white-space: nowrap !important;
+    font-size: 1.1rem !important;
+    margin-bottom: 0.5rem;
+  }
+
+  /* 6. LAYOUT GRID */
+  .report-main-content {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 1rem !important;
+  }
+
+  .report-submission-image-container {
+    min-height: 200px;
+    max-height: 300px;
+  }
+  
+  .report-submission-image-container img {
+    max-height: 280px;
+    object-fit: contain;
+  }
+
+  /* ====================================================== */
+  /* 7. 🛑 FORCE BLUE HEADER ONE LINE (THE FIX)           */
+  /* ====================================================== */
+  .report-top-header {
+    display: flex !important;
+    flex-direction: row !important;  /* Strictly Left-to-Right */
+    flex-wrap: nowrap !important;    /* NEVER wrap to next line */
+    justify-content: space-between !important;
+    align-items: center !important;
+    height: auto !important;         /* Let it fit content, don't lock to 80px */
+    min-height: 60px !important;
+    margin-bottom: 1rem !important;
+    overflow: hidden !important;     /* Prevent spillover */
+  }
+
+  /* Left Side (Text): Allow it to shrink if needed, but keep on one line */
+  .report-header-left {
+    flex: 1 !important;             /* Take available space */
+    min-width: 0 !important;        /* Critical: allows text truncation */
+    margin-right: 1rem !important;  /* Space between text and grade */
+  }
+
+  /* The Title Text: Force one line, truncate if too long */
+  .report-header-left h1 {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important; /* Adds "..." if too long */
+    font-size: 1.4rem !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* Right Side (Grade): NEVER shrink, always stay visible */
+  .report-header-right {
+    flex-shrink: 0 !important;      /* Do not squish the grade */
+    width: auto !important;
   }
 }

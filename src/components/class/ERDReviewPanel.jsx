@@ -258,6 +258,7 @@ const ERDReviewPanel = ({
                   >
                     <option value="strong">Strong</option>
                     <option value="weak">Weak</option>
+                    <option value="associative">Associative</option> {/* ✅ Added this */}
                   </select>
                 )}
                 {element.type === 'relationship' && (
@@ -327,6 +328,9 @@ const ERDReviewPanel = ({
                       className="rev-dropdown"
                       disabled={isReadOnly}
                     >
+                      <option value="none..none">None / Unspecified</option> {/* ✅ Added */}
+                      <option value="0..none">0..None (Missing Max)</option> {/* ✅ Added */}
+                      <option value="1..none">1..None (Missing Max)</option> {/* ✅ Added */}
                       <option value="0..1">0..1 (optional, at most one)</option>
                       <option value="1..1">1..1 (exactly one)</option>
                       <option value="0..M">0..M (optional, many)</option>
@@ -341,6 +345,9 @@ const ERDReviewPanel = ({
                       className="rev-dropdown"
                       disabled={isReadOnly}
                     >
+                      <option value="none..none">None / Unspecified</option> {/* ✅ Added */}
+                      <option value="0..none">0..None (Missing Max)</option> {/* ✅ Added */}
+                      <option value="1..none">1..None (Missing Max)</option> {/* ✅ Added */}
                       <option value="0..1">0..1 (optional, at most one)</option>
                       <option value="1..1">1..1 (exactly one)</option>
                       <option value="0..M">0..M (optional, many)</option>
@@ -442,6 +449,7 @@ const ERDReviewPanel = ({
             >
               <option value="strong">Strong</option>
               <option value="weak">Weak</option>
+              <option value="associative">Associative</option> {/* ✅ Added */}
             </select>
           )}
 
@@ -481,6 +489,9 @@ const ERDReviewPanel = ({
                 onChange={(e) => setNewElement({...newElement, cardinalityFrom: e.target.value})}
                 className="rev-dropdown"
               >
+                <option value="none..none">None / Unspecified</option> {/* ✅ Added */}
+                <option value="0..none">0..None</option>               {/* ✅ Added */}
+                <option value="1..none">1..None</option>               {/* ✅ Added */}
                 <option value="0..1">0..1</option>
                 <option value="1..1">1..1</option>
                 <option value="0..M">0..M</option>
@@ -491,6 +502,9 @@ const ERDReviewPanel = ({
                 onChange={(e) => setNewElement({...newElement, cardinalityTo: e.target.value})}
                 className="rev-dropdown"
               >
+                <option value="none..none">None / Unspecified</option> {/* ✅ Added */}
+                <option value="0..none">0..None</option>               {/* ✅ Added */}
+                <option value="1..none">1..None</option>               {/* ✅ Added */}
                 <option value="0..1">0..1</option>
                 <option value="1..1">1..1</option>
                 <option value="0..M">0..M</option>

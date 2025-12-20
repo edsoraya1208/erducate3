@@ -78,37 +78,93 @@ const MyClassLectPage = () => {
   }, [classId, classData]);
 
   const fetchExercises = async () => {
-    try {
-      const q = query(collection(db, 'classes', classId, 'exercises'));
-      const querySnapshot = await getDocs(q);
-      const exercisesData = [];
-      
-      querySnapshot.forEach((doc) => {
-        exercisesData.push({
-          id: doc.id,
-          ...doc.data()
-        });
-      });
-      
-      // Sort exercises by creation date (newest first) and then by status
-      const sortedExercises = exercisesData.sort((a, b) => {
-        // First sort by status priority: draft > active > completed
-        const statusPriority = { draft: 3, active: 2, completed: 1 };
-        const statusDiff = statusPriority[b.status] - statusPriority[a.status];
-        
-        if (statusDiff !== 0) return statusDiff;
-        
-        // Then sort by creation date (newest first)
-        const aDate = a.createdAt?.toDate?.() || new Date(a.createdAt) || new Date(0);
-        const bDate = b.createdAt?.toDate?.() || new Date(b.createdAt) || new Date(0);
-        return bDate - aDate;
-      });
-      
-      setExercises(sortedExercises);
-    } catch (error) {
-      console.error('Error fetching exercises:', error);
+  try {
+    // 1. Fetch ALL Exercises for this class (Cost: 1 Read)
+    const qExercises = query(collection(db, 'classes', classId, 'exercises'));
+    const exercisesSnap = await getDocs(qExercises);
+    
+    // 2. Fetch ALL Submissions for this class (Cost: 1 Read)
+    // We get them all at once instead of looping later
+    const qSubmissions = query(collection(db, 'submissions'), where('classId', '==', classId));
+    const submissionsSnap = await getDocs(qSubmissions);
+
+    // 3. Group submissions by their Exercise ID (Free & Fast in memory)
+    const submissionsMap = {};
+    submissionsSnap.docs.forEach(doc => {
+       const sub = doc.data();
+       // Create a list for this exercise if it doesn't exist yet
+       if (!submissionsMap[sub.exerciseId]) {
+           submissionsMap[sub.exerciseId] = [];
+       }
+       submissionsMap[sub.exerciseId].push(sub);
+    });
+
+    const now = new Date(); 
+    const exercisesData = [];
+
+    // 4. Process exercises using the data we already downloaded
+    for (const docSnapshot of exercisesSnap.docs) {
+       let data = { id: docSnapshot.id, ...docSnapshot.data() };
+
+       if (data.dueDate) {
+          const dueDate = data.dueDate.toDate ? data.dueDate.toDate() : new Date(data.dueDate);
+          const isDeadlinePassed = now > dueDate;
+
+          // Only run logic if deadline passed
+          if (isDeadlinePassed) {
+             // ⚡ INSTANT LOOKUP (No database call needed here)
+             const exerciseSubmissions = submissionsMap[data.id] || [];
+             
+             const totalSubmissions = exerciseSubmissions.length;
+             // We check for 'published' or 'graded' to be safe
+             const gradedSubmissions = exerciseSubmissions.filter(sub => 
+                 sub.status === 'published' || sub.status === 'graded'
+             ).length;
+
+             const isAllGraded = totalSubmissions > 0 && totalSubmissions === gradedSubmissions;
+
+             // CASE 1: TIME UP + WORK DONE -> MARK COMPLETED
+             if (isAllGraded && data.status !== 'completed') {
+                 console.log(`✅ All graded. Marking Complete: ${data.title}`);
+                 const exerciseRef = doc(db, 'classes', classId, 'exercises', data.id);
+                 await updateDoc(exerciseRef, { status: 'completed' });
+                 data.status = 'completed';
+             }
+             // CASE 2: TIME UP + UNGRADED WORK -> KEEP ACTIVE
+             else if (!isAllGraded && data.status === 'completed') {
+                 console.log(`⚠️ Ungraded work found. Re-opening: ${data.title}`);
+                 const exerciseRef = doc(db, 'classes', classId, 'exercises', data.id);
+                 await updateDoc(exerciseRef, { status: 'active' });
+                 data.status = 'active';
+             }
+          }
+          // CASE 3: DEADLINE EXTENDED (Future) -> FORCE ACTIVE
+          else if (!isDeadlinePassed && data.status === 'completed') {
+             console.log(`🔓 Deadline extended. Re-opening: ${data.title}`);
+             const exerciseRef = doc(db, 'classes', classId, 'exercises', data.id);
+             await updateDoc(exerciseRef, { status: 'active' });
+             data.status = 'active';
+          }
+       }
+       exercisesData.push(data);
     }
-  };
+
+    // 5. Sort (Same as before)
+    const sortedExercises = exercisesData.sort((a, b) => {
+       const statusPriority = { active: 3, draft: 2, completed: 1 };
+       const statusDiff = (statusPriority[b.status] || 0) - (statusPriority[a.status] || 0);
+       if (statusDiff !== 0) return statusDiff;
+       const aDate = a.createdAt?.toDate?.() || new Date(a.createdAt) || new Date(0);
+       const bDate = b.createdAt?.toDate?.() || new Date(b.createdAt) || new Date(0);
+       return bDate - aDate;
+    });
+
+    setExercises(sortedExercises);
+
+  } catch (error) {
+    console.error('Error fetching exercises:', error);
+  }
+};
 
   const fetchStudentCount = async () => {
     try {

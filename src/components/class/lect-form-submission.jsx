@@ -12,7 +12,7 @@ export const useFormSubmission = () => {
     const errors = {};
 
     // 🛡️ Check if editing a published exercise
-    const isEditingPublished = existingData?.status === 'active';
+      const isEditingPublished = existingData?.status === 'active' || existingData?.status === 'completed';
 
     // Always require basic fields (even for drafts when publishing)
     if (!isDraftSave) {
@@ -295,8 +295,9 @@ export const useFormSubmission = () => {
         };
       }
 
-      // 🔍 CHECK: Is this already an active exercise with AI results?
-      const hasExistingAIResults = existingData?.status === 'active' && existingData?.correctAnswer?.elements;
+      // Check if active OR completed
+      const isPublished = existingData?.status === 'active' || existingData?.status === 'completed';
+      const hasExistingAIResults = isPublished && existingData?.correctAnswer?.elements;
 
       console.log('🔍 Checking exercise status:');
       console.log('   - existingData.status:', existingData?.status);

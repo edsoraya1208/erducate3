@@ -162,7 +162,9 @@ const LecturerCreateExercise = ({ onCancel, classId: propClassId, onLogout, onDa
           setIsDraftLoaded(true);
           console.log('✅ Draft loaded successfully');
 
-          setIsPublishedExercise(draftData.status === 'active');
+         // Check for both active AND completed status
+        setIsPublishedExercise(draftData.status === 'active' || draftData.status === 'completed');
+
           
         } else {
           console.warn('Draft not found');

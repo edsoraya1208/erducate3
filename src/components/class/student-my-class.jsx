@@ -177,7 +177,7 @@ const StudentMyClass = ({ classId }) => {
     const [exercisesSnapshot, allProgressSnapshot] = await Promise.all([
       getDocs(query(
         collection(db, 'classes', classId, 'exercises'),
-        where('status', '==', 'active')
+        where('status', 'in', ['active', 'completed']) //status udpated (after udpated lecturer's)
       )),
       getDocs(query(
         collection(db, 'studentProgress'),
@@ -246,7 +246,7 @@ const StudentMyClass = ({ classId }) => {
           getDoc(doc(db, 'classes', targetClassId)),
           getDocs(query(
             collection(db, 'classes', targetClassId, 'exercises'),
-            where('status', '==', 'active')
+            where('status', 'in', ['active', 'completed']) // update status
           ))
         ]);
         

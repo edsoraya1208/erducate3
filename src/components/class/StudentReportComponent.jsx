@@ -162,7 +162,13 @@ const StudentReportComponent = ({ submission, exerciseData, loading, error, clas
               <h3>✅ Strengths</h3>
               <ul>
                 {grade.feedback.correct.map((item, idx) => (
-                  <li key={idx}>{item}</li>
+                  <li key={idx}>
+                    {typeof item === 'object' ? (
+                      <span><strong>{item.item}</strong>: {item.explanation}</span>
+                    ) : (
+                      item
+                    )}
+                  </li>
                 ))}
               </ul>
             </div>
@@ -174,7 +180,13 @@ const StudentReportComponent = ({ submission, exerciseData, loading, error, clas
               <h3>❌ Missing Elements</h3>
               <ul>
                 {grade.feedback.missing.map((item, idx) => (
-                  <li key={idx}>{item}</li>
+                  <li key={idx}>
+                    {typeof item === 'object' ? (
+                      <span><strong>{item.item}</strong>: {item.explanation}</span>
+                    ) : (
+                      item
+                    )}
+                  </li>
                 ))}
               </ul>
             </div>
@@ -186,7 +198,13 @@ const StudentReportComponent = ({ submission, exerciseData, loading, error, clas
               <h3>⚠️ Areas for Improvement</h3>
               <ul>
                 {grade.feedback.incorrect.map((item, idx) => (
-                  <li key={idx}>{item}</li>
+                  <li key={idx}>
+                    {typeof item === 'object' ? (
+                      <span><strong>{item.item}</strong>: {item.explanation}</span>
+                    ) : (
+                      item
+                    )}
+                  </li>
                 ))}
               </ul>
             </div>
